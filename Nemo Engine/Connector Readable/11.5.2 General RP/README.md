@@ -1,6 +1,6 @@
 # Nemo Engine 11.5.2 — connector-readable mirror
 
-This directory is an additive, lossless view of `../Nemo Engine 11.5.2 - General RP.json`. The original importable preset is unchanged.
+This directory is an additive, lossless view of `../../Nemo Engine 11.5.2 - General RP.json`. The original importable preset is unchanged.
 
 The source is not minified. Its size exceeds the GitHub Contents response that many chat clients render conveniently, so it is split into valid UTF-8 JSON files of at most 48 KiB. `reassemble.mjs` recreates the original file byte for byte.
 
