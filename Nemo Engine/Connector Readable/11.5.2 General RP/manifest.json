@@ -607,8 +607,8 @@
     },
     {
       "path": "README.md",
-      "bytes": 1789,
-      "sha256": "e05ed0fd7fa778e2997621e311c2b443c8de7f857bb3a68ea83b071d05530189"
+      "bytes": 1792,
+      "sha256": "8ae9859360f3954f3203d5ef8c04b78f57bbb911e419fba400c44b499bb40c26"
     },
     {
       "path": "reassemble.mjs",
