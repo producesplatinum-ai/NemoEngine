@@ -1,0 +1,1005 @@
+[
+  {
+    "id": "6c3ebe82-9db4-423b-bfa6-40ce5832eada",
+    "scriptName": "Strip HTML from older context",
+    "findRegex": "/<!-- HTML_START -->[\\s\\S]*?<!-- HTML_END -->/gs",
+    "replaceString": "",
+    "trimStrings": [],
+    "placement": [
+      2
+    ],
+    "disabled": true,
+    "markdownOnly": false,
+    "promptOnly": true,
+    "runOnEdit": true,
+    "substituteRegex": 0,
+    "minDepth": 5,
+    "maxDepth": null
+  },
+  {
+    "id": "d7124e73-9e2b-57f9-9c86-aae2354619ab",
+    "scriptName": "Nemo · plan close repair (raw output)",
+    "findRegex": "/^(<plan>(?:(?!<\\/plan>)[\\s\\S])*?)\\s*(<nemo-final>[\\s\\S]*)$/i",
+    "replaceString": "$1\n</plan>\n$2",
+    "trimStrings": [],
+    "placement": [
+      2
+    ],
+    "disabled": false,
+    "markdownOnly": false,
+    "promptOnly": false,
+    "runOnEdit": true,
+    "substituteRegex": 0,
+    "minDepth": null,
+    "maxDepth": null
+  },
+  {
+    "id": "0d9a1a96-9009-5af5-bfb7-7a4b8ec8bea4",
+    "scriptName": "Nemo · completed reasoning boundary cleanup (raw output)",
+    "findRegex": "/^[\\s\\S]*<\\/(?:think(?:ing)?|plan(?:ning)?)\\s*>/i",
+    "replaceString": "",
+    "trimStrings": [],
+    "placement": [
+      2
+    ],
+    "disabled": false,
+    "markdownOnly": false,
+    "promptOnly": false,
+    "runOnEdit": true,
+    "substituteRegex": 0,
+    "minDepth": null,
+    "maxDepth": null
+  },
+  {
+    "id": "4e93acbd-5bd3-5116-a5c9-7ea116f9008e",
+    "scriptName": "Nemo · final boundary cleanup (raw output)",
+    "findRegex": "/^\\s*<nemo-final>\\s*/i",
+    "replaceString": "",
+    "trimStrings": [],
+    "placement": [
+      2
+    ],
+    "disabled": false,
+    "markdownOnly": false,
+    "promptOnly": false,
+    "runOnEdit": true,
+    "substituteRegex": 0,
+    "minDepth": null,
+    "maxDepth": null
+  },
+  {
+    "id": "4d260cb7-bde4-4c9c-891f-da4b8db320fb",
+    "scriptName": "Nemo + Magpie · 0 plan close repair (prompt)",
+    "findRegex": "/^(<plan>(?:(?!<\\/plan>)[\\s\\S])*?)\\s*(<nemo-final>[\\s\\S]*)$/i",
+    "replaceString": "$1\n</plan>\n$2",
+    "trimStrings": [],
+    "placement": [
+      2
+    ],
+    "disabled": false,
+    "markdownOnly": false,
+    "promptOnly": true,
+    "runOnEdit": false,
+    "substituteRegex": 0,
+    "minDepth": null,
+    "maxDepth": null
+  },
+  {
+    "id": "95101950-f5f2-45f2-8420-49f5868dfc61",
+    "scriptName": "Nemo + Magpie · 0 plan close repair",
+    "findRegex": "/^(<plan>(?:(?!<\\/plan>)[\\s\\S])*?)\\s*(<nemo-final>[\\s\\S]*)$/i",
+    "replaceString": "$1\n</plan>\n$2",
+    "trimStrings": [],
+    "placement": [
+      2
+    ],
+    "disabled": false,
+    "markdownOnly": true,
+    "promptOnly": false,
+    "runOnEdit": false,
+    "substituteRegex": 0,
+    "minDepth": null,
+    "maxDepth": null
+  },
+  {
+    "id": "8b9aee12-35dd-4ad9-8f50-b7e11839b249",
+    "scriptName": "Nemo · completed reasoning boundary cleanup (display + context)",
+    "findRegex": "/^[\\s\\S]*<\\/(?:think(?:ing)?|plan(?:ning)?)\\s*>/i",
+    "replaceString": "",
+    "trimStrings": [],
+    "placement": [
+      2
+    ],
+    "disabled": false,
+    "markdownOnly": true,
+    "promptOnly": true,
+    "runOnEdit": true,
+    "substituteRegex": 0,
+    "minDepth": null,
+    "maxDepth": null
+  },
+  {
+    "id": "2f94f27d-c5dd-5ea4-bb3c-d387be67d12f",
+    "scriptName": "Nemo + Magpie · 19 plan context strip",
+    "findRegex": "/<plan>[\\s\\S]*?<\\/plan>\\s*(?:<nemo-final>\\s*)?/gi",
+    "replaceString": "",
+    "trimStrings": [],
+    "placement": [
+      2
+    ],
+    "disabled": false,
+    "markdownOnly": false,
+    "promptOnly": true,
+    "runOnEdit": false,
+    "substituteRegex": 0,
+    "minDepth": null,
+    "maxDepth": null
+  },
+  {
+    "id": "84718c3f-74a9-535f-85f3-f090322c94e0",
+    "scriptName": "Nemo · hidden machinery · scene headers",
+    "findRegex": "/(?:__NEMO_HIDDEN_ONLY__{{getvar::MachineryHideGate}})<scene>[\\s\\S]*?<\\/scene>\\s*/gi",
+    "replaceString": "",
+    "trimStrings": [],
+    "placement": [
+      2
+    ],
+    "disabled": false,
+    "markdownOnly": true,
+    "promptOnly": false,
+    "runOnEdit": true,
+    "substituteRegex": 1,
+    "minDepth": null,
+    "maxDepth": null
+  },
+  {
+    "id": "82c645fe-6c25-59e7-96a7-721ea69d3a5f",
+    "scriptName": "Nemo · hidden machinery · modular pad",
+    "findRegex": "/(?:__NEMO_HIDDEN_ONLY__{{getvar::MachineryHideGate}})<nemo-pad>[\\s\\S]*?<\\/nemo-pad>\\s*/gi",
+    "replaceString": "",
+    "trimStrings": [],
+    "placement": [
+      2
+    ],
+    "disabled": false,
+    "markdownOnly": true,
+    "promptOnly": false,
+    "runOnEdit": true,
+    "substituteRegex": 1,
+    "minDepth": null,
+    "maxDepth": null
+  },
+  {
+    "id": "398766b9-b7c3-5fcd-939c-7a001d668b12",
+    "scriptName": "Nemo · hidden machinery · Magpie ledger",
+    "findRegex": "/(?:__NEMO_HIDDEN_ONLY__{{getvar::MachineryHideGate}})<pad>[\\s\\S]*?<\\/pad>\\s*/gi",
+    "replaceString": "",
+    "trimStrings": [],
+    "placement": [
+      2
+    ],
+    "disabled": false,
+    "markdownOnly": true,
+    "promptOnly": false,
+    "runOnEdit": true,
+    "substituteRegex": 1,
+    "minDepth": null,
+    "maxDepth": null
+  },
+  {
+    "id": "149e32b8-7213-5e70-ae2c-6f6bc829bd4a",
+    "scriptName": "Nemo + Magpie · 18 plan display (disabled: boundary cleanup owns closed plans)",
+    "findRegex": "/<plan>\\s*([\\s\\S]*?)\\s*<\\/plan>/gi",
+    "replaceString": "<style>.pk-plan{display:block;margin:.65em 0 1.05em;border:1px solid rgba(204,121,167,.28);border-left:3px solid #CC79A7;border-radius:.55rem;background:linear-gradient(105deg,rgba(204,121,167,.09),rgba(255,255,255,.015));font-size:.88em;color:#d7d3dc;overflow:hidden}.pk-plan>summary{display:flex;align-items:center;gap:.65em;padding:.58rem .85rem;cursor:pointer;list-style:none;user-select:none}.pk-plan>summary::-webkit-details-marker{display:none}.pk-plan>summary:before{content:\"▸\";color:#CC79A7;font-size:.9em;transition:transform .15s ease}.pk-plan[open]>summary:before{transform:rotate(90deg)}.pk-plan>summary>b{font-size:.72em;letter-spacing:.14em;text-transform:uppercase;color:#e2b2ce}.pk-plan>summary>i{margin-left:auto;font-size:.72em;font-style:normal;letter-spacing:.04em;opacity:.48}.pk-plan>div{padding:.72rem .95rem .82rem;border-top:1px solid rgba(204,121,167,.18);line-height:1.58;background:rgba(0,0,0,.12);max-height:min(72vh,52rem);overflow:auto}.pk-plan>div>p:first-child{margin-top:0}.pk-plan>div>p:last-child{margin-bottom:0}@media(max-width:640px){.pk-plan>summary>i{display:none}.pk-plan>div{max-height:70vh}}</style><details class=\"pk-plan\"><summary><b>Nemo workbench</b><i>planning · draft/attack when enabled · excluded from future context</i></summary><div>$1</div></details>",
+    "trimStrings": [],
+    "placement": [
+      2
+    ],
+    "disabled": true,
+    "markdownOnly": true,
+    "promptOnly": false,
+    "runOnEdit": false,
+    "substituteRegex": 0,
+    "minDepth": null,
+    "maxDepth": null
+  },
+  {
+    "id": "a471053e-fb33-5b43-8df9-9d69d7259668",
+    "scriptName": "Nemo + Magpie · final boundary cleanup",
+    "findRegex": "/\\s*<\\/?nemo-final>\\s*/gi",
+    "replaceString": "\n",
+    "trimStrings": [],
+    "placement": [
+      2
+    ],
+    "disabled": false,
+    "markdownOnly": true,
+    "promptOnly": true,
+    "runOnEdit": true,
+    "substituteRegex": 0,
+    "minDepth": null,
+    "maxDepth": null
+  },
+  {
+    "id": "6e52854c-733d-479d-a7d3-1b5edc95883d",
+    "scriptName": "Strip leaked planning / think tags",
+    "findRegex": "/<\\/?(?:think(?:ing)?|plan(?:ning)?)>/gs",
+    "replaceString": "",
+    "trimStrings": [],
+    "placement": [
+      2
+    ],
+    "disabled": false,
+    "markdownOnly": true,
+    "promptOnly": false,
+    "runOnEdit": true,
+    "substituteRegex": 0,
+    "minDepth": null,
+    "maxDepth": null
+  },
+  {
+    "id": "6daa1d91-89e2-4eac-b62b-7f9d9adece29",
+    "scriptName": "Vex Commentary - Render Bubbles",
+    "findRegex": "/<vexnote>([\\s\\S]*?)<\\/vexnote>/g",
+    "replaceString": "<details style=\"display:inline-block;margin:12px 0;\"><summary style=\"list-style:none;cursor:pointer;\"><img src=\"https://files.catbox.moe/j35b2w.gif\" style=\"width:36px;height:36px;border-radius:50%;object-fit:cover;box-shadow:0 0 8px rgba(155,89,182,0.4);border:2px solid #9B59B6;vertical-align:middle;\"></summary><div style=\"background:#1a1a2e;border:1px solid #9B59B6;border-radius:8px;padding:8px 12px;color:#d4b8e0;font-size:13px;font-style:italic;max-width:500px;box-shadow:0 2px 8px rgba(0,0,0,0.3);margin-top:6px;\">$1</div></details>",
+    "trimStrings": [],
+    "placement": [
+      2
+    ],
+    "disabled": false,
+    "markdownOnly": true,
+    "promptOnly": false,
+    "runOnEdit": true,
+    "substituteRegex": 0,
+    "minDepth": null,
+    "maxDepth": null
+  },
+  {
+    "id": "9aaefe50-279e-415e-97f3-30364e483532",
+    "scriptName": "Vex Commentary - Strip from Context",
+    "findRegex": "/<vexnote>[\\s\\S]*?<\\/vexnote>/g",
+    "replaceString": "",
+    "trimStrings": [],
+    "placement": [
+      2
+    ],
+    "disabled": false,
+    "markdownOnly": false,
+    "promptOnly": true,
+    "runOnEdit": true,
+    "substituteRegex": 0,
+    "minDepth": 5,
+    "maxDepth": null
+  },
+  {
+    "id": "139df77f-59a9-41d7-819c-1a1de4d41738",
+    "scriptName": "Tracker UI - Render Noir Card",
+    "findRegex": "/<st-tracker-noir type=\"([^\"]*)\" title=\"([^\"]*)\" icon=\"([^\"]*)\" accent=\"([^\"]*)\">([\\s\\S]*?)<\\/st-tracker-noir>/g",
+    "replaceString": "<details class=\"st-card st-noir st-$1\" style=\"margin:10px 0;border:1px solid #1f2937;border-left:5px solid $4;border-radius:2px;background:linear-gradient(135deg,#f2eadb,#d8c9ae 62%,#b8aa91);color:#111827;box-shadow:0 9px 24px rgba(0,0,0,.26);overflow:hidden;font-family:Courier New,Georgia,serif;\"><summary style=\"cursor:pointer;list-style:none;padding:10px 13px;display:flex;align-items:center;gap:8px;font-weight:800;border-bottom:2px solid #111827;text-transform:uppercase;\"><span style=\"display:inline-grid;place-items:center;width:1.7em;height:1.7em;background:#111827;color:#f8f1e3;\">$3</span><span>$2</span><span style=\"margin-left:auto;color:#991b1b;font-size:.74em;letter-spacing:.06em;\">CASE:$1</span></summary><div style=\"padding:10px 13px 13px;font-size:.92em;line-height:1.42;white-space:pre-wrap;\">$5</div></details><style>.st-card>summary::-webkit-details-marker{display:none}</style>",
+    "trimStrings": [],
+    "placement": [
+      2
+    ],
+    "disabled": false,
+    "markdownOnly": true,
+    "promptOnly": false,
+    "runOnEdit": true,
+    "substituteRegex": 0,
+    "minDepth": null,
+    "maxDepth": null
+  },
+  {
+    "id": "c287b5ed-df5d-4c07-9346-5e72e747bdf1",
+    "scriptName": "Tracker UI - Render Occult Card",
+    "findRegex": "/<st-tracker-occult type=\"([^\"]*)\" title=\"([^\"]*)\" icon=\"([^\"]*)\" accent=\"([^\"]*)\">([\\s\\S]*?)<\\/st-tracker-occult>/g",
+    "replaceString": "<details class=\"st-card st-occult st-$1\" style=\"margin:10px 0;border:1px solid rgba(168,85,247,.48);border-left:4px solid $4;border-radius:4px;background:radial-gradient(circle at top left,rgba(168,85,247,.18),transparent 34%),linear-gradient(135deg,#090711,#171022 65%,#0b0711);color:#eadcff;box-shadow:0 0 22px rgba(88,28,135,.35);overflow:hidden;font-family:Georgia,Times New Roman,serif;\"><summary style=\"cursor:pointer;list-style:none;padding:10px 12px;display:flex;align-items:center;gap:8px;font-weight:700;border-bottom:1px solid rgba(168,85,247,.28);\"><span style=\"color:$4;text-shadow:0 0 8px rgba(168,85,247,.5);\">$3</span><span>$2</span><span style=\"margin-left:auto;color:#c4b5fd;font-size:.76em;text-transform:uppercase;letter-spacing:.08em;\">$1</span></summary><div style=\"padding:10px 12px 12px;font-size:.94em;line-height:1.45;white-space:pre-wrap;\">$5</div></details><style>.st-card>summary::-webkit-details-marker{display:none}</style>",
+    "trimStrings": [],
+    "placement": [
+      2
+    ],
+    "disabled": false,
+    "markdownOnly": true,
+    "promptOnly": false,
+    "runOnEdit": true,
+    "substituteRegex": 0,
+    "minDepth": null,
+    "maxDepth": null
+  },
+  {
+    "id": "e515baae-e45d-4eb1-9e75-5a0c960d49fa",
+    "scriptName": "Tracker UI - Render Tactical Card",
+    "findRegex": "/<st-tracker-tactical type=\"([^\"]*)\" title=\"([^\"]*)\" icon=\"([^\"]*)\" accent=\"([^\"]*)\">([\\s\\S]*?)<\\/st-tracker-tactical>/g",
+    "replaceString": "<details class=\"st-card st-tactical st-$1\" style=\"margin:10px 0;border:1px solid rgba(132,204,22,.42);border-left:5px solid $4;border-radius:1px;background:linear-gradient(135deg,#11170d,#18220f 60%,#0c1208);color:#e7f5d1;box-shadow:0 10px 22px rgba(0,0,0,.32);overflow:hidden;font-family:Arial Narrow,Segoe UI,sans-serif;\"><summary style=\"cursor:pointer;list-style:none;padding:9px 12px;display:flex;align-items:center;gap:8px;font-weight:800;background:repeating-linear-gradient(90deg,rgba(132,204,22,.10) 0 2px,transparent 2px 14px);border-bottom:1px solid rgba(132,204,22,.28);text-transform:uppercase;\"><span style=\"display:inline-grid;place-items:center;width:1.65em;height:1.65em;background:$4;color:#11170d;font-weight:900;\">$3</span><span>$2</span><span style=\"margin-left:auto;color:#bef264;font-size:.75em;letter-spacing:.06em;\">$1</span></summary><div style=\"padding:10px 12px 12px;font-size:.91em;line-height:1.4;white-space:pre-wrap;\">$5</div></details><style>.st-card>summary::-webkit-details-marker{display:none}</style>",
+    "trimStrings": [],
+    "placement": [
+      2
+    ],
+    "disabled": false,
+    "markdownOnly": true,
+    "promptOnly": false,
+    "runOnEdit": true,
+    "substituteRegex": 0,
+    "minDepth": null,
+    "maxDepth": null
+  },
+  {
+    "id": "1ee7868b-63d8-4932-a951-7aedc732709f",
+    "scriptName": "Tracker UI - Render Newsprint Card",
+    "findRegex": "/<st-tracker-newsprint type=\"([^\"]*)\" title=\"([^\"]*)\" icon=\"([^\"]*)\" accent=\"([^\"]*)\">([\\s\\S]*?)<\\/st-tracker-newsprint>/g",
+    "replaceString": "<details class=\"st-card st-newsprint st-$1\" style=\"margin:10px 0;border:1px solid #222;border-radius:0;background:#f4f1e8;color:#171717;box-shadow:0 6px 16px rgba(0,0,0,.18);overflow:hidden;font-family:Georgia,Times New Roman,serif;\"><summary style=\"cursor:pointer;list-style:none;padding:9px 12px;display:flex;align-items:center;gap:8px;font-weight:900;border-top:4px solid #171717;border-bottom:1px solid #171717;text-transform:uppercase;\"><span>$3</span><span style=\"font-size:1.05em;\">$2</span><span style=\"margin-left:auto;color:#525252;font-size:.72em;letter-spacing:.08em;\">$1</span></summary><div style=\"padding:10px 12px 12px;font-size:.93em;line-height:1.36;white-space:pre-wrap;column-gap:18px;\">$5</div></details><style>.st-card>summary::-webkit-details-marker{display:none}</style>",
+    "trimStrings": [],
+    "placement": [
+      2
+    ],
+    "disabled": false,
+    "markdownOnly": true,
+    "promptOnly": false,
+    "runOnEdit": true,
+    "substituteRegex": 0,
+    "minDepth": null,
+    "maxDepth": null
+  },
+  {
+    "id": "5ba9f006-f379-4bd3-974f-6f48c9485bc9",
+    "scriptName": "Tracker UI - Render Cyberpunk Card",
+    "findRegex": "/<st-tracker-cyberpunk type=\"([^\"]*)\" title=\"([^\"]*)\" icon=\"([^\"]*)\" accent=\"([^\"]*)\">([\\s\\S]*?)<\\/st-tracker-cyberpunk>/g",
+    "replaceString": "<details class=\"st-card st-cyberpunk st-$1\" style=\"margin:10px 0;border:1px solid rgba(34,211,238,.42);border-left:4px solid $4;border-radius:2px;background:linear-gradient(135deg,#090014,#14041f 55%,#020617);color:#e0faff;box-shadow:0 0 20px rgba(236,72,153,.22),0 10px 26px rgba(0,0,0,.38);overflow:hidden;font-family:Rajdhani,Segoe UI,sans-serif;\"><summary style=\"cursor:pointer;list-style:none;padding:9px 12px;display:flex;align-items:center;gap:8px;font-weight:800;border-bottom:1px solid rgba(34,211,238,.26);background:linear-gradient(90deg,rgba(236,72,153,.16),rgba(34,211,238,.08));\"><span style=\"display:inline-grid;place-items:center;width:1.65em;height:1.65em;background:$4;color:#020617;box-shadow:3px 0 0 #22d3ee;\">$3</span><span>$2</span><span style=\"margin-left:auto;color:#67e8f9;font-size:.74em;text-transform:uppercase;letter-spacing:.08em;\">$1</span></summary><div style=\"padding:10px 12px 12px;font-size:.91em;line-height:1.4;white-space:pre-wrap;\">$5</div></details><style>.st-card>summary::-webkit-details-marker{display:none}</style>",
+    "trimStrings": [],
+    "placement": [
+      2
+    ],
+    "disabled": false,
+    "markdownOnly": true,
+    "promptOnly": false,
+    "runOnEdit": true,
+    "substituteRegex": 0,
+    "minDepth": null,
+    "maxDepth": null
+  },
+  {
+    "id": "7b8ad564-7f21-4c15-bdb0-7ba8e49c2d85",
+    "scriptName": "Tracker UI - Render Dossier Card",
+    "findRegex": "/<st-tracker-dossier type=\"([^\"]*)\" title=\"([^\"]*)\" icon=\"([^\"]*)\" accent=\"([^\"]*)\">([\\s\\S]*?)<\\/st-tracker-dossier>/g",
+    "replaceString": "<details class=\"st-card st-dossier st-$1\" style=\"margin:10px 0;border:1px solid #94a3b8;border-left:5px solid $4;border-radius:3px;background:linear-gradient(135deg,#f8fafc,#e5e7eb);color:#111827;box-shadow:0 8px 20px rgba(15,23,42,.18);overflow:hidden;font-family:Inter,Segoe UI,Arial,sans-serif;\"><summary style=\"cursor:pointer;list-style:none;padding:9px 12px;display:flex;align-items:center;gap:8px;font-weight:800;border-bottom:1px solid #cbd5e1;background:#f1f5f9;\"><span style=\"display:inline-grid;place-items:center;width:1.65em;height:1.65em;background:#334155;color:#f8fafc;\">$3</span><span>$2</span><span style=\"margin-left:auto;color:#475569;font-size:.74em;text-transform:uppercase;letter-spacing:.06em;\">FILE:$1</span></summary><div style=\"padding:10px 12px 12px;font-size:.91em;line-height:1.42;white-space:pre-wrap;\">$5</div></details><style>.st-card>summary::-webkit-details-marker{display:none}</style>",
+    "trimStrings": [],
+    "placement": [
+      2
+    ],
+    "disabled": false,
+    "markdownOnly": true,
+    "promptOnly": false,
+    "runOnEdit": true,
+    "substituteRegex": 0,
+    "minDepth": null,
+    "maxDepth": null
+  },
+  {
+    "id": "e5db7987-9d79-48a3-946b-5c88d9426efc",
+    "scriptName": "Tracker UI - Render Visual Novel Card",
+    "findRegex": "/<st-tracker-(?:vn|visualnovel) type=\"([^\"]*)\" title=\"([^\"]*)\" icon=\"([^\"]*)\" accent=\"([^\"]*)\">([\\s\\S]*?)<\\/st-tracker-(?:vn|visualnovel)>/g",
+    "replaceString": "<details class=\"st-card st-vn st-$1\" style=\"margin:10px 0;border:1px solid rgba(219,39,119,.34);border-radius:8px;background:linear-gradient(135deg,#fff7fb,#eef6ff 64%,#fdf2f8);color:#1f2937;box-shadow:0 10px 24px rgba(31,41,55,.16);overflow:hidden;font-family:Trebuchet MS,Segoe UI,sans-serif;\"><summary style=\"cursor:pointer;list-style:none;padding:10px 13px;display:flex;align-items:center;gap:8px;font-weight:800;background:linear-gradient(90deg,rgba(219,39,119,.16),rgba(96,165,250,.14));border-bottom:1px solid rgba(219,39,119,.20);\"><span style=\"display:inline-grid;place-items:center;width:1.75em;height:1.75em;border-radius:6px;background:$4;color:white;\">$3</span><span>$2</span><span style=\"margin-left:auto;color:#be185d;font-size:.75em;text-transform:uppercase;\">$1</span></summary><div style=\"padding:10px 13px 13px;font-size:.92em;line-height:1.44;white-space:pre-wrap;\">$5</div></details><style>.st-card>summary::-webkit-details-marker{display:none}</style>",
+    "trimStrings": [],
+    "placement": [
+      2
+    ],
+    "disabled": false,
+    "markdownOnly": true,
+    "promptOnly": false,
+    "runOnEdit": true,
+    "substituteRegex": 0,
+    "minDepth": null,
+    "maxDepth": null
+  },
+  {
+    "id": "ac093a65-8766-4117-9e12-84878e7722d5",
+    "scriptName": "Tracker UI - Render Parchment Card",
+    "findRegex": "/<st-tracker-parch(?:e)?ment type=\"([^\"]*)\" title=\"([^\"]*)\" icon=\"([^\"]*)\" accent=\"([^\"]*)\">([\\s\\S]*?)<\\/st-tracker-parch(?:e)?ment>/g",
+    "replaceString": "<details class=\"st-card st-parchment st-$1\" style=\"margin:10px 0;border:1px solid #8a5a2b;border-left:5px solid $4;border-radius:3px;background:linear-gradient(135deg,#f3e2b8,#ead09a 62%,#d7b36a);color:#3b2612;box-shadow:0 6px 18px rgba(57,35,12,.24),inset 0 0 34px rgba(92,57,20,.14);overflow:hidden;font-family:Georgia,Times New Roman,serif;\"><summary style=\"cursor:pointer;list-style:none;padding:10px 13px;display:flex;align-items:center;gap:8px;font-weight:700;border-bottom:1px solid rgba(92,57,20,.24);\"><span style=\"display:inline-grid;place-items:center;width:1.6em;height:1.6em;background:#6f451f;color:#f8ecc8;border:1px solid rgba(59,38,18,.35);\">$3</span><span>$2</span><span style=\"margin-left:auto;color:#6f451f;font-size:.76em;text-transform:uppercase;letter-spacing:.04em;\">$1</span></summary><div style=\"padding:10px 13px 13px;font-size:.95em;line-height:1.45;white-space:pre-wrap;\">$5</div></details><style>.st-card>summary::-webkit-details-marker{display:none}</style>",
+    "trimStrings": [],
+    "placement": [
+      2
+    ],
+    "disabled": false,
+    "markdownOnly": true,
+    "promptOnly": false,
+    "runOnEdit": true,
+    "substituteRegex": 0,
+    "minDepth": null,
+    "maxDepth": null
+  },
+  {
+    "id": "f90d0d40-2849-482a-9000-247103bc0729",
+    "scriptName": "Tracker UI - Render Sci-Fi Card",
+    "findRegex": "/<st-tracker-scifi type=\"([^\"]*)\" title=\"([^\"]*)\" icon=\"([^\"]*)\" accent=\"([^\"]*)\">([\\s\\S]*?)<\\/st-tracker-scifi>/g",
+    "replaceString": "<details class=\"st-card st-scifi st-$1\" style=\"margin:10px 0;border:1px solid rgba(56,189,248,.48);border-left:4px solid $4;border-radius:2px;background:linear-gradient(135deg,#07111f,#0b1730 58%,#09111f);color:#d8f3ff;box-shadow:0 0 0 1px rgba(56,189,248,.10) inset,0 10px 24px rgba(0,0,0,.35);overflow:hidden;font-family:Inter,Segoe UI,sans-serif;\"><summary style=\"cursor:pointer;list-style:none;padding:9px 12px;display:flex;align-items:center;gap:8px;font-weight:750;border-bottom:1px solid rgba(56,189,248,.24);background:repeating-linear-gradient(90deg,rgba(56,189,248,.08) 0 1px,transparent 1px 12px);\"><span style=\"display:inline-grid;place-items:center;width:1.6em;height:1.6em;border:1px solid $4;color:$4;background:rgba(56,189,248,.08);\">$3</span><span>$2</span><span style=\"margin-left:auto;color:#7dd3fc;font-size:.75em;text-transform:uppercase;letter-spacing:.08em;\">$1</span></summary><div style=\"padding:10px 12px 12px;font-size:.91em;line-height:1.42;white-space:pre-wrap;\">$5</div></details><style>.st-card>summary::-webkit-details-marker{display:none}</style>",
+    "trimStrings": [],
+    "placement": [
+      2
+    ],
+    "disabled": false,
+    "markdownOnly": true,
+    "promptOnly": false,
+    "runOnEdit": true,
+    "substituteRegex": 0,
+    "minDepth": null,
+    "maxDepth": null
+  },
+  {
+    "id": "b6f6211c-cddb-4745-b0c7-570f3ed37daf",
+    "scriptName": "Tracker UI - Render Terminal Card",
+    "findRegex": "/<st-tracker-terminal type=\"([^\"]*)\" title=\"([^\"]*)\" icon=\"([^\"]*)\" accent=\"([^\"]*)\">([\\s\\S]*?)<\\/st-tracker-terminal>/g",
+    "replaceString": "<details class=\"st-card st-terminal st-$1\" style=\"margin:10px 0;border:1px solid $4;border-radius:0;background:#030704;color:#b7ffbf;box-shadow:0 0 18px rgba(0,255,65,.14);overflow:hidden;font-family:Consolas,Monaco,monospace;\"><summary style=\"cursor:pointer;list-style:none;padding:8px 10px;display:flex;align-items:center;gap:8px;font-weight:700;background:#061108;border-bottom:1px solid rgba(0,255,65,.34);\"><span style=\"color:$4;\">$3</span><span>&gt; $2</span><span style=\"margin-left:auto;color:#5cff76;font-size:.78em;\">$1</span></summary><div style=\"padding:9px 10px 11px;font-size:.9em;line-height:1.35;white-space:pre-wrap;text-shadow:0 0 4px rgba(0,255,65,.22);\">$5</div></details><style>.st-card>summary::-webkit-details-marker{display:none}</style>",
+    "trimStrings": [],
+    "placement": [
+      2
+    ],
+    "disabled": false,
+    "markdownOnly": true,
+    "promptOnly": false,
+    "runOnEdit": true,
+    "substituteRegex": 0,
+    "minDepth": null,
+    "maxDepth": null
+  },
+  {
+    "id": "280b92d6-2280-4fbe-8e02-70df0fec5b5a",
+    "scriptName": "Tracker UI - Render Phone Card",
+    "findRegex": "/<st-tracker-phone type=\"([^\"]*)\" title=\"([^\"]*)\" icon=\"([^\"]*)\" accent=\"([^\"]*)\">([\\s\\S]*?)<\\/st-tracker-phone>/g",
+    "replaceString": "<details class=\"st-card st-phone st-$1\" style=\"margin:10px 0;max-width:430px;border:1px solid rgba(148,163,184,.30);border-radius:18px;background:#0b1220;color:#e5e7eb;box-shadow:0 12px 28px rgba(0,0,0,.35);overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;\"><summary style=\"cursor:pointer;list-style:none;padding:10px 14px;display:flex;align-items:center;gap:8px;font-weight:700;background:linear-gradient(180deg,#111827,#0f172a);border-bottom:1px solid rgba(148,163,184,.18);\"><span style=\"display:inline-grid;place-items:center;width:1.7em;height:1.7em;border-radius:9px;background:$4;color:white;\">$3</span><span>$2</span><span style=\"margin-left:auto;color:#94a3b8;font-size:.75em;\">$1</span></summary><div style=\"padding:10px 12px 12px;font-size:.91em;line-height:1.42;white-space:pre-wrap;\">$5</div></details><style>.st-card>summary::-webkit-details-marker{display:none}</style>",
+    "trimStrings": [],
+    "placement": [
+      2
+    ],
+    "disabled": false,
+    "markdownOnly": true,
+    "promptOnly": false,
+    "runOnEdit": true,
+    "substituteRegex": 0,
+    "minDepth": null,
+    "maxDepth": null
+  },
+  {
+    "id": "d35116fc-3e33-4875-9997-fd622b3f79a8",
+    "scriptName": "Tracker UI - Render Light Card",
+    "findRegex": "/<st-tracker theme=\"light\" type=\"([^\"]*)\" title=\"([^\"]*)\" icon=\"([^\"]*)\" accent=\"([^\"]*)\">([\\s\\S]*?)<\\/st-tracker>/g",
+    "replaceString": "<details class=\"st-card st-light st-$1\" style=\"margin:10px 0;border:1px solid rgba(100,116,139,.24);border-left:4px solid $4;border-radius:6px;background:linear-gradient(135deg,#ffffff,#f8fafc 58%,#eef2f7);color:#111827;box-shadow:0 8px 22px rgba(15,23,42,.12);overflow:hidden;\"><summary style=\"cursor:pointer;list-style:none;padding:9px 12px;display:flex;align-items:center;gap:8px;font-weight:700;\"><span style=\"display:inline-grid;place-items:center;width:1.6em;height:1.6em;border-radius:4px;background:$4;color:#fff;box-shadow:0 0 0 1px rgba(255,255,255,.5) inset;\">$3</span><span>$2</span><span style=\"margin-left:auto;color:#64748b;font-size:.78em;text-transform:uppercase;\">$1</span></summary><div style=\"padding:0 12px 12px;font-size:.92em;line-height:1.45;white-space:pre-wrap;\">$5</div></details><style>.st-card>summary::-webkit-details-marker{display:none}.st-card[open]{filter:saturate(1.04)}.st-card .st-choice:hover{transform:translateX(2px)}</style>",
+    "trimStrings": [],
+    "placement": [
+      2
+    ],
+    "disabled": false,
+    "markdownOnly": true,
+    "promptOnly": false,
+    "runOnEdit": true,
+    "substituteRegex": 0,
+    "minDepth": null,
+    "maxDepth": null
+  },
+  {
+    "id": "e3fd61bf-7f9e-4515-9590-8656e4124039",
+    "scriptName": "Tracker UI - Render Card",
+    "findRegex": "/<st-tracker type=\"([^\"]*)\" title=\"([^\"]*)\" icon=\"([^\"]*)\" accent=\"([^\"]*)\">([\\s\\S]*?)<\\/st-tracker>/g",
+    "replaceString": "<details class=\"st-card st-$1\" style=\"margin:10px 0;border:1px solid rgba(148,163,184,.18);border-left:4px solid $4;border-radius:6px;background:linear-gradient(135deg,#111827,#151a24 58%,#0f172a);color:#e5e7eb;box-shadow:0 8px 22px rgba(0,0,0,.28);overflow:hidden;\"><summary style=\"cursor:pointer;list-style:none;padding:9px 12px;display:flex;align-items:center;gap:8px;font-weight:700;\"><span style=\"display:inline-grid;place-items:center;width:1.6em;height:1.6em;border-radius:4px;background:$4;color:#fff;box-shadow:0 0 14px rgba(255,255,255,.12) inset;\">$3</span><span>$2</span><span style=\"margin-left:auto;color:#94a3b8;font-size:.78em;text-transform:uppercase;\">$1</span></summary><div style=\"padding:0 12px 12px;font-size:.92em;line-height:1.45;white-space:pre-wrap;\">$5</div></details><style>.st-card>summary::-webkit-details-marker{display:none}.st-card[open]{filter:saturate(1.06)}.st-card .st-choice:hover{transform:translateX(2px)}</style>",
+    "trimStrings": [],
+    "placement": [
+      2
+    ],
+    "disabled": false,
+    "markdownOnly": true,
+    "promptOnly": false,
+    "runOnEdit": true,
+    "substituteRegex": 0,
+    "minDepth": null,
+    "maxDepth": null
+  },
+  {
+    "id": "25cc4493-1dd1-40fb-96fc-b2d0523edc52",
+    "scriptName": "Tracker UI - Render Row",
+    "findRegex": "/<st-row k=\"([^\"]*)\" v=\"([^\"]*)\"\\/>/g",
+    "replaceString": "<div class=\"st-row\" style=\"display:grid;grid-template-columns:minmax(5rem,34%) 1fr;gap:10px;align-items:start;margin:5px 0;padding:6px 8px;background:rgba(148,163,184,.10);border:1px solid rgba(148,163,184,.16);border-radius:4px;\"><b style=\"color:#94a3b8;font-weight:650;\">$1</b><span style=\"min-width:0;\">$2</span></div>",
+    "trimStrings": [],
+    "placement": [
+      2
+    ],
+    "disabled": false,
+    "markdownOnly": true,
+    "promptOnly": false,
+    "runOnEdit": true,
+    "substituteRegex": 0,
+    "minDepth": null,
+    "maxDepth": null
+  },
+  {
+    "id": "479fed45-c0ea-4b22-a667-860052667069",
+    "scriptName": "Tracker UI - Render Bar",
+    "findRegex": "/<st-bar k=\"([^\"]*)\" v=\"([0-9]{1,3})\" l=\"([^\"]*)\"\\/>/g",
+    "replaceString": "<div class=\"st-bar\" style=\"margin:7px 0;padding:7px 8px;background:rgba(148,163,184,.10);border:1px solid rgba(148,163,184,.16);border-radius:4px;\"><div style=\"display:flex;justify-content:space-between;gap:10px;margin-bottom:5px;\"><b style=\"color:#94a3b8;font-weight:650;\">$1</b><span>$3</span></div><div style=\"height:7px;background:rgba(15,23,42,.38);border-radius:999px;overflow:hidden;\"><div style=\"width:$2%;height:100%;background:linear-gradient(90deg,#38bdf8,#a78bfa,#f59e0b);box-shadow:0 0 10px rgba(167,139,250,.35);\"></div></div></div>",
+    "trimStrings": [],
+    "placement": [
+      2
+    ],
+    "disabled": false,
+    "markdownOnly": true,
+    "promptOnly": false,
+    "runOnEdit": true,
+    "substituteRegex": 0,
+    "minDepth": null,
+    "maxDepth": null
+  },
+  {
+    "id": "b916f7bc-7049-4a9b-9bc0-579cfc9fdc1f",
+    "scriptName": "Tracker UI - Render Choice",
+    "findRegex": "/<st-choice n=\"([^\"]*)\">([\\s\\S]*?)<\\/st-choice>/g",
+    "replaceString": "<div class=\"st-choice\" style=\"display:grid;grid-template-columns:2rem 1fr;gap:8px;align-items:start;margin:6px 0;padding:7px 8px;background:rgba(148,163,184,.10);border:1px solid rgba(148,163,184,.18);border-radius:4px;transition:transform .16s ease;\"><span style=\"display:inline-grid;place-items:center;width:1.65rem;height:1.65rem;border-radius:4px;background:rgba(148,163,184,.22);font-weight:800;\">$1</span><span>$2</span></div>",
+    "trimStrings": [],
+    "placement": [
+      2
+    ],
+    "disabled": false,
+    "markdownOnly": true,
+    "promptOnly": false,
+    "runOnEdit": true,
+    "substituteRegex": 0,
+    "minDepth": null,
+    "maxDepth": null
+  },
+  {
+    "id": "e975d98a-d9a9-4f14-a63d-c0ac445e0471",
+    "scriptName": "Tracker UI - Render Tag",
+    "findRegex": "/<st-tag t=\"([^\"]*)\"\\/>/g",
+    "replaceString": "<span class=\"st-tag\" style=\"display:inline-block;margin:0 3px;padding:1px 6px;border:1px solid rgba(148,163,184,.32);border-radius:4px;background:rgba(148,163,184,.14);font-size:.82em;font-weight:700;\">$1</span>",
+    "trimStrings": [],
+    "placement": [
+      2
+    ],
+    "disabled": false,
+    "markdownOnly": true,
+    "promptOnly": false,
+    "runOnEdit": true,
+    "substituteRegex": 0,
+    "minDepth": null,
+    "maxDepth": null
+  },
+  {
+    "id": "bd5371e1-92d7-4af3-b1ef-bd556b19ee4c",
+    "scriptName": "Tracker UI - Render Map",
+    "findRegex": "/<st-map>([\\s\\S]*?)<\\/st-map>/g",
+    "replaceString": "<pre class=\"st-map\" style=\"margin:6px 0;padding:8px 10px;overflow:auto;background:rgba(15,23,42,.38);border:1px solid rgba(148,163,184,.18);border-radius:4px;font-family:Consolas,Monaco,monospace;font-size:.9em;line-height:1.2;white-space:pre;\">$1</pre>",
+    "trimStrings": [],
+    "placement": [
+      2
+    ],
+    "disabled": false,
+    "markdownOnly": true,
+    "promptOnly": false,
+    "runOnEdit": true,
+    "substituteRegex": 0,
+    "minDepth": null,
+    "maxDepth": null
+  },
+  {
+    "id": "6edda17f-e38f-43c5-bfbb-03f20f916c9a",
+    "scriptName": "Tracker UI - Strip Compact Trackers from Older Context",
+    "findRegex": "/<st-tracker(?:-[a-z]+)?\\b[\\s\\S]*?<\\/st-tracker(?:-[a-z]+)?>/g",
+    "replaceString": "",
+    "trimStrings": [],
+    "placement": [
+      2
+    ],
+    "disabled": false,
+    "markdownOnly": false,
+    "promptOnly": true,
+    "runOnEdit": true,
+    "substituteRegex": 0,
+    "minDepth": 5,
+    "maxDepth": null
+  },
+  {
+    "id": "01063dd8-654f-4d09-b400-067161dd5d01",
+    "scriptName": "Emoji FX - Fire/Flame",
+    "findRegex": "/(?<!❤️‍)(🔥)/g",
+    "replaceString": "<span style=\"display:inline-block;animation:nemo-emoji-fx-fire-flame 0.4s infinite alternate;filter:drop-shadow(0 0 4px #ff4500);\">$1</span><style>@keyframes nemo-emoji-fx-fire-flame{0%{transform:scale(1);opacity:1}100%{transform:scale(1.1);opacity:0.85}}</style>",
+    "trimStrings": [],
+    "placement": [
+      2
+    ],
+    "disabled": false,
+    "markdownOnly": true,
+    "promptOnly": false,
+    "runOnEdit": true,
+    "substituteRegex": 0,
+    "minDepth": null,
+    "maxDepth": null
+  },
+  {
+    "id": "defac35d-d821-4a15-99b4-d0cc1efd9e01",
+    "scriptName": "Emoji FX - Sparkle/Magic",
+    "findRegex": "/(✨|🌟|💫)/g",
+    "replaceString": "<span style=\"display:inline-block;animation:nemo-emoji-fx-sparkle-magic 1s ease-in-out infinite;filter:drop-shadow(0 0 6px #ffd700);\">$1</span><style>@keyframes nemo-emoji-fx-sparkle-magic{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.2);opacity:0.7}}</style>",
+    "trimStrings": [],
+    "placement": [
+      2
+    ],
+    "disabled": false,
+    "markdownOnly": true,
+    "promptOnly": false,
+    "runOnEdit": true,
+    "substituteRegex": 0,
+    "minDepth": null,
+    "maxDepth": null
+  },
+  {
+    "id": "264f5e11-64cd-4788-bfe0-5fe17ec92cc8",
+    "scriptName": "Emoji FX - Swords/Combat",
+    "findRegex": "/(⚔️|🗡️|🔱)/g",
+    "replaceString": "<span style=\"display:inline-block;animation:nemo-emoji-fx-swords-combat 0.3s ease-in-out;filter:drop-shadow(0 0 3px #c0c0c0);\">$1</span><style>@keyframes nemo-emoji-fx-swords-combat{0%{transform:rotate(0deg)}25%{transform:rotate(-5deg)}75%{transform:rotate(5deg)}100%{transform:rotate(0deg)}}</style>",
+    "trimStrings": [],
+    "placement": [
+      2
+    ],
+    "disabled": false,
+    "markdownOnly": true,
+    "promptOnly": false,
+    "runOnEdit": true,
+    "substituteRegex": 0,
+    "minDepth": null,
+    "maxDepth": null
+  },
+  {
+    "id": "bb974b95-b66d-4331-8654-ef67bc9e1584",
+    "scriptName": "Emoji FX - Skull/Death",
+    "findRegex": "/(💀|☠️)/g",
+    "replaceString": "<span style=\"display:inline-block;filter:drop-shadow(0 0 4px #8b0000);animation:nemo-emoji-fx-skull-death 2s ease-in-out infinite;\">$1</span><style>@keyframes nemo-emoji-fx-skull-death{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.7;transform:scale(1.05)}}</style>",
+    "trimStrings": [],
+    "placement": [
+      2
+    ],
+    "disabled": false,
+    "markdownOnly": true,
+    "promptOnly": false,
+    "runOnEdit": true,
+    "substituteRegex": 0,
+    "minDepth": null,
+    "maxDepth": null
+  },
+  {
+    "id": "91bf8fab-3ef1-46ba-95a9-3a8ff8ceddb0",
+    "scriptName": "Emoji FX - Heart/Love",
+    "findRegex": "/(❤️‍🔥|❤️|💕|💖|💗)/g",
+    "replaceString": "<span style=\"display:inline-block;animation:nemo-emoji-fx-heart-love 1s ease-in-out infinite;filter:drop-shadow(0 0 4px #ff69b4);\">$1</span><style>@keyframes nemo-emoji-fx-heart-love{0%,100%{transform:scale(1)}15%{transform:scale(1.15)}30%{transform:scale(1)}45%{transform:scale(1.1)}}</style>",
+    "trimStrings": [],
+    "placement": [
+      2
+    ],
+    "disabled": false,
+    "markdownOnly": true,
+    "promptOnly": false,
+    "runOnEdit": true,
+    "substituteRegex": 0,
+    "minDepth": null,
+    "maxDepth": null
+  },
+  {
+    "id": "fd225a5f-3110-485f-a17e-f2db23950fbe",
+    "scriptName": "Emoji FX - Lightning/Power",
+    "findRegex": "/(⚡|🔮)/g",
+    "replaceString": "<span style=\"display:inline-block;animation:nemo-emoji-fx-lightning-power 0.2s ease-in-out infinite alternate;filter:drop-shadow(0 0 5px #00bfff);\">$1</span><style>@keyframes nemo-emoji-fx-lightning-power{0%{transform:scale(1);filter:drop-shadow(0 0 3px #00bfff)}100%{transform:scale(1.1);filter:drop-shadow(0 0 8px #00bfff)}}</style>",
+    "trimStrings": [],
+    "placement": [
+      2
+    ],
+    "disabled": false,
+    "markdownOnly": true,
+    "promptOnly": false,
+    "runOnEdit": true,
+    "substituteRegex": 0,
+    "minDepth": null,
+    "maxDepth": null
+  },
+  {
+    "id": "8c231c8f-7e77-47b7-9404-5cb7c2d7c584",
+    "scriptName": "Emoji FX - Ice/Cold",
+    "findRegex": "/(❄️|🥶)/g",
+    "replaceString": "<span style=\"display:inline-block;filter:drop-shadow(0 0 4px #87ceeb);animation:nemo-emoji-fx-ice-cold 2s ease-in-out infinite;\">$1</span><style>@keyframes nemo-emoji-fx-ice-cold{0%,100%{filter:drop-shadow(0 0 3px #87ceeb) brightness(1)}50%{filter:drop-shadow(0 0 8px #add8e6) brightness(1.2)}}</style>",
+    "trimStrings": [],
+    "placement": [
+      2
+    ],
+    "disabled": false,
+    "markdownOnly": true,
+    "promptOnly": false,
+    "runOnEdit": true,
+    "substituteRegex": 0,
+    "minDepth": null,
+    "maxDepth": null
+  },
+  {
+    "id": "62834d69-d66e-4b30-81fa-90f8a2e6619d",
+    "scriptName": "Emoji FX - Blood/Gore",
+    "findRegex": "/(🩸)/g",
+    "replaceString": "<span style=\"display:inline-block;animation:nemo-emoji-fx-blood-gore 1.5s ease-in infinite;filter:drop-shadow(0 0 3px #8b0000);\">$1</span><style>@keyframes nemo-emoji-fx-blood-gore{0%{transform:translateY(0)}80%{transform:translateY(0)}100%{transform:translateY(2px);opacity:0.8}}</style>",
+    "trimStrings": [],
+    "placement": [
+      2
+    ],
+    "disabled": false,
+    "markdownOnly": true,
+    "promptOnly": false,
+    "runOnEdit": true,
+    "substituteRegex": 0,
+    "minDepth": null,
+    "maxDepth": null
+  },
+  {
+    "id": "c550ce8d-2422-4e6a-8a1d-28522ac9b50b",
+    "scriptName": "Emoji FX - Anger/Rage",
+    "findRegex": "/(💢|😡)/g",
+    "replaceString": "<span style=\"display:inline-block;animation:nemo-emoji-fx-anger-rage 0.15s infinite;filter:drop-shadow(0 0 3px #ff0000);\">$1</span><style>@keyframes nemo-emoji-fx-anger-rage{0%{transform:translate(0)}25%{transform:translate(-1px,1px)}50%{transform:translate(1px,-1px)}75%{transform:translate(-1px,-1px)}100%{transform:translate(1px,1px)}}</style>",
+    "trimStrings": [],
+    "placement": [
+      2
+    ],
+    "disabled": false,
+    "markdownOnly": true,
+    "promptOnly": false,
+    "runOnEdit": true,
+    "substituteRegex": 0,
+    "minDepth": null,
+    "maxDepth": null
+  },
+  {
+    "id": "c99da944-843f-4083-ae7e-afe2a1aaf699",
+    "scriptName": "Emoji FX - Warning/Alert",
+    "findRegex": "/(⚠️|🚨)/g",
+    "replaceString": "<span style=\"display:inline-block;animation:nemo-emoji-fx-warning-alert 0.8s ease-in-out infinite;filter:drop-shadow(0 0 4px #ff8c00);\">$1</span><style>@keyframes nemo-emoji-fx-warning-alert{0%,100%{opacity:1}50%{opacity:0.5}}</style>",
+    "trimStrings": [],
+    "placement": [
+      2
+    ],
+    "disabled": false,
+    "markdownOnly": true,
+    "promptOnly": false,
+    "runOnEdit": true,
+    "substituteRegex": 0,
+    "minDepth": null,
+    "maxDepth": null
+  },
+  {
+    "id": "0e69bfac-6a46-473d-bf99-f391b256bd56",
+    "scriptName": "Emoji FX - Music/Sound",
+    "findRegex": "/(🎵|🎶|🎸)/g",
+    "replaceString": "<span style=\"display:inline-block;animation:nemo-emoji-fx-music-sound 0.6s ease-in-out infinite alternate;filter:drop-shadow(0 0 3px #9b59b6);\">$1</span><style>@keyframes nemo-emoji-fx-music-sound{0%{transform:translateY(0)}100%{transform:translateY(-3px)}}</style>",
+    "trimStrings": [],
+    "placement": [
+      2
+    ],
+    "disabled": false,
+    "markdownOnly": true,
+    "promptOnly": false,
+    "runOnEdit": true,
+    "substituteRegex": 0,
+    "minDepth": null,
+    "maxDepth": null
+  },
+  {
+    "id": "e1572121-d5a9-43ed-89f9-9747723d6bfb",
+    "scriptName": "Emoji FX - Sweat/Nervous",
+    "findRegex": "/(💦|😰)/g",
+    "replaceString": "<span style=\"display:inline-block;animation:nemo-emoji-fx-sweat-nervous 1s ease-in infinite;filter:drop-shadow(0 0 2px #87ceeb);\">$1</span><style>@keyframes nemo-emoji-fx-sweat-nervous{0%{transform:translateY(0);opacity:1}70%{transform:translateY(0);opacity:1}100%{transform:translateY(3px);opacity:0.65}}</style>",
+    "trimStrings": [],
+    "placement": [
+      2
+    ],
+    "disabled": false,
+    "markdownOnly": true,
+    "promptOnly": false,
+    "runOnEdit": true,
+    "substituteRegex": 0,
+    "minDepth": null,
+    "maxDepth": null
+  },
+  {
+    "id": "e93381e8-026a-4da5-b833-84bd5c089361",
+    "scriptName": "Emoji FX - Explosion/Boom",
+    "findRegex": "/(💥|💣)/g",
+    "replaceString": "<span style=\"display:inline-block;animation:nemo-emoji-fx-explosion-boom 0.4s ease-out;filter:drop-shadow(0 0 6px #ff4500);\">$1</span><style>@keyframes nemo-emoji-fx-explosion-boom{0%{transform:scale(0.5);opacity:0.5}50%{transform:scale(1.3);opacity:1}100%{transform:scale(1);opacity:1}}</style>",
+    "trimStrings": [],
+    "placement": [
+      2
+    ],
+    "disabled": false,
+    "markdownOnly": true,
+    "promptOnly": false,
+    "runOnEdit": true,
+    "substituteRegex": 0,
+    "minDepth": null,
+    "maxDepth": null
+  },
+  {
+    "id": "bcef5025-09b6-4619-85ca-e239f29ffaad",
+    "scriptName": "Emoji FX - Crown/Royalty",
+    "findRegex": "/(👑|⚜️)/g",
+    "replaceString": "<span style=\"display:inline-block;animation:nemo-emoji-fx-crown-royalty 2s ease-in-out infinite;filter:drop-shadow(0 0 5px #ffd700);\">$1</span><style>@keyframes nemo-emoji-fx-crown-royalty{0%,100%{filter:drop-shadow(0 0 3px #ffd700) brightness(1)}50%{filter:drop-shadow(0 0 8px #ffd700) brightness(1.3)}}</style>",
+    "trimStrings": [],
+    "placement": [
+      2
+    ],
+    "disabled": false,
+    "markdownOnly": true,
+    "promptOnly": false,
+    "runOnEdit": true,
+    "substituteRegex": 0,
+    "minDepth": null,
+    "maxDepth": null
+  },
+  {
+    "id": "92efb667-e48d-401c-b3ae-771fa9fd8670",
+    "scriptName": "Emoji FX - Ghost/Spooky",
+    "findRegex": "/(👻|🎃)/g",
+    "replaceString": "<span style=\"display:inline-block;animation:nemo-emoji-fx-ghost-spooky 2s ease-in-out infinite;filter:drop-shadow(0 0 4px rgba(255,255,255,0.3));\">$1</span><style>@keyframes nemo-emoji-fx-ghost-spooky{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}</style>",
+    "trimStrings": [],
+    "placement": [
+      2
+    ],
+    "disabled": false,
+    "markdownOnly": true,
+    "promptOnly": false,
+    "runOnEdit": true,
+    "substituteRegex": 0,
+    "minDepth": null,
+    "maxDepth": null
+  },
+  {
+    "id": "01598cc1-7fa1-40ff-8b3e-bb3969106ac1",
+    "scriptName": "Emoji FX - Crying/Tears",
+    "findRegex": "/(😭|😢|🥺)/g",
+    "replaceString": "<span style=\"display:inline-block;animation:nemo-emoji-fx-crying-tears 0.5s ease-in-out infinite;filter:drop-shadow(0 0 3px #4169e1);\">$1</span><style>@keyframes nemo-emoji-fx-crying-tears{0%,100%{transform:translateY(0)}25%{transform:translateY(-1px)}75%{transform:translateY(1px)}}</style>",
+    "trimStrings": [],
+    "placement": [
+      2
+    ],
+    "disabled": false,
+    "markdownOnly": true,
+    "promptOnly": false,
+    "runOnEdit": true,
+    "substituteRegex": 0,
+    "minDepth": null,
+    "maxDepth": null
+  },
+  {
+    "id": "d2a9dbd2-68f0-499c-9af9-50ccb642627c",
+    "scriptName": "Emoji FX - Thinking/Brain",
+    "findRegex": "/(🧠|🤔|💭)/g",
+    "replaceString": "<span style=\"display:inline-block;animation:nemo-emoji-fx-thinking-brain 2s ease-in-out infinite;filter:drop-shadow(0 0 3px #9b59b6);\">$1</span><style>@keyframes nemo-emoji-fx-thinking-brain{0%,100%{transform:scale(1)}30%{transform:scale(1.05)}60%{transform:scale(0.98)}}</style>",
+    "trimStrings": [],
+    "placement": [
+      2
+    ],
+    "disabled": false,
+    "markdownOnly": true,
+    "promptOnly": false,
+    "runOnEdit": true,
+    "substituteRegex": 0,
+    "minDepth": null,
+    "maxDepth": null
+  },
+  {
+    "id": "bd6d465b-da50-422e-9328-48a06e251449",
+    "scriptName": "Emoji FX - Eye/Looking",
+    "findRegex": "/(👁️|👀|🔍)/g",
+    "replaceString": "<span style=\"display:inline-block;animation:nemo-emoji-fx-eye-looking 2s ease-in-out infinite;filter:drop-shadow(0 0 3px #00ff88);\">$1</span><style>@keyframes nemo-emoji-fx-eye-looking{0%,100%{transform:translateX(0)}25%{transform:translateX(2px)}75%{transform:translateX(-2px)}}</style>",
+    "trimStrings": [],
+    "placement": [
+      2
+    ],
+    "disabled": false,
+    "markdownOnly": true,
+    "promptOnly": false,
+    "runOnEdit": true,
+    "substituteRegex": 0,
+    "minDepth": null,
+    "maxDepth": null
+  },
+  {
+    "id": "7fe68039-ddf1-4d41-ba8c-ffe21d94487b",
+    "scriptName": "Emoji FX - Dice/Random",
+    "findRegex": "/(🎲|🎰)/g",
+    "replaceString": "<span style=\"display:inline-block;animation:nemo-emoji-fx-dice-random 0.6s ease-in-out infinite;filter:drop-shadow(0 0 3px #27ae60);\">$1</span><style>@keyframes nemo-emoji-fx-dice-random{0%{transform:rotate(0deg)}25%{transform:rotate(10deg)}75%{transform:rotate(-10deg)}100%{transform:rotate(0deg)}}</style>",
+    "trimStrings": [],
+    "placement": [
+      2
+    ],
+    "disabled": false,
+    "markdownOnly": true,
+    "promptOnly": false,
+    "runOnEdit": true,
+    "substituteRegex": 0,
+    "minDepth": null,
+    "maxDepth": null
+  },
+  {
+    "id": "c5e26c28-76be-4a2c-a89e-3f283ab85d9b",
+    "scriptName": "Emoji FX - Lock/Key",
+    "findRegex": "/(🔒|🔓|🗝️)/g",
+    "replaceString": "<span style=\"display:inline-block;animation:nemo-emoji-fx-lock-key 0.5s ease-in-out;filter:drop-shadow(0 0 3px #c0c0c0);\">$1</span><style>@keyframes nemo-emoji-fx-lock-key{0%,100%{transform:rotate(0)}20%{transform:rotate(-3deg)}40%{transform:rotate(3deg)}60%{transform:rotate(-2deg)}80%{transform:rotate(1deg)}}</style>",
+    "trimStrings": [],
+    "placement": [
+      2
+    ],
+    "disabled": false,
+    "markdownOnly": true,
+    "promptOnly": false,
+    "runOnEdit": true,
+    "substituteRegex": 0,
+    "minDepth": null,
+    "maxDepth": null
+  },
+  {
+    "id": "ff0b3789-85e5-49b3-af74-aa1ba68e50a5",
+    "scriptName": "Emoji FX - Poison/Toxic",
+    "findRegex": "/(🧪)/g",
+    "replaceString": "<span style=\"display:inline-block;animation:nemo-emoji-fx-poison-toxic 1.5s ease-in-out infinite;filter:drop-shadow(0 0 4px #00ff00);\">$1</span><style>@keyframes nemo-emoji-fx-poison-toxic{0%,100%{filter:drop-shadow(0 0 3px #00ff00) hue-rotate(0deg)}50%{filter:drop-shadow(0 0 6px #7fff00) hue-rotate(30deg)}}</style>",
+    "trimStrings": [],
+    "placement": [
+      2
+    ],
+    "disabled": false,
+    "markdownOnly": true,
+    "promptOnly": false,
+    "runOnEdit": true,
+    "substituteRegex": 0,
+    "minDepth": null,
+    "maxDepth": null
+  },
+  {
+    "id": "5626bc2e-7ba2-4ce7-8303-58b1b2299136",
+    "scriptName": "Emoji FX - Moon/Night",
+    "findRegex": "/(🌙|🌑|🌕)/g",
+    "replaceString": "<span style=\"display:inline-block;animation:nemo-emoji-fx-moon-night 3s ease-in-out infinite;filter:drop-shadow(0 0 6px rgba(255,255,200,0.4));\">$1</span><style>@keyframes nemo-emoji-fx-moon-night{0%,100%{filter:drop-shadow(0 0 4px rgba(255,255,200,0.3)) brightness(0.9)}50%{filter:drop-shadow(0 0 10px rgba(255,255,200,0.6)) brightness(1.1)}}</style>",
+    "trimStrings": [],
+    "placement": [
+      2
+    ],
+    "disabled": false,
+    "markdownOnly": true,
+    "promptOnly": false,
+    "runOnEdit": true,
+    "substituteRegex": 0,
+    "minDepth": null,
+    "maxDepth": null
+  },
+  {
+    "id": "85e55117-8ffc-410a-b560-f413afae7274",
+    "scriptName": "Emoji FX - Sun/Bright",
+    "findRegex": "/(☀️|🌞|🌅)/g",
+    "replaceString": "<span style=\"display:inline-block;animation:nemo-emoji-fx-sun-bright 2s ease-in-out infinite;filter:drop-shadow(0 0 6px #ffa500);\">$1</span><style>@keyframes nemo-emoji-fx-sun-bright{0%,100%{transform:scale(1);filter:drop-shadow(0 0 4px #ffa500)}50%{transform:scale(1.08);filter:drop-shadow(0 0 10px #ffcc00)}}</style>",
+    "trimStrings": [],
+    "placement": [
+      2
+    ],
+    "disabled": false,
+    "markdownOnly": true,
+    "promptOnly": false,
+    "runOnEdit": true,
+    "substituteRegex": 0,
+    "minDepth": null,
+    "maxDepth": null
+  },
+  {
+    "id": "6a1331da-2d71-4ec0-87e5-7e81b48e24f8",
+    "scriptName": "Emoji FX - Shield/Defense",
+    "findRegex": "/(🛡️|🔰)/g",
+    "replaceString": "<span style=\"display:inline-block;animation:nemo-emoji-fx-shield-defense 1s ease-in-out;filter:drop-shadow(0 0 4px #4a90d9);\">$1</span><style>@keyframes nemo-emoji-fx-shield-defense{0%{transform:scale(0.9);opacity:0.7}50%{transform:scale(1.1);opacity:1}100%{transform:scale(1)}}</style>",
+    "trimStrings": [],
+    "placement": [
+      2
+    ],
+    "disabled": false,
+    "markdownOnly": true,
+    "promptOnly": false,
+    "runOnEdit": true,
+    "substituteRegex": 0,
+    "minDepth": null,
+    "maxDepth": null
+  }
+]

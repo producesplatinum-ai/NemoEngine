@@ -1,0 +1,649 @@
+{
+  "schema_version": 1,
+  "purpose": "Connector-readable, byte-reconstructable mirror; original preset remains authoritative",
+  "source": {
+    "repository": "producesplatinum-ai/NemoEngine",
+    "commit": "ba88f80eb97608d55306e8fd34462d754c908d88",
+    "filename": "Nemo Engine 11.5.2 - General RP.json",
+    "path": "Nemo Engine/Nemo Engine 11.5.2 - General RP.json",
+    "git_blob_sha1": "dec71df412a9b2189aec271d1428d0728dde6e3c",
+    "bytes": 1689140,
+    "characters": 1679435,
+    "lines": 11747,
+    "encoding": "UTF-8",
+    "bom": false,
+    "line_ending": "LF",
+    "final_newline": true,
+    "sha256": "983e31575b824d0f4910078a2549930495d5f7e5c5e49d508db331cd8a6bd698"
+  },
+  "format": {
+    "indent": 2,
+    "max_connector_file_bytes": 49152,
+    "array_order_preserved": true,
+    "object_key_order_preserved": true
+  },
+  "counts": {
+    "top_level_keys": 49,
+    "prompts": 456,
+    "prompt_order_profiles": 2,
+    "prompt_order_entries_per_profile": [
+      456,
+      456
+    ],
+    "regex_scripts": 97,
+    "active_regex_scripts": 95
+  },
+  "top_level_keys": [
+    "temperature",
+    "frequency_penalty",
+    "presence_penalty",
+    "top_p",
+    "top_k",
+    "top_a",
+    "min_p",
+    "repetition_penalty",
+    "max_context_unlocked",
+    "tool_reasoning_mode",
+    "openai_max_context",
+    "openai_max_tokens",
+    "names_behavior",
+    "send_if_empty",
+    "impersonation_prompt",
+    "new_chat_prompt",
+    "new_group_chat_prompt",
+    "new_example_chat_prompt",
+    "continue_nudge_prompt",
+    "bias_preset_selected",
+    "wi_format",
+    "scenario_format",
+    "personality_format",
+    "group_nudge_prompt",
+    "stream_openai",
+    "prompts",
+    "prompt_order",
+    "assistant_prefill",
+    "assistant_impersonation",
+    "use_sysprompt",
+    "squash_system_messages",
+    "media_inlining",
+    "inline_image_quality",
+    "continue_prefill",
+    "continue_postfix",
+    "function_calling",
+    "tool_call_recurse_limit",
+    "show_thoughts",
+    "reasoning_effort",
+    "verbosity",
+    "enable_web_search",
+    "seed",
+    "n",
+    "request_images",
+    "request_image_aspect_ratio",
+    "request_image_resolution",
+    "extensions",
+    "preset_name",
+    "nemo_merge_note"
+  ],
+  "settings": {
+    "path": "settings.json",
+    "bytes": 4999,
+    "sha256": "520a27b2ef34233179bfae6dc0f528914e984b45169369a2dfb9889ba8d05aa5"
+  },
+  "prompt_index": "prompt-index.jsonl",
+  "regex_index": "regex-index.jsonl",
+  "active_stacks": {
+    "100000": {
+      "path": "active-stack/100000.json",
+      "count": 107,
+      "bytes": 22457,
+      "sha256": "ee2fe211e1fe3060fc9865d4ebcd4bb316262e3e9cf28a4ba60e46bd564ac3d9"
+    },
+    "100001": {
+      "path": "active-stack/100001.json",
+      "count": 107,
+      "bytes": 22450,
+      "sha256": "ed005fd62adf2e35b5b5d1f2d690ae81d4c52cc3a052bea64bd212779bec5585"
+    }
+  },
+  "prompt_shards": [
+    {
+      "path": "prompts/prompts-000-010.json",
+      "start": 0,
+      "end": 10,
+      "count": 11,
+      "bytes": 44296,
+      "sha256": "5e15fa66f60c2576a9f56f28fcb53401b7016a7eaaf233e5d6c28cc5c6a2fde5"
+    },
+    {
+      "path": "prompts/prompts-011-017.json",
+      "start": 11,
+      "end": 17,
+      "count": 7,
+      "bytes": 48642,
+      "sha256": "b1d6c9e1cdadc489b622f37b0d439bae1ca1166627f0c983edbca74dd16a4488"
+    },
+    {
+      "path": "prompts/prompts-018-030.json",
+      "start": 18,
+      "end": 30,
+      "count": 13,
+      "bytes": 47942,
+      "sha256": "d4a819b20cc9ed3702a192f50c3b1a147985efd1141e5f34785ce9b8b75a0f15"
+    },
+    {
+      "path": "prompts/prompts-031-044.json",
+      "start": 31,
+      "end": 44,
+      "count": 14,
+      "bytes": 37114,
+      "sha256": "411586aec1c37d6a4c97c517a0a10ad908f64b1b38ef8d57da0bb4fa07c6a4dd"
+    },
+    {
+      "path": "prompts/prompts-045-048.json",
+      "start": 45,
+      "end": 48,
+      "count": 4,
+      "bytes": 47375,
+      "sha256": "a2d0bdce6ebfbef76b9a01457a4591af07f96f2e3a48d9ddf71921d0a00374ec"
+    },
+    {
+      "path": "prompts/prompts-049-052.json",
+      "start": 49,
+      "end": 52,
+      "count": 4,
+      "bytes": 39435,
+      "sha256": "3371db549c402069fddd3ed5f69ea8b266bbd444d1eef98615cd6ee20de24b86"
+    },
+    {
+      "path": "prompts/prompts-053-057.json",
+      "start": 53,
+      "end": 57,
+      "count": 5,
+      "bytes": 44629,
+      "sha256": "4009014a940ddf73e132efaa9de7e6abcc33376e1def4a683e71c29c0dc03bfd"
+    },
+    {
+      "path": "prompts/prompts-058-061.json",
+      "start": 58,
+      "end": 61,
+      "count": 4,
+      "bytes": 44525,
+      "sha256": "da5ac7053e07c5b99f54f141f72d2408eac7d4bbea15e697bf81e5a8e5b88851"
+    },
+    {
+      "path": "prompts/prompts-062-065.json",
+      "start": 62,
+      "end": 65,
+      "count": 4,
+      "bytes": 45794,
+      "sha256": "633cc858a3b83c3945afac9ad39db38a6cf4ee17bfde2eeacffb2173f767b86d"
+    },
+    {
+      "path": "prompts/prompts-066-069.json",
+      "start": 66,
+      "end": 69,
+      "count": 4,
+      "bytes": 47479,
+      "sha256": "81fe57af5a4b375637d0bc24181220c3041ae017c1d708c95680bf550df9b68d"
+    },
+    {
+      "path": "prompts/prompts-070-073.json",
+      "start": 70,
+      "end": 73,
+      "count": 4,
+      "bytes": 47401,
+      "sha256": "f4fd819a9be6a38d0156ffb49aa558f7cfcafcd773c6493dfccace61055040fc"
+    },
+    {
+      "path": "prompts/prompts-074-081.json",
+      "start": 74,
+      "end": 81,
+      "count": 8,
+      "bytes": 44868,
+      "sha256": "8b370fbe2c642fd590f25f6a7aed9f4bcef8fb86f8cb90087f1ddd2eadd9e0fe"
+    },
+    {
+      "path": "prompts/prompts-082-125.json",
+      "start": 82,
+      "end": 125,
+      "count": 44,
+      "bytes": 48974,
+      "sha256": "998f40d711689567714b6062471bf435cf2e4efc9fd991ffc0bc8aeb19e5c447"
+    },
+    {
+      "path": "prompts/prompts-126-140.json",
+      "start": 126,
+      "end": 140,
+      "count": 15,
+      "bytes": 48356,
+      "sha256": "bb3172eaab0f2625b0b9f68bb19a32406261367ead919b6609b75b89dd96f1e4"
+    },
+    {
+      "path": "prompts/prompts-141-152.json",
+      "start": 141,
+      "end": 152,
+      "count": 12,
+      "bytes": 44499,
+      "sha256": "5cb6907b16a27f56350e64c6107e3cbb0d062eced4116cf5f5fec01d83435754"
+    },
+    {
+      "path": "prompts/prompts-153-159.json",
+      "start": 153,
+      "end": 159,
+      "count": 7,
+      "bytes": 44102,
+      "sha256": "6c071554b30adcb3343726dd6d3d57efd90931eda9b03364982556a7f7803eed"
+    },
+    {
+      "path": "prompts/prompts-160-175.json",
+      "start": 160,
+      "end": 175,
+      "count": 16,
+      "bytes": 47747,
+      "sha256": "ac6a1cb4c0f01431b58294babab225ffd467f761a1e065bfe771532180c2ce65"
+    },
+    {
+      "path": "prompts/prompts-176-204.json",
+      "start": 176,
+      "end": 204,
+      "count": 29,
+      "bytes": 48748,
+      "sha256": "d9ec175306d0d2718beb628a6c1182afd43b3d18f9441a6cb07192cfbb17b546"
+    },
+    {
+      "path": "prompts/prompts-205-234.json",
+      "start": 205,
+      "end": 234,
+      "count": 30,
+      "bytes": 45427,
+      "sha256": "408c6f1e7417c702d8620b4f61b0e5aa1d4060ff78ca08277e4790b71d96bba3"
+    },
+    {
+      "path": "prompts/prompts-235-257.json",
+      "start": 235,
+      "end": 257,
+      "count": 23,
+      "bytes": 47485,
+      "sha256": "8e7b158765b09d9ee3bf2e68dfb8b660e970eb5424d6a102c603ae4530d9a253"
+    },
+    {
+      "path": "prompts/prompts-258-280.json",
+      "start": 258,
+      "end": 280,
+      "count": 23,
+      "bytes": 48371,
+      "sha256": "10b2c881bf9fac1424c66f600dc57b23a97259469804b1fce5dcde2159978c38"
+    },
+    {
+      "path": "prompts/prompts-281-288.json",
+      "start": 281,
+      "end": 288,
+      "count": 8,
+      "bytes": 16420,
+      "sha256": "b6cfdadfd79f08f33a1db4044adec53b69115e1e1d890f5c7fe72054963b8ca2"
+    },
+    {
+      "path": "prompts/prompts-289-298.json",
+      "start": 289,
+      "end": 298,
+      "count": 10,
+      "bytes": 48009,
+      "sha256": "5bf7de0baf7b7a287f39c4cef2336eb0583efa66489205aa8a4618fdebf08741"
+    },
+    {
+      "path": "prompts/prompts-299-317.json",
+      "start": 299,
+      "end": 317,
+      "count": 19,
+      "bytes": 48712,
+      "sha256": "b2cd806f07e47d1da2e00dd8ee422b5a336ebe780b492a7623645210fda7fc51"
+    },
+    {
+      "path": "prompts/prompts-318-336.json",
+      "start": 318,
+      "end": 336,
+      "count": 19,
+      "bytes": 47127,
+      "sha256": "b5f7e34eb63453dcb5d5fcfb64114b1014325a09043b95c4beee8fad1dd1a8f3"
+    },
+    {
+      "path": "prompts/prompts-337-367.json",
+      "start": 337,
+      "end": 367,
+      "count": 31,
+      "bytes": 48486,
+      "sha256": "ecdd69c5777a049fc5bb503736a706a78e73fcfe81dd9d0f6d10d4b62f04a54b"
+    },
+    {
+      "path": "prompts/prompts-368-380.json",
+      "start": 368,
+      "end": 380,
+      "count": 13,
+      "bytes": 47836,
+      "sha256": "8cdd52d551db36b022adb37c784997f54ced3c5ef08b4a62ff3db40aeae41952"
+    },
+    {
+      "path": "prompts/prompts-381-396.json",
+      "start": 381,
+      "end": 396,
+      "count": 16,
+      "bytes": 48059,
+      "sha256": "cb46b7c61e60c9de96a070edb75bb7695e34a2965480e67eae6afbf51e14415a"
+    },
+    {
+      "path": "prompts/prompts-397-411.json",
+      "start": 397,
+      "end": 411,
+      "count": 15,
+      "bytes": 47808,
+      "sha256": "765e58231d036e0de1a60fc19f255fc47a0bb0b7204e1a3324e2fab192eb6d54"
+    },
+    {
+      "path": "prompts/prompts-412-428.json",
+      "start": 412,
+      "end": 428,
+      "count": 17,
+      "bytes": 48022,
+      "sha256": "1ec9d5aff3e1dcfb6d0c743814bb9a5a1a8f7014a095c477206139568c82ab9e"
+    },
+    {
+      "path": "prompts/prompts-429-454.json",
+      "start": 429,
+      "end": 454,
+      "count": 26,
+      "bytes": 43098,
+      "sha256": "a5187e1eafef2c6a2c10374babb8495123a2dbc1eca36042f3721fb21a52ab0a"
+    },
+    {
+      "path": "prompts/prompts-455-455.json",
+      "start": 455,
+      "end": 455,
+      "count": 1,
+      "bytes": 8018,
+      "sha256": "b31151947c68fcf747558ece25ca6d97349ca7e7c908b7265dcec2a9ffb23548"
+    }
+  ],
+  "prompt_order": [
+    {
+      "path": "prompt-order/100000.json",
+      "index": 0,
+      "character_id": 100000,
+      "entries": 456,
+      "enabled": 107,
+      "disabled": 349,
+      "bytes": 39579,
+      "sha256": "3134d5b4a2d42c889750e5313ab52e56a10f418b13a2db80689026d87936a4e5"
+    },
+    {
+      "path": "prompt-order/100001.json",
+      "index": 1,
+      "character_id": 100001,
+      "entries": 456,
+      "enabled": 107,
+      "disabled": 349,
+      "bytes": 39579,
+      "sha256": "3541ccae31e50ed00a65ce442d80b8487c7a4ee5d3832b65c47e54d081925417"
+    }
+  ],
+  "regex_shards": [
+    {
+      "path": "regex-scripts/regex-000-058.json",
+      "start": 0,
+      "end": 58,
+      "count": 59,
+      "bytes": 49130,
+      "sha256": "1fdf3e397679b9f6443a3c1ae58b9280772a9d4cc4de7cc562612bbdd04922b1"
+    },
+    {
+      "path": "regex-scripts/regex-059-086.json",
+      "start": 59,
+      "end": 86,
+      "count": 28,
+      "bytes": 46464,
+      "sha256": "70b2827c2b6a988f9f6f0fdf69ad4d77541b7301af8eb448009ec2d8e9a38b1e"
+    },
+    {
+      "path": "regex-scripts/regex-087-091.json",
+      "start": 87,
+      "end": 91,
+      "count": 5,
+      "bytes": 37095,
+      "sha256": "d5fbd10a6700b64a79bf0b4aab5b5b5e48af825e57e35d43cede256717c681c1"
+    },
+    {
+      "path": "regex-scripts/regex-092-096.json",
+      "start": 92,
+      "end": 96,
+      "count": 5,
+      "bytes": 23528,
+      "sha256": "0b983bb57a59f636754feffc85d405c314be32e258db79541106ed64dfea9330"
+    }
+  ],
+  "generated_files": [
+    {
+      "path": "active-stack/100000.json",
+      "bytes": 22457,
+      "sha256": "ee2fe211e1fe3060fc9865d4ebcd4bb316262e3e9cf28a4ba60e46bd564ac3d9"
+    },
+    {
+      "path": "active-stack/100001.json",
+      "bytes": 22450,
+      "sha256": "ed005fd62adf2e35b5b5d1f2d690ae81d4c52cc3a052bea64bd212779bec5585"
+    },
+    {
+      "path": "prompt-index.jsonl",
+      "bytes": 48498,
+      "sha256": "0a4cebcccb0cac93bc426880797880af5d1db21a39d30a800feb5ae9e2570576"
+    },
+    {
+      "path": "prompt-order/100000.json",
+      "bytes": 39579,
+      "sha256": "3134d5b4a2d42c889750e5313ab52e56a10f418b13a2db80689026d87936a4e5"
+    },
+    {
+      "path": "prompt-order/100001.json",
+      "bytes": 39579,
+      "sha256": "3541ccae31e50ed00a65ce442d80b8487c7a4ee5d3832b65c47e54d081925417"
+    },
+    {
+      "path": "prompts/prompts-000-010.json",
+      "bytes": 44296,
+      "sha256": "5e15fa66f60c2576a9f56f28fcb53401b7016a7eaaf233e5d6c28cc5c6a2fde5"
+    },
+    {
+      "path": "prompts/prompts-011-017.json",
+      "bytes": 48642,
+      "sha256": "b1d6c9e1cdadc489b622f37b0d439bae1ca1166627f0c983edbca74dd16a4488"
+    },
+    {
+      "path": "prompts/prompts-018-030.json",
+      "bytes": 47942,
+      "sha256": "d4a819b20cc9ed3702a192f50c3b1a147985efd1141e5f34785ce9b8b75a0f15"
+    },
+    {
+      "path": "prompts/prompts-031-044.json",
+      "bytes": 37114,
+      "sha256": "411586aec1c37d6a4c97c517a0a10ad908f64b1b38ef8d57da0bb4fa07c6a4dd"
+    },
+    {
+      "path": "prompts/prompts-045-048.json",
+      "bytes": 47375,
+      "sha256": "a2d0bdce6ebfbef76b9a01457a4591af07f96f2e3a48d9ddf71921d0a00374ec"
+    },
+    {
+      "path": "prompts/prompts-049-052.json",
+      "bytes": 39435,
+      "sha256": "3371db549c402069fddd3ed5f69ea8b266bbd444d1eef98615cd6ee20de24b86"
+    },
+    {
+      "path": "prompts/prompts-053-057.json",
+      "bytes": 44629,
+      "sha256": "4009014a940ddf73e132efaa9de7e6abcc33376e1def4a683e71c29c0dc03bfd"
+    },
+    {
+      "path": "prompts/prompts-058-061.json",
+      "bytes": 44525,
+      "sha256": "da5ac7053e07c5b99f54f141f72d2408eac7d4bbea15e697bf81e5a8e5b88851"
+    },
+    {
+      "path": "prompts/prompts-062-065.json",
+      "bytes": 45794,
+      "sha256": "633cc858a3b83c3945afac9ad39db38a6cf4ee17bfde2eeacffb2173f767b86d"
+    },
+    {
+      "path": "prompts/prompts-066-069.json",
+      "bytes": 47479,
+      "sha256": "81fe57af5a4b375637d0bc24181220c3041ae017c1d708c95680bf550df9b68d"
+    },
+    {
+      "path": "prompts/prompts-070-073.json",
+      "bytes": 47401,
+      "sha256": "f4fd819a9be6a38d0156ffb49aa558f7cfcafcd773c6493dfccace61055040fc"
+    },
+    {
+      "path": "prompts/prompts-074-081.json",
+      "bytes": 44868,
+      "sha256": "8b370fbe2c642fd590f25f6a7aed9f4bcef8fb86f8cb90087f1ddd2eadd9e0fe"
+    },
+    {
+      "path": "prompts/prompts-082-125.json",
+      "bytes": 48974,
+      "sha256": "998f40d711689567714b6062471bf435cf2e4efc9fd991ffc0bc8aeb19e5c447"
+    },
+    {
+      "path": "prompts/prompts-126-140.json",
+      "bytes": 48356,
+      "sha256": "bb3172eaab0f2625b0b9f68bb19a32406261367ead919b6609b75b89dd96f1e4"
+    },
+    {
+      "path": "prompts/prompts-141-152.json",
+      "bytes": 44499,
+      "sha256": "5cb6907b16a27f56350e64c6107e3cbb0d062eced4116cf5f5fec01d83435754"
+    },
+    {
+      "path": "prompts/prompts-153-159.json",
+      "bytes": 44102,
+      "sha256": "6c071554b30adcb3343726dd6d3d57efd90931eda9b03364982556a7f7803eed"
+    },
+    {
+      "path": "prompts/prompts-160-175.json",
+      "bytes": 47747,
+      "sha256": "ac6a1cb4c0f01431b58294babab225ffd467f761a1e065bfe771532180c2ce65"
+    },
+    {
+      "path": "prompts/prompts-176-204.json",
+      "bytes": 48748,
+      "sha256": "d9ec175306d0d2718beb628a6c1182afd43b3d18f9441a6cb07192cfbb17b546"
+    },
+    {
+      "path": "prompts/prompts-205-234.json",
+      "bytes": 45427,
+      "sha256": "408c6f1e7417c702d8620b4f61b0e5aa1d4060ff78ca08277e4790b71d96bba3"
+    },
+    {
+      "path": "prompts/prompts-235-257.json",
+      "bytes": 47485,
+      "sha256": "8e7b158765b09d9ee3bf2e68dfb8b660e970eb5424d6a102c603ae4530d9a253"
+    },
+    {
+      "path": "prompts/prompts-258-280.json",
+      "bytes": 48371,
+      "sha256": "10b2c881bf9fac1424c66f600dc57b23a97259469804b1fce5dcde2159978c38"
+    },
+    {
+      "path": "prompts/prompts-281-288.json",
+      "bytes": 16420,
+      "sha256": "b6cfdadfd79f08f33a1db4044adec53b69115e1e1d890f5c7fe72054963b8ca2"
+    },
+    {
+      "path": "prompts/prompts-289-298.json",
+      "bytes": 48009,
+      "sha256": "5bf7de0baf7b7a287f39c4cef2336eb0583efa66489205aa8a4618fdebf08741"
+    },
+    {
+      "path": "prompts/prompts-299-317.json",
+      "bytes": 48712,
+      "sha256": "b2cd806f07e47d1da2e00dd8ee422b5a336ebe780b492a7623645210fda7fc51"
+    },
+    {
+      "path": "prompts/prompts-318-336.json",
+      "bytes": 47127,
+      "sha256": "b5f7e34eb63453dcb5d5fcfb64114b1014325a09043b95c4beee8fad1dd1a8f3"
+    },
+    {
+      "path": "prompts/prompts-337-367.json",
+      "bytes": 48486,
+      "sha256": "ecdd69c5777a049fc5bb503736a706a78e73fcfe81dd9d0f6d10d4b62f04a54b"
+    },
+    {
+      "path": "prompts/prompts-368-380.json",
+      "bytes": 47836,
+      "sha256": "8cdd52d551db36b022adb37c784997f54ced3c5ef08b4a62ff3db40aeae41952"
+    },
+    {
+      "path": "prompts/prompts-381-396.json",
+      "bytes": 48059,
+      "sha256": "cb46b7c61e60c9de96a070edb75bb7695e34a2965480e67eae6afbf51e14415a"
+    },
+    {
+      "path": "prompts/prompts-397-411.json",
+      "bytes": 47808,
+      "sha256": "765e58231d036e0de1a60fc19f255fc47a0bb0b7204e1a3324e2fab192eb6d54"
+    },
+    {
+      "path": "prompts/prompts-412-428.json",
+      "bytes": 48022,
+      "sha256": "1ec9d5aff3e1dcfb6d0c743814bb9a5a1a8f7014a095c477206139568c82ab9e"
+    },
+    {
+      "path": "prompts/prompts-429-454.json",
+      "bytes": 43098,
+      "sha256": "a5187e1eafef2c6a2c10374babb8495123a2dbc1eca36042f3721fb21a52ab0a"
+    },
+    {
+      "path": "prompts/prompts-455-455.json",
+      "bytes": 8018,
+      "sha256": "b31151947c68fcf747558ece25ca6d97349ca7e7c908b7265dcec2a9ffb23548"
+    },
+    {
+      "path": "README.md",
+      "bytes": 1789,
+      "sha256": "e05ed0fd7fa778e2997621e311c2b443c8de7f857bb3a68ea83b071d05530189"
+    },
+    {
+      "path": "reassemble.mjs",
+      "bytes": 2052,
+      "sha256": "396d219a4685eaf4f7c2dd118ea8489b7076c8db47cea4fce316eaad8bd22cd1"
+    },
+    {
+      "path": "regex-index.jsonl",
+      "bytes": 11197,
+      "sha256": "0d325d62d2d28bb3b36d05c2b15bc30cd99b1e01df2c97f6f5a3842bc3327369"
+    },
+    {
+      "path": "regex-scripts/regex-000-058.json",
+      "bytes": 49130,
+      "sha256": "1fdf3e397679b9f6443a3c1ae58b9280772a9d4cc4de7cc562612bbdd04922b1"
+    },
+    {
+      "path": "regex-scripts/regex-059-086.json",
+      "bytes": 46464,
+      "sha256": "70b2827c2b6a988f9f6f0fdf69ad4d77541b7301af8eb448009ec2d8e9a38b1e"
+    },
+    {
+      "path": "regex-scripts/regex-087-091.json",
+      "bytes": 37095,
+      "sha256": "d5fbd10a6700b64a79bf0b4aab5b5b5e48af825e57e35d43cede256717c681c1"
+    },
+    {
+      "path": "regex-scripts/regex-092-096.json",
+      "bytes": 23528,
+      "sha256": "0b983bb57a59f636754feffc85d405c314be32e258db79541106ed64dfea9330"
+    },
+    {
+      "path": "settings.json",
+      "bytes": 4999,
+      "sha256": "520a27b2ef34233179bfae6dc0f528914e984b45169369a2dfb9889ba8d05aa5"
+    }
+  ]
+}

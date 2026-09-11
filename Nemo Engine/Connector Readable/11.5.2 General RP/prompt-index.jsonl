@@ -1,0 +1,456 @@
+{"index":0,"identifier":"1770095491852-1nszrpl3","name":"=== 📁 Core ===","role":"system"}
+{"index":1,"identifier":"nemo-success-dice","name":"🎲 Success Dice","role":"system"}
+{"index":2,"identifier":"v11-000-variable-init","name":"🔧 Variable Init","role":"system"}
+{"index":3,"identifier":"nemo_retro_frame","name":"🕹️ Retro Frame: NemoNet Bootup","role":"system"}
+{"index":4,"identifier":"nemo_magpie_frame","name":"🐦‍⬛ Magpie Frame","role":"system"}
+{"index":5,"identifier":"nemo_premise","name":"🎭 The Premise","role":"system"}
+{"index":6,"identifier":"v11-251-utility-anti-chekhov-s-gun","name":"📁 Anti-Chekhov's Gun","role":"system"}
+{"index":7,"identifier":"v11-header-core-augments","name":"<Core: Augments>","role":"system"}
+{"index":8,"identifier":"v11-612-augment-consequences","name":"⚖️ Augment: Consequences","role":"system"}
+{"index":9,"identifier":"v11-615-augment-social-consequence-realism","name":"🗣️ Augment: Social & Consequence Realism","role":"system"}
+{"index":10,"identifier":"v11-header-core-narration","name":"<Core: Narration>","role":"system"}
+{"index":11,"identifier":"v11-020-default-narration","name":"📋 Default: Narration","role":"system"}
+{"index":12,"identifier":"v11-031-narration-alpha","name":"🧱 Narration: Alpha","role":"system"}
+{"index":13,"identifier":"v11-030-narration-omega","name":"🧱 Narration: Omega","role":"system"}
+{"index":14,"identifier":"v11-032-narration-understated","name":"🧱 Narration: Understated","role":"system"}
+{"index":15,"identifier":"v11-header-core-speech","name":"<Core: Speech>","role":"system"}
+{"index":16,"identifier":"v11-021-default-speech","name":"📋 Default: Speech","role":"system"}
+{"index":17,"identifier":"v11-034-speech-alpha","name":"🗣️ Speech: Alpha","role":"system"}
+{"index":18,"identifier":"v11-033-speech-omega","name":"🗣️ Speech: Omega","role":"system"}
+{"index":19,"identifier":"v11-035-speech-theta","name":"🗣️ Speech: Theta","role":"system"}
+{"index":20,"identifier":"v11-header-core-character","name":"<Core: Character>","role":"system"}
+{"index":21,"identifier":"v11-022-default-character","name":"📋 Default: Character","role":"system"}
+{"index":22,"identifier":"v11-036-character-omega","name":"👤 Character: Omega","role":"system"}
+{"index":23,"identifier":"v11-header-core-development","name":"<Core: Development>","role":"system"}
+{"index":24,"identifier":"v11-023-default-development","name":"📋 Default: Development","role":"system"}
+{"index":25,"identifier":"v11-038-development-alpha","name":"🌱 Development: Alpha","role":"system"}
+{"index":26,"identifier":"v11-037-development-omega","name":"🌱 Development: Omega","role":"system"}
+{"index":27,"identifier":"v11-039-development-theta","name":"🌱 Development: Theta","role":"system"}
+{"index":28,"identifier":"v11-header-core-grounding","name":"<Core: Grounding>","role":"system"}
+{"index":29,"identifier":"v11-024-default-grounding","name":"📋 Default: Grounding","role":"system"}
+{"index":30,"identifier":"v11-041-grounding-alpha","name":"⚖️ Grounding: Alpha","role":"system"}
+{"index":31,"identifier":"v11-040-grounding-omega","name":"⚖️ Grounding: Omega","role":"system"}
+{"index":32,"identifier":"v11-042-grounding-theta","name":"⚖️ Grounding: Theta","role":"system"}
+{"index":33,"identifier":"v11-header-core-knowledge","name":"<Core: Knowledge>","role":"system"}
+{"index":34,"identifier":"v11-025-default-knowledge","name":"📋 Default: Knowledge","role":"system"}
+{"index":35,"identifier":"v11-044-knowledge-alpha-theta","name":"🔍 Knowledge: Alpha/Theta","role":"system"}
+{"index":36,"identifier":"v11-043-knowledge-omega","name":"🔍 Knowledge: Omega","role":"system"}
+{"index":37,"identifier":"v11-header-core-narrative","name":"<Core: Narrative>","role":"system"}
+{"index":38,"identifier":"v11-026-default-narrative","name":"📋 Default: Narrative","role":"system"}
+{"index":39,"identifier":"v11-046-narrative-alpha","name":"📖 Narrative: Alpha","role":"system"}
+{"index":40,"identifier":"v11-045-narrative-omega","name":"📖 Narrative: Omega","role":"system"}
+{"index":41,"identifier":"v11-047-narrative-theta","name":"📖 Narrative: Theta","role":"system"}
+{"index":42,"identifier":"1770095491852-4oavigaf","name":"=== 🎭 Vex Personality ===","role":"system"}
+{"index":43,"identifier":"v11-299-default-vex","name":"📋 Default: Vex","role":"system"}
+{"index":44,"identifier":"v11-header-vex-modern","name":"<Vex Personas>","role":"system"}
+{"index":45,"identifier":"v11-301-vex-brooding-vex","name":"🎭 Brooding Vex","role":"system"}
+{"index":46,"identifier":"v11-300-vex-bubbly-vex","name":"🎭 Bubbly Vex","role":"system"}
+{"index":47,"identifier":"v11-322-vex-chaotic-vex","name":"🎭 Chaotic Vex","role":"system"}
+{"index":48,"identifier":"v11-319-vex-clinical-vex","name":"🎭 Clinical Vex","role":"system"}
+{"index":49,"identifier":"v11-317-vex-cozy-vex","name":"🎭 Cozy Vex","role":"system"}
+{"index":50,"identifier":"v11-323-vex-crescent-vex","name":"🎭 Crescent Vex","role":"system"}
+{"index":51,"identifier":"v11-311-vex-dark-urban-fantasy-vex","name":"🎭 Dark Urban Fantasy Vex","role":"system"}
+{"index":52,"identifier":"v11-324-vex-epic-vex","name":"🎭 Epic Vex","role":"system"}
+{"index":53,"identifier":"v11-315-vex-explosive-vex","name":"🎭 Explosive Vex","role":"system"}
+{"index":54,"identifier":"v11-313-vex-gamemaster-vex","name":"🎭 Gamemaster Vex","role":"system"}
+{"index":55,"identifier":"v11-325-vex-gentle-vex","name":"🎭 Gentle Vex","role":"system"}
+{"index":56,"identifier":"v11-316-vex-grimdark-vex","name":"🎭 Grimdark Vex","role":"system"}
+{"index":57,"identifier":"v11-326-vex-haar-vex","name":"🎭 Haar Vex","role":"system"}
+{"index":58,"identifier":"v11-327-vex-lustful-vex","name":"🎭 Lustful Vex","role":"system"}
+{"index":59,"identifier":"v11-314-vex-morbid-vex","name":"🎭 Morbid Vex","role":"system"}
+{"index":60,"identifier":"v11-305-vex-narrative-vex","name":"🎭 Narrative Vex","role":"system"}
+{"index":61,"identifier":"v11-312-vex-noir-vex","name":"🎭 Noir Vex","role":"system"}
+{"index":62,"identifier":"v11-303-vex-obsessive-vex","name":"🎭 Obsessive Vex","role":"system"}
+{"index":63,"identifier":"v11-302-vex-petrichor-vex","name":"🎭 Petrichor Vex","role":"system"}
+{"index":64,"identifier":"v11-321-vex-philosophical-vex","name":"🎭 Philosophical Vex","role":"system"}
+{"index":65,"identifier":"v11-309-vex-sensory-vex","name":"🎭 Sensory Vex","role":"system"}
+{"index":66,"identifier":"v11-310-vex-shadowy-vex","name":"🎭 Shadowy Vex","role":"system"}
+{"index":67,"identifier":"v11-320-vex-soft-romance-vex","name":"🎭 Soft Romance Vex","role":"system"}
+{"index":68,"identifier":"v11-306-vex-tactical-vex","name":"🎭 Tactical Vex","role":"system"}
+{"index":69,"identifier":"v11-318-vex-tsundere-vex","name":"🎭 Tsundere Vex","role":"system"}
+{"index":70,"identifier":"v11-308-vex-underdog-vex","name":"🎭 Underdog Vex","role":"system"}
+{"index":71,"identifier":"v11-328-vex-unhinged-vex","name":"🎭 Unhinged Vex","role":"system"}
+{"index":72,"identifier":"v11-307-vex-whimsical-vex","name":"🎭 Whimsical Vex","role":"system"}
+{"index":73,"identifier":"v11-304-vex-goon-gremlin-vex","name":"🎭 Goon Gremlin Vex","role":"system"}
+{"index":74,"identifier":"v11-329-vex-gooner-vex","name":"🎭 Gooner Vex","role":"system"}
+{"index":75,"identifier":"v11-514-classicvex-midnight-courier","name":"♠️ Midnight Courier Vex","role":"system"}
+{"index":76,"identifier":"vex_commentary","name":"💬 Vex Commentary","role":"system"}
+{"index":77,"identifier":"nemo_vex_meta_commentary","name":"💭 Vex Meta-Commentary","role":"system"}
+{"index":78,"identifier":"v11-010-core-assembler","name":"📦 Core Assembler","role":"system"}
+{"index":79,"identifier":"nemo_magpie_files_header","name":"=== 🗂️ Magpie Files ===","role":"system"}
+{"index":80,"identifier":"nemo_magpie_character_files","name":"🗂️ Magpie Character Files","role":"system"}
+{"index":81,"identifier":"nemo_magpie_location_files","name":"🗺️ Magpie Location Files","role":"system"}
+{"index":82,"identifier":"nemo_magpie_object_files","name":"🔎 Magpie Important Object Files","role":"system"}
+{"index":83,"identifier":"nemo_consequence_header","name":"=== ⚰️ Consequence ===","role":"system"}
+{"index":84,"identifier":"nemo_consequence_core","name":"⚰️ Consequence Core","role":"system"}
+{"index":85,"identifier":"nemo_consequence_somewhere_else","name":"⚰️ Somewhere Else","role":"system"}
+{"index":86,"identifier":"nemo_consequence_return_by_death","name":"⚰️ Return By Death","role":"system"}
+{"index":87,"identifier":"nemo_consequence_roll_another","name":"⚰️ Roll Another","role":"system"}
+{"index":88,"identifier":"nemo_consequence_epilogue","name":"⚰️ The Epilogue","role":"system"}
+{"index":89,"identifier":"nemo_consequence_never_the_kill","name":"⚰️ Never The Kill","role":"system"}
+{"index":90,"identifier":"nemo_consequence_directors_chair","name":"⚰️ Director's Chair","role":"system"}
+{"index":91,"identifier":"nemo_consequence_still_here","name":"⚰️ Still Here","role":"system"}
+{"index":92,"identifier":"header_language_control","name":"=== 🌐 Language Control ===","role":"system"}
+{"index":93,"identifier":"header_think_lang","name":"<Think Language>","role":"system"}
+{"index":94,"identifier":"think_lang_english","name":"🇺🇸 Plan: English","role":"system"}
+{"index":95,"identifier":"think_lang_chinese","name":"🇨🇳 Plan: Chinese","role":"system"}
+{"index":96,"identifier":"think_lang_russian","name":"🇷🇺 Plan: Russian","role":"system"}
+{"index":97,"identifier":"think_lang_japanese","name":"🇯🇵 Plan: Japanese","role":"system"}
+{"index":98,"identifier":"think_lang_korean","name":"🇰🇷 Plan: Korean","role":"system"}
+{"index":99,"identifier":"think_lang_portuguese","name":"🇧🇷 Plan: Portuguese","role":"system"}
+{"index":100,"identifier":"think_lang_spanish","name":"🇪🇸 Plan: Spanish","role":"system"}
+{"index":101,"identifier":"think_lang_thai","name":"🇹🇭 Plan: Thai","role":"system"}
+{"index":102,"identifier":"think_lang_romanian","name":"🇷🇴 Plan: Romanian","role":"system"}
+{"index":103,"identifier":"think_lang_ukrainian","name":"🇺🇦 Plan: Ukrainian","role":"system"}
+{"index":104,"identifier":"think_lang_french","name":"🇫🇷 Plan: French","role":"system"}
+{"index":105,"identifier":"think_lang_arabic","name":"🇸🇦 Plan: Arabic","role":"system"}
+{"index":106,"identifier":"header_narrate_lang","name":"<Narrate Language>","role":"system"}
+{"index":107,"identifier":"narrate_lang_english","name":"🇺🇸 Narrate: English","role":"system"}
+{"index":108,"identifier":"narrate_lang_chinese","name":"🇨🇳 Narrate: Chinese","role":"system"}
+{"index":109,"identifier":"narrate_lang_russian","name":"🇷🇺 Narrate: Russian","role":"system"}
+{"index":110,"identifier":"narrate_lang_japanese","name":"🇯🇵 Narrate: Japanese","role":"system"}
+{"index":111,"identifier":"narrate_lang_korean","name":"🇰🇷 Narrate: Korean","role":"system"}
+{"index":112,"identifier":"narrate_lang_portuguese","name":"🇧🇷 Narrate: Portuguese","role":"system"}
+{"index":113,"identifier":"narrate_lang_spanish","name":"🇪🇸 Narrate: Spanish","role":"system"}
+{"index":114,"identifier":"narrate_lang_thai","name":"🇹🇭 Narrate: Thai","role":"system"}
+{"index":115,"identifier":"narrate_lang_romanian","name":"🇷🇴 Narrate: Romanian","role":"system"}
+{"index":116,"identifier":"narrate_lang_ukrainian","name":"🇺🇦 Narrate: Ukrainian","role":"system"}
+{"index":117,"identifier":"narrate_lang_french","name":"🇫🇷 Narrate: French","role":"system"}
+{"index":118,"identifier":"narrate_lang_arabic","name":"🇸🇦 Narrate: Arabic","role":"system"}
+{"index":119,"identifier":"1770095491850-aqupr9vk","name":"📜 Language Runtime Resolver","role":"system"}
+{"index":120,"identifier":"language_styling","name":"🌐 Language Styling","role":"system"}
+{"index":121,"identifier":"v11-section-classic","name":"=== 🕰️ Classic Helpers & Modes ===","role":"system"}
+{"index":122,"identifier":"v11-525-classic-vex-identity","name":"🕰️ Classic Vex Identity","role":"system"}
+{"index":123,"identifier":"v11-526-classic-directors-cut","name":"🕰️ Classic: Vex's Director's Cut","role":"system"}
+{"index":124,"identifier":"v11-527-classic-mode-single-lens","name":"🕰️ Classic Mode: Single Lens","role":"system"}
+{"index":125,"identifier":"v11-528-classic-mode-council","name":"🕰️ Classic Mode: Council","role":"system"}
+{"index":126,"identifier":"v11-535-classic-council-prefil","name":"🕰️ Legacy: Explicit <think> Prefill","role":"assistant"}
+{"index":127,"identifier":"v11-603-helper-brazilian-friend","name":"🕰️ Helper: Brazilian Friend","role":"system"}
+{"index":128,"identifier":"v11-602-helper-forsaken-ghost-13-core","name":"🕰️ Helper: Forsaken_Ghost_13 Core","role":"system"}
+{"index":129,"identifier":"v11-601-helper-interiority-protocol","name":"🕰️ Helper: Interiority Protocol","role":"system"}
+{"index":130,"identifier":"v11-604-helper-nemo-s-experimental","name":"🕰️ Helper: Nemo's Experimental","role":"system"}
+{"index":131,"identifier":"v11-600-helper-nokiaarmour-core","name":"🕰️ Helper: NokiaArmour Core","role":"system"}
+{"index":132,"identifier":"1770095491852-6k39uvjz","name":"=== 🧭 Planning ===","role":"system"}
+{"index":133,"identifier":"header_cot_steps","name":"<Planning Steps>","role":"system"}
+{"index":134,"identifier":"cot_step_knowledgemap","name":"🧭 Plan: Knowledge Map","role":"system"}
+{"index":135,"identifier":"nemo-world-knowledge-infusion","name":"🧭 Plan: NemoNet Search","role":"system"}
+{"index":136,"identifier":"cot_step_infoasymmetry","name":"🧭 Plan: Information Asymmetry","role":"system"}
+{"index":137,"identifier":"cot_step_lastcritique","name":"🧭 Plan: Last Turn Critique","role":"system"}
+{"index":138,"identifier":"cot_step_charstate","name":"🧭 Plan: Character State","role":"system"}
+{"index":139,"identifier":"cot_step_character_turn_simulation","name":"⏱️ Plan: In-Scene Character Turn Simulation","role":"system"}
+{"index":140,"identifier":"cot_step_coursecorrect","name":"🧭 Plan: Course Correction","role":"system"}
+{"index":141,"identifier":"cot_step_pacingbeats","name":"🧭 Plan: Pacing Beats","role":"system"}
+{"index":142,"identifier":"cot_step_narrativehook","name":"🧭 Plan: Narrative Hook","role":"system"}
+{"index":143,"identifier":"cot_step_nsfwfocus","name":"🧭 Plan: NSFW Focus","role":"system"}
+{"index":144,"identifier":"cot_step_voicecraft","name":"🧭 Plan: Voice Crafting","role":"system"}
+{"index":145,"identifier":"cot_step_subtext","name":"🧭 Plan: Subtext Layer","role":"system"}
+{"index":146,"identifier":"cot_step_relationshipstage","name":"🧭 Plan: Relationship Stage","role":"system"}
+{"index":147,"identifier":"cot_step_physicalground","name":"🧭 Plan: Physical Grounding","role":"system"}
+{"index":148,"identifier":"cot_step_fulldraft","name":"⚔️ Plan Tail: Draft + Attack","role":"system"}
+{"index":149,"identifier":"cot_tail_magpie_workbench","name":"🐦‍⬛ Post Plan: Magpie Workbench","role":"system"}
+{"index":150,"identifier":"cot_step_emotionalmatrix","name":"🧭 Plan: Emotional Matrix","role":"system"}
+{"index":151,"identifier":"cot_step_htmldesign","name":"🧭 Plan: HTML Design","role":"system"}
+{"index":152,"identifier":"cot_step_htmlmarkers","name":"🧭 Plan: HTML Marker Check","role":"system"}
+{"index":153,"identifier":"1770095491833-k4vjf2f1","name":"🧭 Experimental Plan","role":"system"}
+{"index":154,"identifier":"1770095491833-8jtqr5y4","name":"🧭 Fast Plan","role":"system"}
+{"index":155,"identifier":"1770095491833-6qezelnl","name":"🧭 Loose Plan","role":"system"}
+{"index":156,"identifier":"1770095491833-adrmydb8","name":"🧭 Main Plan","role":"system"}
+{"index":157,"identifier":"v11-261-cot-council-functional","name":"🧭 Council Plan","role":"system"}
+{"index":158,"identifier":"v11-529-classiccot-gemini-council-classic","name":"🕰️ Legacy: Council of Vex (<think>)","role":"user"}
+{"index":159,"identifier":"v11-531-classiccot-gemini-fast-council-classic","name":"🕰️ Legacy: Fast Council (<think>)","role":"system"}
+{"index":160,"identifier":"v11-533-classiccot-thinking-gemini-classic","name":"🕰️ Legacy: Explicit Thinking (<think>)","role":"system"}
+{"index":161,"identifier":"1770095491852-d833xu2d","name":"=== 🎬 Genre ===","role":"system"}
+{"index":162,"identifier":"v11-185-genre-angst","name":"🎬 Angst","role":"system"}
+{"index":163,"identifier":"v11-186-genre-ao3-style","name":"🎬 AO3 Style","role":"system"}
+{"index":164,"identifier":"v11-187-genre-comedy","name":"🎬 Comedy","role":"system"}
+{"index":165,"identifier":"v11-188-genre-dead-dove","name":"🎬 Dead Dove","role":"system"}
+{"index":166,"identifier":"v11-189-genre-erotica","name":"🎬 Erotica","role":"system"}
+{"index":167,"identifier":"v11-190-genre-fluff","name":"🎬 Fluff","role":"system"}
+{"index":168,"identifier":"v11-191-genre-high-fantasy","name":"🎬 High Fantasy","role":"system"}
+{"index":169,"identifier":"v11-192-genre-html-reality","name":"🎬 HTML Reality","role":"system"}
+{"index":170,"identifier":"v11-193-genre-medieval","name":"🎬 Medieval","role":"system"}
+{"index":171,"identifier":"v11-194-genre-melancholy","name":"🎬 Melancholy","role":"system"}
+{"index":172,"identifier":"v11-195-genre-romance","name":"🎬 Romance","role":"system"}
+{"index":173,"identifier":"v11-196-genre-slice-of-life","name":"🎬 Slice of Life","role":"system"}
+{"index":174,"identifier":"v11-197-genre-texting-format","name":"🎬 Texting Format","role":"system"}
+{"index":175,"identifier":"v11-198-genre-thriller","name":"🎬 Thriller","role":"system"}
+{"index":176,"identifier":"v11-199-genre-tragedy","name":"🎬 Tragedy","role":"system"}
+{"index":177,"identifier":"header_action_authors","name":"<Action & Adventure Authors>","role":"system"}
+{"index":178,"identifier":"v11-200-influence-jin-yong","name":"✒️ Influence: Jin Yong","role":"system"}
+{"index":179,"identifier":"v11-201-influence-gu-long","name":"✒️ Influence: Gu Long","role":"system"}
+{"index":180,"identifier":"v11-202-influence-kamachi-kazuma","name":"✒️ Influence: Kamachi Kazuma","role":"system"}
+{"index":181,"identifier":"v11-203-influence-masashi-kishimoto","name":"✒️ Influence: Masashi Kishimoto","role":"system"}
+{"index":182,"identifier":"v11-204-influence-quentin-tarantino","name":"✒️ Influence: Quentin Tarantino","role":"system"}
+{"index":183,"identifier":"header_horror_authors","name":"<Horror & Psychological Authors>","role":"system"}
+{"index":184,"identifier":"v11-205-influence-chuck-palahniuk","name":"✒️ Influence: Chuck Palahniuk","role":"system"}
+{"index":185,"identifier":"v11-206-influence-fyodor-dostoevsky","name":"✒️ Influence: Fyodor Dostoevsky","role":"system"}
+{"index":186,"identifier":"v11-207-influence-akira-denpa-style","name":"✒️ Influence: Akira (Denpa Style)","role":"system"}
+{"index":187,"identifier":"v11-208-influence-stephen-king","name":"✒️ Influence: Stephen King","role":"system"}
+{"index":188,"identifier":"header_comedy_authors","name":"<Comedy & Satire Authors>","role":"system"}
+{"index":189,"identifier":"v11-209-influence-douglas-adams","name":"✒️ Influence: Douglas Adams","role":"system"}
+{"index":190,"identifier":"v11-210-influence-terry-pratchett","name":"✒️ Influence: Terry Pratchett","role":"system"}
+{"index":191,"identifier":"header_literary_fiction","name":"<Literary Fiction Authors>","role":"system"}
+{"index":192,"identifier":"v11-211-influence-yasunari-kawabata","name":"✒️ Influence: Yasunari Kawabata","role":"system"}
+{"index":193,"identifier":"v11-212-influence-haruki-murakami","name":"✒️ Influence: Haruki Murakami","role":"system"}
+{"index":194,"identifier":"v11-213-influence-garca-mrquez","name":"✒️ Influence: García Márquez","role":"system"}
+{"index":195,"identifier":"v11-214-influence-salman-rushdie","name":"✒️ Influence: Salman Rushdie","role":"system"}
+{"index":196,"identifier":"v11-215-influence-lu-xun","name":"✒️ Influence: Lu Xun","role":"system"}
+{"index":197,"identifier":"v11-216-influence-wang-xiaobo","name":"✒️ Influence: Wang Xiaobo","role":"system"}
+{"index":198,"identifier":"v11-217-influence-li-bihua","name":"✒️ Influence: Li Bihua","role":"system"}
+{"index":199,"identifier":"v11-218-influence-cormac-mccarthy","name":"✒️ Influence: Cormac McCarthy","role":"system"}
+{"index":200,"identifier":"v11-219-influence-ernest-hemingway","name":"✒️ Influence: Ernest Hemingway","role":"system"}
+{"index":201,"identifier":"header_romance_emotional","name":"<Romance & Emotional Authors>","role":"system"}
+{"index":202,"identifier":"v11-220-influence-jun-maeda-key","name":"✒️ Influence: Jun Maeda / Key","role":"system"}
+{"index":203,"identifier":"v11-221-influence-nisio-isin","name":"✒️ Influence: Nisio Isin","role":"system"}
+{"index":204,"identifier":"v11-222-influence-jane-austen","name":"✒️ Influence: Jane Austen","role":"system"}
+{"index":205,"identifier":"header_formats","name":"<Formats>","role":"system"}
+{"index":206,"identifier":"v11-137-format-ao3-style","name":"📄 AO3 Style","role":"system"}
+{"index":207,"identifier":"v11-138-format-erotica","name":"📄 Erotica","role":"system"}
+{"index":208,"identifier":"v11-139-format-light-novel","name":"📄 Light Novel","role":"system"}
+{"index":209,"identifier":"v11-140-format-web-novel","name":"📄 Web Novel","role":"system"}
+{"index":210,"identifier":"v11-141-format-roleplay-format","name":"📄 Roleplay Format","role":"system"}
+{"index":211,"identifier":"v11-142-format-modern-literature","name":"📄 Modern Literature","role":"system"}
+{"index":212,"identifier":"v11-143-format-classical-literature","name":"📄 Classical Literature","role":"system"}
+{"index":213,"identifier":"v11-144-format-epic-saga-edda","name":"📄 Epic Saga / Edda","role":"system"}
+{"index":214,"identifier":"v11-145-format-stage-play","name":"📄 Stage Play","role":"system"}
+{"index":215,"identifier":"v11-146-format-stream-of-consciousness","name":"📄 Stream of Consciousness","role":"system"}
+{"index":216,"identifier":"header_fantasy_mythology","name":"<Fantasy & Mythology>","role":"system"}
+{"index":217,"identifier":"v11-223-influence-arabian-nights","name":"✒️ Influence: Arabian Nights","role":"system"}
+{"index":218,"identifier":"v11-224-influence-medieval-setting","name":"✒️ Influence: Medieval Setting","role":"system"}
+{"index":219,"identifier":"v11-225-influence-brandon-sanderson","name":"✒️ Influence: Brandon Sanderson","role":"system"}
+{"index":220,"identifier":"v11-226-influence-neil-gaiman","name":"✒️ Influence: Neil Gaiman","role":"system"}
+{"index":221,"identifier":"header_regional_styles","name":"<Regional Styles>","role":"system"}
+{"index":222,"identifier":"v11-227-influence-japanese-literature","name":"✒️ Influence: Japanese Literature","role":"system"}
+{"index":223,"identifier":"v11-228-influence-chinese-literature","name":"✒️ Influence: Chinese Literature","role":"system"}
+{"index":224,"identifier":"v11-229-influence-indian-literature","name":"✒️ Influence: Indian Literature","role":"system"}
+{"index":225,"identifier":"v11-230-influence-middle-eastern-literature","name":"✒️ Influence: Middle Eastern Literature","role":"system"}
+{"index":226,"identifier":"v11-231-influence-latin-american-literature","name":"✒️ Influence: Latin American Literature","role":"system"}
+{"index":227,"identifier":"v11-232-influence-german-literature","name":"✒️ Influence: German Literature","role":"system"}
+{"index":228,"identifier":"v11-233-influence-scandinavian-literature","name":"✒️ Influence: Scandinavian Literature","role":"system"}
+{"index":229,"identifier":"header_utility_styles","name":"<Utility Styles>","role":"system"}
+{"index":230,"identifier":"v11-234-influence-japanese-honorifics","name":"✒️ Influence: Japanese Honorifics","role":"system"}
+{"index":231,"identifier":"v11-235-influence-regional-dialect","name":"✒️ Influence: Regional Dialect","role":"system"}
+{"index":232,"identifier":"v11-236-influence-cyberpunk-noir","name":"✒️ Influence: Cyberpunk Noir","role":"system"}
+{"index":233,"identifier":"v11-237-influence-nemo-writing","name":"✒️ Influence: Nemo Writing","role":"system"}
+{"index":234,"identifier":"v11-238-influence-gritty-prose","name":"✒️ Influence: Gritty Prose","role":"system"}
+{"index":235,"identifier":"v11-608-influence-vtm-narration","name":"✒️ Influence: VtM Narration","role":"system"}
+{"index":236,"identifier":"1770095491852-xaivbsx2","name":"=== ⏱️ Plot Pacing ===","role":"system"}
+{"index":237,"identifier":"v11-119-pacing-literary-mode","name":"⏱️ Literary Mode","role":"system"}
+{"index":238,"identifier":"v11-120-pacing-narrative-pressure","name":"⚡ Narrative Pressure","role":"system"}
+{"index":239,"identifier":"v11-121-pacing-active-mode","name":"🎬 Active Mode","role":"system"}
+{"index":240,"identifier":"v11-122-pacing-slow-burn","name":"🔥 Slow Burn","role":"system"}
+{"index":241,"identifier":"v11-123-pacing-sandbox-mode","name":"🧭 Sandbox Mode","role":"system"}
+{"index":242,"identifier":"v11-124-pacing-episodic-mode","name":"📺 Episodic Mode","role":"system"}
+{"index":243,"identifier":"header_story_agency","name":"=== 🎮 Story Agency ===","role":"system"}
+{"index":244,"identifier":"v11-125-agency-user-driven","name":"🎮 User-Driven","role":"system"}
+{"index":245,"identifier":"v11-126-agency-collaborative","name":"🎮 Collaborative","role":"system"}
+{"index":246,"identifier":"v11-127-agency-ai-driven","name":"🎮 AI-Driven","role":"system"}
+{"index":247,"identifier":"v11-249-utility-decentered-protagonist","name":"🛰️ Decentered Protagonist","role":"system"}
+{"index":248,"identifier":"v11-250-utility-parallel-storylines","name":"🛠️ Parallel Storylines","role":"system"}
+{"index":249,"identifier":"worldlogic_section_header","name":"=== 🌐 World Logic ===","role":"system"}
+{"index":250,"identifier":"v11-128-world-logic-literary","name":"🌐 Literary","role":"system"}
+{"index":251,"identifier":"v11-147-engine-literary-archetypes-engine","name":"📖 Literary Archetypes Engine","role":"system"}
+{"index":252,"identifier":"v11-129-world-logic-grounded","name":"🌐 Grounded","role":"system"}
+{"index":253,"identifier":"v11-148-engine-grounded-archetypes-engine","name":"🌍 Grounded Archetypes Engine","role":"system"}
+{"index":254,"identifier":"v11-130-world-logic-realism","name":"🌐 Realism","role":"system"}
+{"index":255,"identifier":"v11-149-engine-realism-archetypes-engine","name":"🩸 Realism Archetypes Engine","role":"system"}
+{"index":256,"identifier":"v11-131-world-logic-genre-logic","name":"🌐 Genre Logic","role":"system"}
+{"index":257,"identifier":"v11-150-engine-genre-archetypes-engine","name":"✨ Genre Archetypes Engine","role":"system"}
+{"index":258,"identifier":"v11-132-world-logic-video-game","name":"🌐 Video Game","role":"system"}
+{"index":259,"identifier":"v11-151-engine-video-game-archetypes-engine","name":"🎮 Video Game Archetypes Engine","role":"system"}
+{"index":260,"identifier":"v11-133-world-logic-anime","name":"🌐 Anime","role":"system"}
+{"index":261,"identifier":"v11-152-engine-anime-archetypes-engine","name":"🌸 Anime Archetypes Engine","role":"system"}
+{"index":262,"identifier":"nemo_anime_erotic_calibration","name":"🌸 Anime Erotica Calibration","role":"system"}
+{"index":263,"identifier":"v11-134-world-logic-hentai","name":"🌐 Hentai","role":"system"}
+{"index":264,"identifier":"nemo-section-world-augments","name":"=== 🌍 World Augments ===","role":"system"}
+{"index":265,"identifier":"v11-027-living-embodied-salience","name":"🫀 Living World: Embodied Salience","role":"system"}
+{"index":266,"identifier":"v11-028-living-dormant-threads-offscreen-motion","name":"🧵 Living World: Dormant Threads / Offscreen Motion","role":"system"}
+{"index":267,"identifier":"v11-029-living-beat-logic-scene-discipline","name":"🎬 Living World: Beat Logic / Scene Turn Discipline","role":"system"}
+{"index":268,"identifier":"v11-153-world-augments-aura-of-emotions","name":"🪞 Aura of Emotions","role":"system"}
+{"index":269,"identifier":"v11-154-world-augments-bustling-environment","name":"🏙️ Bustling Environment","role":"system"}
+{"index":270,"identifier":"v11-155-world-augments-dreamscape-reality","name":"🌫️ Dreamscape Reality","role":"system"}
+{"index":271,"identifier":"v11-156-world-augments-the-honesty-plague","name":"📜 The Honesty Plague","role":"system"}
+{"index":272,"identifier":"v11-157-world-augments-prophecy-magnet","name":"🔮 Prophecy Magnet","role":"system"}
+{"index":273,"identifier":"v11-158-world-augments-slow-burn-mysteries","name":"🕵️ Slow Burn Mysteries","role":"system"}
+{"index":274,"identifier":"v11-159-world-augments-ambient-monster-threat","name":"👹 Ambient Monster Threat","role":"system"}
+{"index":275,"identifier":"v11-160-world-augments-dungeon-delve-focus","name":"⛓️ Dungeon Delve Focus","role":"system"}
+{"index":276,"identifier":"v11-161-world-augments-environmental-descriptions","name":"🌳 Environmental Descriptions","role":"system"}
+{"index":277,"identifier":"v11-162-world-augments-everything-is-alive","name":"🪑 Everything is Alive!","role":"system"}
+{"index":278,"identifier":"v11-163-world-augments-foreigner-user","name":"🛂 Foreigner <user>","role":"system"}
+{"index":279,"identifier":"v11-164-world-augments-gynocentric-society","name":"👯 Gynocentric Society","role":"system"}
+{"index":280,"identifier":"v11-165-world-augments-physiological-environmental-realism","name":"🌍 Physiological & Environmental Realism","role":"system"}
+{"index":281,"identifier":"v11-610-augment-violence-realism","name":"⚔️ Augment: Violence Realism","role":"system"}
+{"index":282,"identifier":"v11-614-augment-logistical-survival-realism","name":"🎒 Augment: Logistical & Survival Realism","role":"system"}
+{"index":283,"identifier":"v11-617-augment-grounded-realism-gritty-detail","name":"🎨 Augment: Grounded Realism & Gritty Detail","role":"system"}
+{"index":284,"identifier":"v11-616-augment-harsh-realism","name":"🎨 Augment: Harsh Realism","role":"system"}
+{"index":285,"identifier":"v11-619-augment-unpredictable-realism","name":"🎲 Augment: Unpredictable Realism","role":"system"}
+{"index":286,"identifier":"v11-618-augment-realism-overall","name":"📜 Augment: Realism Overall","role":"system"}
+{"index":287,"identifier":"v11-611-augment-manipulation-realism","name":"😱 Augment: Manipulation Realism","role":"system"}
+{"index":288,"identifier":"v11-613-augment-psychological-emotional-realism","name":"🧠 Augment: Psychological & Emotional Realism","role":"system"}
+{"index":289,"identifier":"v11-607-vtm-blood-bond","name":"🦇 World: Blood Bond Mechanics","role":"system"}
+{"index":290,"identifier":"v11-605-vtm-masquerade-setting","name":"🦇 World: Vampire the Masquerade","role":"system"}
+{"index":291,"identifier":"v11-606-vtm-masquerade-alt","name":"🦇 World: Vampire the Masquerade (Alt)","role":"system"}
+{"index":292,"identifier":"1770095491852-x5vbcjo5","name":"=== 🛠️ Utility ===","role":"system"}
+{"index":293,"identifier":"v11-header-utility-formatting-interface","name":"<Utility: Formatting & Interface>","role":"system"}
+{"index":294,"identifier":"v11-252-utility-visual-styling","name":"🔧︱Utility: Color Formatting (v6)","role":"system"}
+{"index":295,"identifier":"v11-631-utility-scene-header-time-location-weather","name":"⏳ Scene Header (Time/Location/Weather)","role":"system"}
+{"index":296,"identifier":"nemo-machinery-visible","name":"🪟 Machinery Display: Visible","role":"system"}
+{"index":297,"identifier":"nemo-machinery-hidden","name":"🫥 Machinery Display: Hidden","role":"system"}
+{"index":298,"identifier":"v11-253-utility-auto-image-gen","name":"🖼️ Auto Image Gen","role":"system"}
+{"index":299,"identifier":"immersive_world_html","name":"🖥️ Immersive World HTML [V6 Hybrid]","role":"system"}
+{"index":300,"identifier":"v11-header-utility-response-discipline","name":"<Utility: Response Discipline>","role":"system"}
+{"index":301,"identifier":"v11-633-utility-anti-echo-user-agency","name":"🪞 Anti Echo / User Agency","role":"system"}
+{"index":302,"identifier":"nemo-header-user-role-modes","name":"=== 🎭 User Role Modes ===","role":"system"}
+{"index":303,"identifier":"nemo-user-role-character","name":"👤 User is a Character","role":"system"}
+{"index":304,"identifier":"nemo_cowriter_frame","name":"✍️ Cowriter Frame","role":"system"}
+{"index":305,"identifier":"nemo_anime_cowriter_frame","name":"✍️🎙️ Anime Cowriter Frame","role":"system"}
+{"index":306,"identifier":"v11-637-utility-director-mode","name":"🎬 Director Mode","role":"system"}
+{"index":307,"identifier":"v11-638-utility-user-as-director","name":"🎥 User as Director","role":"system"}
+{"index":308,"identifier":"v11-632-utility-dehedge-response-discipline","name":"🪓 De-Hedge Response Discipline","role":"system"}
+{"index":309,"identifier":"v11-239-utility-danger-protocol","name":"🛠️ Danger Protocol","role":"system"}
+{"index":310,"identifier":"3d3756b0-f03d-447a-9ee4-4d568c503683","name":"🧊 Anti Horny","role":"system"}
+{"index":311,"identifier":"v11-header-utility-character-dialogue","name":"<Utility: Character & Dialogue>","role":"system"}
+{"index":312,"identifier":"v11-240-utility-more-dialogue","name":"🛠️ More Dialogue","role":"system"}
+{"index":313,"identifier":"v11-242-utility-character-naming","name":"🛠️ Character Naming","role":"system"}
+{"index":314,"identifier":"v11-243-utility-proactive-characters","name":"🛠️ Proactive Characters","role":"system"}
+{"index":315,"identifier":"v11-634-utility-proactive-dialogue-engaging-npcs","name":"🗣️ Proactive Dialogue / Engaging NPCs","role":"system"}
+{"index":316,"identifier":"v11-636-utility-rotating-npc-spotlight","name":"👥 NPC Spotlight","role":"system"}
+{"index":317,"identifier":"v11-244-utility-character-friction","name":"🗡️ Character Friction","role":"system"}
+{"index":318,"identifier":"v11-628-utility-fuck-robots","name":"🛠️ Anti Robot / Natural Characters","role":"system"}
+{"index":319,"identifier":"v11-629-utility-swipe-enhancer","name":"🛠️ Swipe Enhancer","role":"system"}
+{"index":320,"identifier":"v11-header-utility-style-extras","name":"<Utility: Style, Format & Extras>","role":"system"}
+{"index":321,"identifier":"v11-241-utility-rp-markdown","name":"🛠️ RP Markdown","role":"system"}
+{"index":322,"identifier":"v11-245-utility-manga-side-character-intro","name":"📖 Manga Side Character Intro","role":"system"}
+{"index":323,"identifier":"v11-247-utility-literary-chameleon","name":"🛠️ Literary Chameleon","role":"system"}
+{"index":324,"identifier":"v11-header-utility-resolver","name":"<Utility: Resolver>","role":"system"}
+{"index":325,"identifier":"v11-635-utility-ooc-resolver","name":"🧷 Utility OOC Resolver","role":"user"}
+{"index":326,"identifier":"1770095491852-awpwqax7","name":"<Utility: Difficulty>","role":"system"}
+{"index":327,"identifier":"v11-100-difficulty-balanced","name":"⚙️ Balanced","role":"system"}
+{"index":328,"identifier":"v11-101-difficulty-cozy","name":"⚙️ Cozy","role":"system"}
+{"index":329,"identifier":"v11-102-difficulty-hard-gritty","name":"⚙️ Hard Gritty","role":"system"}
+{"index":330,"identifier":"v11-103-difficulty-heroic","name":"⚙️ Heroic","role":"system"}
+{"index":331,"identifier":"v11-104-difficulty-ironman","name":"⚙️ IronMan","role":"system"}
+{"index":332,"identifier":"v11-105-difficulty-nightmare","name":"⚙️ Nightmare","role":"system"}
+{"index":333,"identifier":"v11-106-difficulty-story-mode","name":"⚙️ Story Mode","role":"system"}
+{"index":334,"identifier":"v11-107-difficulty-god-mode","name":"⚙️ God Mode","role":"system"}
+{"index":335,"identifier":"1770095491852-6gk7jr7f","name":"<Utility: Perspective, Interiority & Tense>","role":"system"}
+{"index":336,"identifier":"v11-108-perspective-first-person","name":"👁️ First Person","role":"system"}
+{"index":337,"identifier":"v11-109-perspective-second-person","name":"👁️ Second Person","role":"system"}
+{"index":338,"identifier":"v11-110-perspective-third-person-limited","name":"👁️ Third Person Limited","role":"system"}
+{"index":339,"identifier":"v11-111-perspective-third-person-omniscient","name":"👁️ Third Person Omniscient","role":"system"}
+{"index":340,"identifier":"v11-111a-npc-interiority-default","name":"🧠 NPC Interiority: Perspective Default","role":"system"}
+{"index":341,"identifier":"v11-111b-npc-interiority-on","name":"🧠 NPC Interiority: ON","role":"system"}
+{"index":342,"identifier":"v11-111c-npc-interiority-off","name":"🚫 NPC Interiority: OFF","role":"system"}
+{"index":343,"identifier":"v11-112-tense-past-tense","name":"⏮️ Past Tense","role":"system"}
+{"index":344,"identifier":"v11-113-tense-present-tense","name":"⏺️ Present Tense","role":"system"}
+{"index":345,"identifier":"v11-114-tense-future-tense","name":"⏭️ Future Tense","role":"system"}
+{"index":346,"identifier":"1770095491852-myr4rfed","name":"<Utility: Response Length>","role":"system"}
+{"index":347,"identifier":"v11-115-length-long","name":"📏 Long","role":"system"}
+{"index":348,"identifier":"v11-116-length-medium","name":"📏 Medium","role":"system"}
+{"index":349,"identifier":"v11-117-length-organic","name":"📏 Organic","role":"system"}
+{"index":350,"identifier":"v11-118-length-short","name":"📏 Short","role":"system"}
+{"index":351,"identifier":"1770095491852-jxjk3hrm","name":"<Utility: RPG>","role":"system"}
+{"index":352,"identifier":"v11-135-world-logic-video-game-litrpg","name":"🌐 Video Game: LitRPG","role":"system"}
+{"index":353,"identifier":"v11-246-utility-tactical-combat","name":"⚔️ Tactical Combat","role":"system"}
+{"index":354,"identifier":"v11-136-world-logic-video-game-ttrpg","name":"🌐 Video Game: TTRPG","role":"system"}
+{"index":355,"identifier":"1770095491852-72zpomku","name":"<Utility: Trackers>","role":"system"}
+{"index":356,"identifier":"f7b7c4db-75d2-4bdb-98b8-5d8a759c0f7e","name":"🖥️ HTML/CSS Render","role":"system"}
+{"index":357,"identifier":"1770095491838-tdl85l34","name":"📟 ASCII Render","role":"system"}
+{"index":358,"identifier":"f21f6d62-7d63-41a8-b8e3-compact-regex-trackers","name":"🧩 Regex Render","role":"system"}
+{"index":359,"identifier":"tracker_light_mode","name":"☀️ Light Theme","role":"system"}
+{"index":360,"identifier":"9fbaf3a2-15cd-42ff-8dce-4c5a6d3a8c11","name":"📜 Parchment Theme","role":"system"}
+{"index":361,"identifier":"94ea2a5b-bc71-4c56-9838-f44e46c2d7e1","name":"🚀 Sci-Fi Theme","role":"system"}
+{"index":362,"identifier":"b215ff02-9c4f-48c1-9fd0-3fd1f1ab3a27","name":"🖥️ Terminal Theme","role":"system"}
+{"index":363,"identifier":"65df6f0a-9851-4c89-81c6-cf85d1d7f2b4","name":"📱 Cell Phone Theme","role":"system"}
+{"index":364,"identifier":"2857fc16-22dd-4c4a-9b4c-e8e49fa5ef31","name":"🕵️ Noir Casefile Theme","role":"system"}
+{"index":365,"identifier":"19c6e102-ef1e-4e1f-8798-b5cbfd42d0f2","name":"🔮 Occult Grimoire Theme","role":"system"}
+{"index":366,"identifier":"d0532876-712f-42ad-b8f5-03b2436bc8a8","name":"🎖️ Tactical HUD Theme","role":"system"}
+{"index":367,"identifier":"0ced8cc6-85df-4dbe-a6c2-b7d90533a5e7","name":"📰 Newsprint Theme","role":"system"}
+{"index":368,"identifier":"9e63d716-e7b5-47e2-841c-8a021d2ff2ec","name":"🌃 Cyberpunk AR Theme","role":"system"}
+{"index":369,"identifier":"3f91deac-e569-4a1b-aea9-84b30e7519f0","name":"🧾 Dossier Theme","role":"system"}
+{"index":370,"identifier":"e399d4e1-7608-49d4-aa9e-2a863a1f7f82","name":"🎭 Visual Novel Theme","role":"system"}
+{"index":371,"identifier":"1770095491838-tzqljonp","name":"🛡️ RPG Dashboard","role":"user"}
+{"index":372,"identifier":"1770095491838-bxxnfri2","name":"🔀 CYOA","role":"user"}
+{"index":373,"identifier":"nemo_tracker_cyoa_three_paths","name":"🔀 CYOA: 3 Paths","role":"user"}
+{"index":374,"identifier":"1770095491839-npsjusbc","name":"💖 Dating Sim Interface","role":"system"}
+{"index":375,"identifier":"1770095491839-m9rg73a5","name":"📣 Fandom Reaction","role":"system"}
+{"index":376,"identifier":"1770095491839-c6om818e","name":"🎰 Gacha System","role":"system"}
+{"index":377,"identifier":"v11-700-tracker-game-mechanic","name":"📊 Game Mechanic Tracker","role":"user"}
+{"index":378,"identifier":"v11-701-tracker-social-web","name":"🕸️ Social Web","role":"user"}
+{"index":379,"identifier":"v11-702-tracker-karma-ledger","name":"⚖️ Karma / Cosmic Ledger","role":"user"}
+{"index":380,"identifier":"1770095491839-bhuvuw8l","name":"🗺️ Quest Journal","role":"user"}
+{"index":381,"identifier":"1770095491839-jckggy3a","name":"📰 Scroll News Lore","role":"system"}
+{"index":382,"identifier":"1770095491839-yu8kryx0","name":"🎭 Scene Dashboard","role":"system"}
+{"index":383,"identifier":"nemo-status-board-9-3-2","name":"📊 Status Board","role":"user"}
+{"index":384,"identifier":"nemo-location-board-9-3-2","name":"🧭 Location Board","role":"user"}
+{"index":385,"identifier":"481c09b7-3580-4280-b75c-53250378b431","name":"🧭 ASCII Minimap","role":"user"}
+{"index":386,"identifier":"nemo-char-knowledge-log-9-3-2","name":"🧠 Char's Knowledge Log","role":"user"}
+{"index":387,"identifier":"nemo-vex-planning-9-3-2","name":"📖 Vex Planning Quarters","role":"user"}
+{"index":388,"identifier":"nemo-manga-panels-9-3-2","name":"📖 Manga / Comic Panels","role":"user"}
+{"index":389,"identifier":"nemo-webtoon-panels-9-3-2","name":"📜 Vertical Webtoon Panels","role":"user"}
+{"index":390,"identifier":"nemo-world-anvil","name":"🗺️ Dynamic World Anvil","role":"system"}
+{"index":391,"identifier":"3499e906-80f1-4016-9679-6fef4aac10f4","name":"Tracker Toggle","role":"system"}
+{"index":392,"identifier":"nemo_pad_consequence","name":"🗒️ Pad Tab: Consequence","role":"user"}
+{"index":393,"identifier":"nemo_pad_parallel","name":"🗒️ Pad Tab: Parallel Storylines","role":"user"}
+{"index":394,"identifier":"nemo_pad_cutaway","name":"🗒️ Pad Tab: Next Cutaway","role":"user"}
+{"index":395,"identifier":"nemo_pad_canon","name":"🗒️ Pad Tab: Canon","role":"user"}
+{"index":396,"identifier":"nemo_pad_stage","name":"🗒️ Pad Tab: Narrative Stage","role":"user"}
+{"index":397,"identifier":"nemo_pad_affinity","name":"🗒️ Pad Tab: Affinity","role":"user"}
+{"index":398,"identifier":"nemo_pad_stats","name":"🗒️ Pad Tab: Stats","role":"user"}
+{"index":399,"identifier":"nemo_pad_inventory","name":"🗒️ Pad Tab: Inventory","role":"user"}
+{"index":400,"identifier":"nemo_pad_userprefs","name":"🗒️ Pad Tab: User Preferences","role":"user"}
+{"index":401,"identifier":"nemo_pad_turncarry","name":"🗒️ Pad Tab: Turn Carry","role":"user"}
+{"index":402,"identifier":"8f9acca5-6a3b-4a7e-a926-f51682aeb2ee","name":"🗒️ Scratchpad Modular","role":"user"}
+{"index":403,"identifier":"nemo-pad-loader-resolver","name":"🧩 Scratchpad Loader Resolver","role":"user"}
+{"index":404,"identifier":"nemo_pad_legacy","name":"🗒️ Scratchpad Legacy","role":"user"}
+{"index":405,"identifier":"1770095491852-bnk32vkw","name":"=== 🔞 NSFW ===","role":"system"}
+{"index":406,"identifier":"v11-176-nsfw-dirty-talk","name":"🔞 Dirty Talk [V6]","role":"system"}
+{"index":407,"identifier":"v11-177-nsfw-dom-language","name":"🔞 Dom Language [V6]","role":"system"}
+{"index":408,"identifier":"v11-178-nsfw-gooner-protocol","name":"🔞 Gooner Protocol","role":"system"}
+{"index":409,"identifier":"v11-179-nsfw-moans-sfx","name":"🔞 Moans SFX [V6]","role":"system"}
+{"index":410,"identifier":"v11-180-nsfw-nsfw-core","name":"🔞 NSFW Core","role":"system"}
+{"index":411,"identifier":"v11-181-nsfw-porn-tropes","name":"🔞 Porn Tropes","role":"system"}
+{"index":412,"identifier":"v11-182-nsfw-proactive-partners","name":"🔞 Proactive Partners","role":"system"}
+{"index":413,"identifier":"v11-183-nsfw-realistic-smut","name":"🔞 Realistic Smut [V6]","role":"system"}
+{"index":414,"identifier":"v11-184-nsfw-sexual-physiology","name":"🔞 Sexual Physiology [V6]","role":"system"}
+{"index":415,"identifier":"v11-620-nsfw-gooner-slop-mode","name":"🔞 Gooner Slop Mode [V6]","role":"system"}
+{"index":416,"identifier":"v11-621-nsfw-gooner-s-masterpiece-protocol","name":"🔞 Gooner's Masterpiece Protocol [V6]","role":"user"}
+{"index":417,"identifier":"v11-622-nsfw-hentai-mode","name":"🔞 Hentai Mode [V6]","role":"user"}
+{"index":418,"identifier":"v11-623-nsfw-dead-dove-classic","name":"🔞 Dead Dove (Classic) [V6]","role":"system"}
+{"index":419,"identifier":"v11-537-classic-nsfw-core","name":"🔞 NSFW Core (Classic) [V6]","role":"system"}
+{"index":420,"identifier":"1770095491852-zbyjkp37","name":"=== 🎀 Fetish ===","role":"system"}
+{"index":421,"identifier":"v11-166-fetish-cbt","name":"🎀 CBT","role":"system"}
+{"index":422,"identifier":"v11-167-fetish-femdom","name":"🎀 Femdom","role":"system"}
+{"index":423,"identifier":"v11-168-fetish-feminization","name":"🎀 Feminization","role":"system"}
+{"index":424,"identifier":"v11-169-fetish-foot-fetish","name":"🎀 Foot Fetish","role":"system"}
+{"index":425,"identifier":"v11-170-fetish-furry","name":"🎀 Furry","role":"system"}
+{"index":426,"identifier":"v11-171-fetish-harem","name":"🎀 Harem","role":"system"}
+{"index":427,"identifier":"v11-172-fetish-netori","name":"🎀 Netori","role":"system"}
+{"index":428,"identifier":"v11-175-fetish-noncon","name":"🎀 NonCon","role":"system"}
+{"index":429,"identifier":"v11-624-fetish-dating-sim-quantum","name":"🎀 Dating Sim (Quantum)","role":"system"}
+{"index":430,"identifier":"v11-625-fetish-corruption-fefnik","name":"🎀 Corruption (Fefnik)","role":"system"}
+{"index":431,"identifier":"v11-626-fetish-forced-fem-classic","name":"🎀 Forced Fem (Classic)","role":"system"}
+{"index":432,"identifier":"v11-627-fetish-harmonized-html-enable-fefnik","name":"🎀 Harmonized HTML Enable (fefnik)","role":"system"}
+{"index":433,"identifier":"v11-173-fetish-ntr","name":"🎀 NTR","role":"system"}
+{"index":434,"identifier":"v11-174-fetish-petplay","name":"🎀 Petplay","role":"system"}
+{"index":435,"identifier":"v11-254-consent-consent-user","name":"🔓 Consent: User","role":"system"}
+{"index":436,"identifier":"v11-255-consent-consent-acknowledged","name":"🔓 Consent: Acknowledged","role":"system"}
+{"index":437,"identifier":"v11-248-utility-extreme-content","name":"⚠️ Extreme Content","role":"system"}
+{"index":438,"identifier":"1770095491852-vouskndq","name":"=== 💾 Databank ===","role":"system"}
+{"index":439,"identifier":"1770095491852-0l2gtxvq","name":"💾 Databank: Unified Card Context","role":"user"}
+{"index":440,"identifier":"1770095491852-dplzxppa","name":"=== ⚙️ System ===","role":"system"}
+{"index":441,"identifier":"v11-classic-user-message-separator","name":"🪞 System: Current Message Separator","role":"user"}
+{"index":442,"identifier":"v11-260-system-sudo-prefill-assistant","name":"🪞 System: Assistant Sudo Prefill","role":"assistant"}
+{"index":443,"identifier":"main","name":"Main Prompt","role":"system"}
+{"index":444,"identifier":"nsfw","name":"Auxiliary Prompt","role":"system"}
+{"index":445,"identifier":"dialogueExamples","name":"Chat Examples","role":"system"}
+{"index":446,"identifier":"jailbreak","name":"Post-History Instructions","role":"system"}
+{"index":447,"identifier":"chatHistory","name":"Chat History","role":"system"}
+{"index":448,"identifier":"worldInfoAfter","name":"World Info (after)","role":"system"}
+{"index":449,"identifier":"worldInfoBefore","name":"World Info (before)","role":"system"}
+{"index":450,"identifier":"enhanceDefinitions","name":"Enhance Definitions","role":"system"}
+{"index":451,"identifier":"charDescription","name":"Char Description","role":"system"}
+{"index":452,"identifier":"charPersonality","name":"Char Personality","role":"system"}
+{"index":453,"identifier":"scenario","name":"Scenario","role":"system"}
+{"index":454,"identifier":"personaDescription","name":"Persona Description","role":"system"}
+{"index":455,"identifier":"v11-classic-user-message-ender","name":"🔚 System: Final User-Role Tail / Runtime Reminder","role":"user"}

@@ -1,0 +1,97 @@
+{"index":0,"id":"6c3ebe82-9db4-423b-bfa6-40ce5832eada","name":"Strip HTML from older context","disabled":true}
+{"index":1,"id":"d7124e73-9e2b-57f9-9c86-aae2354619ab","name":"Nemo · plan close repair (raw output)","disabled":false}
+{"index":2,"id":"0d9a1a96-9009-5af5-bfb7-7a4b8ec8bea4","name":"Nemo · completed reasoning boundary cleanup (raw output)","disabled":false}
+{"index":3,"id":"4e93acbd-5bd3-5116-a5c9-7ea116f9008e","name":"Nemo · final boundary cleanup (raw output)","disabled":false}
+{"index":4,"id":"4d260cb7-bde4-4c9c-891f-da4b8db320fb","name":"Nemo + Magpie · 0 plan close repair (prompt)","disabled":false}
+{"index":5,"id":"95101950-f5f2-45f2-8420-49f5868dfc61","name":"Nemo + Magpie · 0 plan close repair","disabled":false}
+{"index":6,"id":"8b9aee12-35dd-4ad9-8f50-b7e11839b249","name":"Nemo · completed reasoning boundary cleanup (display + context)","disabled":false}
+{"index":7,"id":"2f94f27d-c5dd-5ea4-bb3c-d387be67d12f","name":"Nemo + Magpie · 19 plan context strip","disabled":false}
+{"index":8,"id":"84718c3f-74a9-535f-85f3-f090322c94e0","name":"Nemo · hidden machinery · scene headers","disabled":false}
+{"index":9,"id":"82c645fe-6c25-59e7-96a7-721ea69d3a5f","name":"Nemo · hidden machinery · modular pad","disabled":false}
+{"index":10,"id":"398766b9-b7c3-5fcd-939c-7a001d668b12","name":"Nemo · hidden machinery · Magpie ledger","disabled":false}
+{"index":11,"id":"149e32b8-7213-5e70-ae2c-6f6bc829bd4a","name":"Nemo + Magpie · 18 plan display (disabled: boundary cleanup owns closed plans)","disabled":true}
+{"index":12,"id":"a471053e-fb33-5b43-8df9-9d69d7259668","name":"Nemo + Magpie · final boundary cleanup","disabled":false}
+{"index":13,"id":"6e52854c-733d-479d-a7d3-1b5edc95883d","name":"Strip leaked planning / think tags","disabled":false}
+{"index":14,"id":"6daa1d91-89e2-4eac-b62b-7f9d9adece29","name":"Vex Commentary - Render Bubbles","disabled":false}
+{"index":15,"id":"9aaefe50-279e-415e-97f3-30364e483532","name":"Vex Commentary - Strip from Context","disabled":false}
+{"index":16,"id":"139df77f-59a9-41d7-819c-1a1de4d41738","name":"Tracker UI - Render Noir Card","disabled":false}
+{"index":17,"id":"c287b5ed-df5d-4c07-9346-5e72e747bdf1","name":"Tracker UI - Render Occult Card","disabled":false}
+{"index":18,"id":"e515baae-e45d-4eb1-9e75-5a0c960d49fa","name":"Tracker UI - Render Tactical Card","disabled":false}
+{"index":19,"id":"1ee7868b-63d8-4932-a951-7aedc732709f","name":"Tracker UI - Render Newsprint Card","disabled":false}
+{"index":20,"id":"5ba9f006-f379-4bd3-974f-6f48c9485bc9","name":"Tracker UI - Render Cyberpunk Card","disabled":false}
+{"index":21,"id":"7b8ad564-7f21-4c15-bdb0-7ba8e49c2d85","name":"Tracker UI - Render Dossier Card","disabled":false}
+{"index":22,"id":"e5db7987-9d79-48a3-946b-5c88d9426efc","name":"Tracker UI - Render Visual Novel Card","disabled":false}
+{"index":23,"id":"ac093a65-8766-4117-9e12-84878e7722d5","name":"Tracker UI - Render Parchment Card","disabled":false}
+{"index":24,"id":"f90d0d40-2849-482a-9000-247103bc0729","name":"Tracker UI - Render Sci-Fi Card","disabled":false}
+{"index":25,"id":"b6f6211c-cddb-4745-b0c7-570f3ed37daf","name":"Tracker UI - Render Terminal Card","disabled":false}
+{"index":26,"id":"280b92d6-2280-4fbe-8e02-70df0fec5b5a","name":"Tracker UI - Render Phone Card","disabled":false}
+{"index":27,"id":"d35116fc-3e33-4875-9997-fd622b3f79a8","name":"Tracker UI - Render Light Card","disabled":false}
+{"index":28,"id":"e3fd61bf-7f9e-4515-9590-8656e4124039","name":"Tracker UI - Render Card","disabled":false}
+{"index":29,"id":"25cc4493-1dd1-40fb-96fc-b2d0523edc52","name":"Tracker UI - Render Row","disabled":false}
+{"index":30,"id":"479fed45-c0ea-4b22-a667-860052667069","name":"Tracker UI - Render Bar","disabled":false}
+{"index":31,"id":"b916f7bc-7049-4a9b-9bc0-579cfc9fdc1f","name":"Tracker UI - Render Choice","disabled":false}
+{"index":32,"id":"e975d98a-d9a9-4f14-a63d-c0ac445e0471","name":"Tracker UI - Render Tag","disabled":false}
+{"index":33,"id":"bd5371e1-92d7-4af3-b1ef-bd556b19ee4c","name":"Tracker UI - Render Map","disabled":false}
+{"index":34,"id":"6edda17f-e38f-43c5-bfbb-03f20f916c9a","name":"Tracker UI - Strip Compact Trackers from Older Context","disabled":false}
+{"index":35,"id":"01063dd8-654f-4d09-b400-067161dd5d01","name":"Emoji FX - Fire/Flame","disabled":false}
+{"index":36,"id":"defac35d-d821-4a15-99b4-d0cc1efd9e01","name":"Emoji FX - Sparkle/Magic","disabled":false}
+{"index":37,"id":"264f5e11-64cd-4788-bfe0-5fe17ec92cc8","name":"Emoji FX - Swords/Combat","disabled":false}
+{"index":38,"id":"bb974b95-b66d-4331-8654-ef67bc9e1584","name":"Emoji FX - Skull/Death","disabled":false}
+{"index":39,"id":"91bf8fab-3ef1-46ba-95a9-3a8ff8ceddb0","name":"Emoji FX - Heart/Love","disabled":false}
+{"index":40,"id":"fd225a5f-3110-485f-a17e-f2db23950fbe","name":"Emoji FX - Lightning/Power","disabled":false}
+{"index":41,"id":"8c231c8f-7e77-47b7-9404-5cb7c2d7c584","name":"Emoji FX - Ice/Cold","disabled":false}
+{"index":42,"id":"62834d69-d66e-4b30-81fa-90f8a2e6619d","name":"Emoji FX - Blood/Gore","disabled":false}
+{"index":43,"id":"c550ce8d-2422-4e6a-8a1d-28522ac9b50b","name":"Emoji FX - Anger/Rage","disabled":false}
+{"index":44,"id":"c99da944-843f-4083-ae7e-afe2a1aaf699","name":"Emoji FX - Warning/Alert","disabled":false}
+{"index":45,"id":"0e69bfac-6a46-473d-bf99-f391b256bd56","name":"Emoji FX - Music/Sound","disabled":false}
+{"index":46,"id":"e1572121-d5a9-43ed-89f9-9747723d6bfb","name":"Emoji FX - Sweat/Nervous","disabled":false}
+{"index":47,"id":"e93381e8-026a-4da5-b833-84bd5c089361","name":"Emoji FX - Explosion/Boom","disabled":false}
+{"index":48,"id":"bcef5025-09b6-4619-85ca-e239f29ffaad","name":"Emoji FX - Crown/Royalty","disabled":false}
+{"index":49,"id":"92efb667-e48d-401c-b3ae-771fa9fd8670","name":"Emoji FX - Ghost/Spooky","disabled":false}
+{"index":50,"id":"01598cc1-7fa1-40ff-8b3e-bb3969106ac1","name":"Emoji FX - Crying/Tears","disabled":false}
+{"index":51,"id":"d2a9dbd2-68f0-499c-9af9-50ccb642627c","name":"Emoji FX - Thinking/Brain","disabled":false}
+{"index":52,"id":"bd6d465b-da50-422e-9328-48a06e251449","name":"Emoji FX - Eye/Looking","disabled":false}
+{"index":53,"id":"7fe68039-ddf1-4d41-ba8c-ffe21d94487b","name":"Emoji FX - Dice/Random","disabled":false}
+{"index":54,"id":"c5e26c28-76be-4a2c-a89e-3f283ab85d9b","name":"Emoji FX - Lock/Key","disabled":false}
+{"index":55,"id":"ff0b3789-85e5-49b3-af74-aa1ba68e50a5","name":"Emoji FX - Poison/Toxic","disabled":false}
+{"index":56,"id":"5626bc2e-7ba2-4ce7-8303-58b1b2299136","name":"Emoji FX - Moon/Night","disabled":false}
+{"index":57,"id":"85e55117-8ffc-410a-b560-f413afae7274","name":"Emoji FX - Sun/Bright","disabled":false}
+{"index":58,"id":"6a1331da-2d71-4ec0-87e5-7e81b48e24f8","name":"Emoji FX - Shield/Defense","disabled":false}
+{"index":59,"id":"b5ca5c4f-209f-42b4-82b7-46ac00f2e0a7","name":"Emoji FX - Scroll/Magic Item","disabled":false}
+{"index":60,"id":"4052cc5b-a0a8-4f9e-b2da-dec7e8f4149e","name":"Emoji FX - Smoke/Mist","disabled":false}
+{"index":61,"id":"a8767bcc-7f2d-4e3a-9524-6ba31fcd1624","name":"Emoji FX - Gem/Crystal","disabled":false}
+{"index":62,"id":"b94d51f9-696f-431f-9f32-44d3f3495704","name":"Emoji FX - Chains/Bondage","disabled":false}
+{"index":63,"id":"84defeb9-a193-4d4c-8dea-5c8e5163d302","name":"Emoji FX - Trophy/Victory","disabled":false}
+{"index":64,"id":"e08f6712-faca-4c93-b064-73c15af2d451","name":"Emoji FX - Flower/Nature","disabled":false}
+{"index":65,"id":"8ded2742-b4fe-521d-a5b6-0132f7514332","name":"Nemo + Magpie · 0 tab close repair","disabled":false}
+{"index":66,"id":"0b683467-2949-474f-8b19-0e4ff7b097dc","name":"Nemo + Magpie · 0 who close repair","disabled":false}
+{"index":67,"id":"ea6181bf-27cb-4405-a76f-7e2bd324bb23","name":"Nemo + Magpie · 0 room close repair","disabled":false}
+{"index":68,"id":"105123e2-b89c-5b13-9a1e-9008b6b400bc","name":"Nemo + Magpie · 0 thread close repair","disabled":false}
+{"index":69,"id":"b3b5c5b7-4256-5f3d-82de-779578a76bb8","name":"Nemo + Magpie · 0 elsewhere close repair","disabled":false}
+{"index":70,"id":"6b84f521-89c5-4ba9-9655-a518b9ad9101","name":"Nemo + Magpie · 0 deep close repair","disabled":false}
+{"index":71,"id":"71e3d612-f8b2-4f99-bb41-3fa486d3bbd4","name":"Nemo + Magpie · 0 deep auto-wrap","disabled":false}
+{"index":72,"id":"5af51840-b870-4713-96ff-5e50627003fa","name":"Nemo + Magpie · 0 inline-args file repair","disabled":false}
+{"index":73,"id":"07624014-16ac-5c70-a098-f5bfeae25d19","name":"Nemo + Magpie · 1 heading","disabled":false}
+{"index":74,"id":"f4b397d6-f550-5786-b180-38043d6beb40","name":"Nemo + Magpie · 2 row","disabled":false}
+{"index":75,"id":"18999f0d-c4d7-42b5-9448-106df5b1ad31","name":"Nemo + Magpie · 2b bare row fallback","disabled":false}
+{"index":76,"id":"77fe6d8d-2d34-5119-949c-6ce95095d108","name":"Nemo + Magpie · 11 meter","disabled":false}
+{"index":77,"id":"efc3ba83-9153-56b9-a927-be33b2c7a62d","name":"Nemo + Magpie · 12 stat","disabled":false}
+{"index":78,"id":"87ee8145-a1a0-5a82-b2d9-053f8c130290","name":"Nemo + Magpie · 13 item","disabled":false}
+{"index":79,"id":"c0c538ea-3208-528d-8813-af431e77da1e","name":"Nemo + Magpie · 14 tier badge","disabled":false}
+{"index":80,"id":"b5da2d57-fe4f-59d9-b8c7-6598107a1118","name":"Nemo + Magpie · 4 dossier","disabled":false}
+{"index":81,"id":"3c72a808-9b65-5ac2-9446-fbb9d3124251","name":"Nemo + Magpie · 20 location file","disabled":false}
+{"index":82,"id":"43569082-f1bb-55da-83fa-bc16e0976d31","name":"Nemo + Magpie · 21 important object file","disabled":false}
+{"index":83,"id":"8d70d4b2-611a-5d53-9fae-be45dd3c7e1c","name":"Nemo + Magpie · 6 scene header","disabled":false}
+{"index":84,"id":"6ef64c27-2f64-5b5d-ae1d-2d5dd8e9b56f","name":"Nemo + Magpie · 7 skip offer","disabled":false}
+{"index":85,"id":"8edc4e8b-44ca-5dca-981c-3742d2c35947","name":"Nemo + Magpie · 17 thread block","disabled":false}
+{"index":86,"id":"9d5a79af-f6e0-5f80-84a8-196c070c2b38","name":"Nemo + Magpie · 15 elsewhere block","disabled":false}
+{"index":87,"id":"f2edaca8-61ea-5a17-af22-7fa2dfb0c2d7","name":"Nemo + Magpie · 9 person block","disabled":false}
+{"index":88,"id":"8862591e-e588-59b4-8489-7b2d79e70fe0","name":"Nemo + Magpie · 16 scene block","disabled":false}
+{"index":89,"id":"17d3317f-20a6-5e30-863d-449e39b7cfe8","name":"Nemo + Magpie · Pad tab open render","disabled":false}
+{"index":90,"id":"056a2cd2-d78f-48ce-9113-1b3baa9b6d09","name":"Nemo + Magpie · Pad tab render","disabled":false}
+{"index":91,"id":"8f9d0838-4733-5211-9899-0d1889f1be11","name":"Nemo + Magpie · 10 working notes","disabled":false}
+{"index":92,"id":"32507c87-d316-5be3-bc45-0b04466c80b2","name":"Nemo + Magpie · 5 scratchpad","disabled":false}
+{"index":93,"id":"39e0b74d-17ae-4228-81cb-8c4c773e6594","name":"Nemo + Magpie · 98 orphan named-marker open cleanup","disabled":false}
+{"index":94,"id":"b0727f98-d6dc-49da-87f9-b42da3bfe265","name":"Nemo + Magpie · 98 orphan structural close cleanup","disabled":false}
+{"index":95,"id":"ea154a23-a7d9-59f1-a693-86439d6430ef","name":"Nemo + Magpie · 99 orphan tab/deep open cleanup","disabled":false}
+{"index":96,"id":"eb38b2ca-3a18-4d7a-887b-289bf132fa6e","name":"Nemo + Magpie · 22 old scratchpad context strip","disabled":false}
