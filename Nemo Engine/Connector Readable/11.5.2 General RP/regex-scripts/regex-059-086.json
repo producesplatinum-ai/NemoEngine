@@ -1,0 +1,478 @@
+[
+  {
+    "id": "b5ca5c4f-209f-42b4-82b7-46ac00f2e0a7",
+    "scriptName": "Emoji FX - Scroll/Magic Item",
+    "findRegex": "/(📜|📖|📕)/g",
+    "replaceString": "<span style=\"display:inline-block;animation:nemo-emoji-fx-scroll-magic-item 1.5s ease-in-out;filter:drop-shadow(0 0 3px #daa520);\">$1</span><style>@keyframes nemo-emoji-fx-scroll-magic-item{0%{transform:scaleX(0.8);opacity:0.6}100%{transform:scaleX(1);opacity:1}}</style>",
+    "trimStrings": [],
+    "placement": [
+      2
+    ],
+    "disabled": false,
+    "markdownOnly": true,
+    "promptOnly": false,
+    "runOnEdit": true,
+    "substituteRegex": 0,
+    "minDepth": null,
+    "maxDepth": null
+  },
+  {
+    "id": "4052cc5b-a0a8-4f9e-b2da-dec7e8f4149e",
+    "scriptName": "Emoji FX - Smoke/Mist",
+    "findRegex": "/(🌫️|💨)/g",
+    "replaceString": "<span style=\"display:inline-block;animation:nemo-emoji-fx-smoke-mist 3s ease-in-out infinite;opacity:0.85;\">$1</span><style>@keyframes nemo-emoji-fx-smoke-mist{0%,100%{transform:translateX(0);opacity:0.85}50%{transform:translateX(3px);opacity:0.6}}</style>",
+    "trimStrings": [],
+    "placement": [
+      2
+    ],
+    "disabled": false,
+    "markdownOnly": true,
+    "promptOnly": false,
+    "runOnEdit": true,
+    "substituteRegex": 0,
+    "minDepth": null,
+    "maxDepth": null
+  },
+  {
+    "id": "a8767bcc-7f2d-4e3a-9524-6ba31fcd1624",
+    "scriptName": "Emoji FX - Gem/Crystal",
+    "findRegex": "/(💎|💍)/g",
+    "replaceString": "<span style=\"display:inline-block;animation:nemo-emoji-fx-gem-crystal 2s ease-in-out infinite;filter:drop-shadow(0 0 5px #00ffff);\">$1</span><style>@keyframes nemo-emoji-fx-gem-crystal{0%,100%{filter:drop-shadow(0 0 3px #00ffff) brightness(1)}33%{filter:drop-shadow(0 0 8px #ff69b4) brightness(1.2)}66%{filter:drop-shadow(0 0 6px #ffd700) brightness(1.1)}}</style>",
+    "trimStrings": [],
+    "placement": [
+      2
+    ],
+    "disabled": false,
+    "markdownOnly": true,
+    "promptOnly": false,
+    "runOnEdit": true,
+    "substituteRegex": 0,
+    "minDepth": null,
+    "maxDepth": null
+  },
+  {
+    "id": "b94d51f9-696f-431f-9f32-44d3f3495704",
+    "scriptName": "Emoji FX - Chains/Bondage",
+    "findRegex": "/(⛓️|🔗)/g",
+    "replaceString": "<span style=\"display:inline-block;animation:nemo-emoji-fx-chains-bondage 0.3s ease-in-out infinite alternate;filter:drop-shadow(0 0 2px #808080);\">$1</span><style>@keyframes nemo-emoji-fx-chains-bondage{0%{transform:rotate(-2deg)}100%{transform:rotate(2deg)}}</style>",
+    "trimStrings": [],
+    "placement": [
+      2
+    ],
+    "disabled": false,
+    "markdownOnly": true,
+    "promptOnly": false,
+    "runOnEdit": true,
+    "substituteRegex": 0,
+    "minDepth": null,
+    "maxDepth": null
+  },
+  {
+    "id": "84defeb9-a193-4d4c-8dea-5c8e5163d302",
+    "scriptName": "Emoji FX - Trophy/Victory",
+    "findRegex": "/(🏆|🥇|🎖️)/g",
+    "replaceString": "<span style=\"display:inline-block;animation:nemo-emoji-fx-trophy-victory 1.5s ease-in-out infinite;filter:drop-shadow(0 0 6px #ffd700);\">$1</span><style>@keyframes nemo-emoji-fx-trophy-victory{0%,100%{transform:scale(1) rotate(0deg);filter:drop-shadow(0 0 4px #ffd700)}50%{transform:scale(1.1) rotate(3deg);filter:drop-shadow(0 0 10px #ffd700)}}</style>",
+    "trimStrings": [],
+    "placement": [
+      2
+    ],
+    "disabled": false,
+    "markdownOnly": true,
+    "promptOnly": false,
+    "runOnEdit": true,
+    "substituteRegex": 0,
+    "minDepth": null,
+    "maxDepth": null
+  },
+  {
+    "id": "e08f6712-faca-4c93-b064-73c15af2d451",
+    "scriptName": "Emoji FX - Flower/Nature",
+    "findRegex": "/(🌸|🌺|🌹|🌷)/g",
+    "replaceString": "<span style=\"display:inline-block;animation:nemo-emoji-fx-flower-nature 2s ease-in-out infinite;filter:drop-shadow(0 0 3px #ff69b4);\">$1</span><style>@keyframes nemo-emoji-fx-flower-nature{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}</style>",
+    "trimStrings": [],
+    "placement": [
+      2
+    ],
+    "disabled": false,
+    "markdownOnly": true,
+    "promptOnly": false,
+    "runOnEdit": true,
+    "substituteRegex": 0,
+    "minDepth": null,
+    "maxDepth": null
+  },
+  {
+    "id": "8ded2742-b4fe-521d-a5b6-0132f7514332",
+    "scriptName": "Nemo + Magpie · 0 tab close repair",
+    "findRegex": "/(\\[\\[tab\\s+[^\\]]+\\]\\](?:(?!\\[\\[\\/tab\\]\\]|\\[\\[tab\\s|\\[\\[deep\\]\\]|\\[\\[\\/deep\\]\\]|<\\/nemo-pad>)[\\s\\S])*?)(?=(?:\\[\\[tab\\s|\\[\\[deep\\]\\]|\\[\\[\\/deep\\]\\]|<\\/nemo-pad>))/gi",
+    "replaceString": "$1[[/tab]]\n",
+    "trimStrings": [],
+    "placement": [
+      2
+    ],
+    "disabled": false,
+    "markdownOnly": true,
+    "promptOnly": false,
+    "runOnEdit": false,
+    "substituteRegex": 0,
+    "minDepth": null,
+    "maxDepth": null
+  },
+  {
+    "id": "0b683467-2949-474f-8b19-0e4ff7b097dc",
+    "scriptName": "Nemo + Magpie · 0 who close repair",
+    "findRegex": "/(\\[\\[who\\s+[^\\]]+\\]\\](?:(?!\\[\\[\\/who\\]\\]|\\[\\[who\\s|\\[\\[room\\s|\\[\\[tab\\s|\\[\\[\\/tab\\]\\]|\\[\\[deep\\]\\]|\\[\\[\\/deep\\]\\]|<\\/nemo-pad>)[\\s\\S])*?)(?=(?:\\[\\[who\\s|\\[\\[room\\s|\\[\\[tab\\s|\\[\\[\\/tab\\]\\]|\\[\\[deep\\]\\]|\\[\\[\\/deep\\]\\]|<\\/nemo-pad>))/gi",
+    "replaceString": "$1[[/who]]\n",
+    "trimStrings": [],
+    "placement": [
+      2
+    ],
+    "disabled": false,
+    "markdownOnly": true,
+    "promptOnly": false,
+    "runOnEdit": false,
+    "substituteRegex": 0,
+    "minDepth": null,
+    "maxDepth": null
+  },
+  {
+    "id": "ea6181bf-27cb-4405-a76f-7e2bd324bb23",
+    "scriptName": "Nemo + Magpie · 0 room close repair",
+    "findRegex": "/(\\[\\[room\\s+[^\\]]+\\]\\](?:(?!\\[\\[\\/room\\]\\]|\\[\\[who\\s|\\[\\[room\\s|\\[\\[tab\\s|\\[\\[\\/tab\\]\\]|\\[\\[deep\\]\\]|\\[\\[\\/deep\\]\\]|<\\/nemo-pad>)[\\s\\S])*?)(?=(?:\\[\\[who\\s|\\[\\[room\\s|\\[\\[tab\\s|\\[\\[\\/tab\\]\\]|\\[\\[deep\\]\\]|\\[\\[\\/deep\\]\\]|<\\/nemo-pad>))/gi",
+    "replaceString": "$1[[/room]]\n",
+    "trimStrings": [],
+    "placement": [
+      2
+    ],
+    "disabled": false,
+    "markdownOnly": true,
+    "promptOnly": false,
+    "runOnEdit": false,
+    "substituteRegex": 0,
+    "minDepth": null,
+    "maxDepth": null
+  },
+  {
+    "id": "105123e2-b89c-5b13-9a1e-9008b6b400bc",
+    "scriptName": "Nemo + Magpie · 0 thread close repair",
+    "findRegex": "/(\\[\\[thread\\s+[^\\]]+\\]\\](?:(?!\\[\\[\\/thread\\]\\]|\\[\\[thread\\s|\\[\\[else\\s|\\[\\[tab\\s|\\[\\[\\/tab\\]\\]|\\[\\[deep\\]\\]|\\[\\[\\/deep\\]\\]|<\\/nemo-pad>)[\\s\\S])*?)(?=(?:\\[\\[thread\\s|\\[\\[else\\s|\\[\\[tab\\s|\\[\\[\\/tab\\]\\]|\\[\\[deep\\]\\]|\\[\\[\\/deep\\]\\]|<\\/nemo-pad>))/gi",
+    "replaceString": "$1[[/thread]]\n",
+    "trimStrings": [],
+    "placement": [
+      2
+    ],
+    "disabled": false,
+    "markdownOnly": true,
+    "promptOnly": false,
+    "runOnEdit": false,
+    "substituteRegex": 0,
+    "minDepth": null,
+    "maxDepth": null
+  },
+  {
+    "id": "b3b5c5b7-4256-5f3d-82de-779578a76bb8",
+    "scriptName": "Nemo + Magpie · 0 elsewhere close repair",
+    "findRegex": "/(\\[\\[else\\s+[^\\]]+\\]\\](?:(?!\\[\\[\\/else\\]\\]|\\[\\[else\\s|\\[\\[tab\\s|\\[\\[\\/tab\\]\\]|\\[\\[deep\\]\\]|\\[\\[\\/deep\\]\\]|<\\/nemo-pad>)[\\s\\S])*?)(?=(?:\\[\\[else\\s|\\[\\[tab\\s|\\[\\[\\/tab\\]\\]|\\[\\[deep\\]\\]|\\[\\[\\/deep\\]\\]|<\\/nemo-pad>))/gi",
+    "replaceString": "$1[[/else]]\n",
+    "trimStrings": [],
+    "placement": [
+      2
+    ],
+    "disabled": false,
+    "markdownOnly": true,
+    "promptOnly": false,
+    "runOnEdit": false,
+    "substituteRegex": 0,
+    "minDepth": null,
+    "maxDepth": null
+  },
+  {
+    "id": "6b84f521-89c5-4ba9-9655-a518b9ad9101",
+    "scriptName": "Nemo + Magpie · 0 deep close repair",
+    "findRegex": "/<nemo-pad>((?:(?!\\[\\[\\/deep\\]\\])[\\s\\S])*?\\[\\[deep\\]\\](?:(?!\\[\\[\\/deep\\]\\])[\\s\\S])*?)<\\/nemo-pad>/gi",
+    "replaceString": "<nemo-pad>$1[[/deep]]</nemo-pad>",
+    "trimStrings": [],
+    "placement": [
+      2
+    ],
+    "disabled": false,
+    "markdownOnly": true,
+    "promptOnly": false,
+    "runOnEdit": false,
+    "substituteRegex": 0,
+    "minDepth": null,
+    "maxDepth": null
+  },
+  {
+    "id": "71e3d612-f8b2-4f99-bb41-3fa486d3bbd4",
+    "scriptName": "Nemo + Magpie · 0 deep auto-wrap",
+    "findRegex": "/<nemo-pad>((?:(?!\\[\\[deep\\]\\])[\\s\\S])*?)(?=(?:[ \\t\\r\\n]|<br\\s*\\/?>|<\\/p>|<p>)*\\[\\[tab\\s+[^\\]]+\\|\\s*deep\\s*\\]\\])([\\s\\S]*?)<\\/nemo-pad>/gi",
+    "replaceString": "<nemo-pad>$1[[deep]]$2[[/deep]]</nemo-pad>",
+    "trimStrings": [],
+    "placement": [
+      2
+    ],
+    "disabled": false,
+    "markdownOnly": true,
+    "promptOnly": false,
+    "runOnEdit": false,
+    "substituteRegex": 0,
+    "minDepth": null,
+    "maxDepth": null
+  },
+  {
+    "id": "5af51840-b870-4713-96ff-5e50627003fa",
+    "scriptName": "Nemo + Magpie · 0 inline-args file repair",
+    "findRegex": "/\\[\\[(npc|place|object)\\s+([^\\]|\\r\\n]+?)\\s*(?:\\|\\s*([^\\]|\\r\\n]*?))?\\s*\\|?\\s*\\r?\\n((?:(?!\\]\\])[\\s\\S])*?)\\s*\\]\\](?!\\])/g",
+    "replaceString": "[[$1 $2|$3]]\n$4\n[[/$1]]",
+    "trimStrings": [],
+    "placement": [
+      2
+    ],
+    "disabled": false,
+    "markdownOnly": true,
+    "promptOnly": false,
+    "runOnEdit": false,
+    "substituteRegex": 0,
+    "minDepth": null,
+    "maxDepth": null
+  },
+  {
+    "id": "07624014-16ac-5c70-a098-f5bfeae25d19",
+    "scriptName": "Nemo + Magpie · 1 heading",
+    "findRegex": "/(?:[ \\t\\r\\n]|<br\\s*\\/?>|<\\/p>|<p>)*»»[ \\t]*((?:(?!<br|<\\/?p[ >\\/])[^»\\r\\n])+)(?:[ \\t\\r\\n]|<br\\s*\\/?>|<\\/p>|<p>)*/g",
+    "replaceString": "<style>.pk-h{display:block;margin:1.15em 0 .45em;padding-bottom:.28em;font-size:.7em;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--pk-accent,#8a8a96);border-bottom:1px solid rgba(140,140,155,.18)}.pk-h:first-child{margin-top:0}.pk-r{display:grid;grid-template-columns:minmax(5.5em,auto) 1fr;gap:.1em .9em;margin:.28em 0;line-height:1.55;align-items:baseline}.pk-r>i{font-style:normal;font-size:.82em;font-weight:600;letter-spacing:.03em;text-transform:uppercase;opacity:.45;text-align:right;white-space:nowrap}.pk-r>.pk-rv{display:block;grid-column:2;min-width:0;max-width:100%;overflow-wrap:anywhere;word-break:normal}.pk-v0,.pk-v0 q{color:#9E9E9E}.pk-v1,.pk-v1 q{color:#56B4E9}.pk-v2,.pk-v2 q{color:#E69F00}.pk-v3,.pk-v3 q{color:#009E73}.pk-v4,.pk-v4 q{color:#CC79A7}.pk-v5,.pk-v5 q{color:#D55E00}.pk-v6,.pk-v6 q{color:#F0E442}.pk-v7,.pk-v7 q{color:#B39DDB}.pk-v8,.pk-v8 q{color:#80CBC4}.pk-v9,.pk-v9 q{color:#FF8A80}.pk-v10,.pk-v10 q{color:#A5D6A7}.pk-v11,.pk-v11 q{color:#FFD180}.pk-v12,.pk-v12 q{color:#9FA8DA}.pk-v13,.pk-v13 q{color:#F48FB1}.pk-v14,.pk-v14 q{color:#BCAAA4}.pk-v15,.pk-v15 q{color:#4DD0E1}.pk-v16,.pk-v16 q{color:#DCE775}.pk-o{display:inline-block;margin-right:.45em;font-size:.72em;line-height:1;vertical-align:.14em;text-shadow:0 0 6px currentColor}@media(max-width:640px){.pk-r{grid-template-columns:1fr;gap:0}.pk-r>i{text-align:left;opacity:.4;margin-top:.35em}.pk-r>.pk-rv{grid-column:1}}</style><b class=\"pk-h\" data-s=\"$1\">$1</b>",
+    "trimStrings": [],
+    "placement": [
+      2
+    ],
+    "disabled": false,
+    "markdownOnly": true,
+    "promptOnly": false,
+    "runOnEdit": false,
+    "substituteRegex": 0,
+    "minDepth": null,
+    "maxDepth": null
+  },
+  {
+    "id": "f4b397d6-f550-5786-b180-38043d6beb40",
+    "scriptName": "Nemo + Magpie · 2 row",
+    "findRegex": "/(?:[ \\t\\r\\n]|<br\\s*\\/?>|<\\/p>|<p>)*»[ \\t]*((?:(?!<br|<\\/?p[ >\\/])[^|»\\r\\n])+)\\|[ \\t]*((?:(?!<br|<\\/?p[ >\\/])[^»\\r\\n])*)(?:[ \\t\\r\\n]|<br\\s*\\/?>|<\\/p>|<p>)*/g",
+    "replaceString": "<style>.pk-h{display:block;margin:1.15em 0 .45em;padding-bottom:.28em;font-size:.7em;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--pk-accent,#8a8a96);border-bottom:1px solid rgba(140,140,155,.18)}.pk-h:first-child{margin-top:0}.pk-r{display:grid;grid-template-columns:minmax(5.5em,auto) 1fr;gap:.1em .9em;margin:.28em 0;line-height:1.55;align-items:baseline}.pk-r>i{font-style:normal;font-size:.82em;font-weight:600;letter-spacing:.03em;text-transform:uppercase;opacity:.45;text-align:right;white-space:nowrap}.pk-r>.pk-rv{display:block;grid-column:2;min-width:0;max-width:100%;overflow-wrap:anywhere;word-break:normal}.pk-v0,.pk-v0 q{color:#9E9E9E}.pk-v1,.pk-v1 q{color:#56B4E9}.pk-v2,.pk-v2 q{color:#E69F00}.pk-v3,.pk-v3 q{color:#009E73}.pk-v4,.pk-v4 q{color:#CC79A7}.pk-v5,.pk-v5 q{color:#D55E00}.pk-v6,.pk-v6 q{color:#F0E442}.pk-v7,.pk-v7 q{color:#B39DDB}.pk-v8,.pk-v8 q{color:#80CBC4}.pk-v9,.pk-v9 q{color:#FF8A80}.pk-v10,.pk-v10 q{color:#A5D6A7}.pk-v11,.pk-v11 q{color:#FFD180}.pk-v12,.pk-v12 q{color:#9FA8DA}.pk-v13,.pk-v13 q{color:#F48FB1}.pk-v14,.pk-v14 q{color:#BCAAA4}.pk-v15,.pk-v15 q{color:#4DD0E1}.pk-v16,.pk-v16 q{color:#DCE775}.pk-o{display:inline-block;margin-right:.45em;font-size:.72em;line-height:1;vertical-align:.14em;text-shadow:0 0 6px currentColor}@media(max-width:640px){.pk-r{grid-template-columns:1fr;gap:0}.pk-r>i{text-align:left;opacity:.4;margin-top:.35em}.pk-r>.pk-rv{grid-column:1}}</style><span class=\"pk-r\" data-l=\"$1\"><i>$1</i><span class=\"pk-rv\">$2</span></span>",
+    "trimStrings": [],
+    "placement": [
+      2
+    ],
+    "disabled": false,
+    "markdownOnly": true,
+    "promptOnly": false,
+    "runOnEdit": false,
+    "substituteRegex": 0,
+    "minDepth": null,
+    "maxDepth": null
+  },
+  {
+    "id": "18999f0d-c4d7-42b5-9448-106df5b1ad31",
+    "scriptName": "Nemo + Magpie · 2b bare row fallback",
+    "findRegex": "/(?:[ \\t\\r\\n]|<br\\s*\\/?>|<\\/p>|<p>)*»(?!»)[ \\t]*((?:(?!<br|<\\/?p[ >\\/])[^|»\\r\\n])+)(?:[ \\t\\r\\n]|<br\\s*\\/?>|<\\/p>|<p>)*/g",
+    "replaceString": "<span class=\"pk-r pk-r-bare\" style=\"display:block;margin:.28em 0;line-height:1.55;min-width:0;max-width:100%\"><span class=\"pk-rv\" style=\"display:block;min-width:0;max-width:100%;overflow-wrap:anywhere;word-break:normal\">$1</span></span>",
+    "trimStrings": [],
+    "placement": [
+      2
+    ],
+    "disabled": false,
+    "markdownOnly": true,
+    "promptOnly": false,
+    "runOnEdit": false,
+    "substituteRegex": 0,
+    "minDepth": null,
+    "maxDepth": null
+  },
+  {
+    "id": "77fe6d8d-2d34-5119-949c-6ce95095d108",
+    "scriptName": "Nemo + Magpie · 11 meter",
+    "findRegex": "/\\[\\[bar\\s+([^\\]|]+?)\\s*\\|\\s*(-?\\d{1,3})\\s*\\|\\s*(?:(\\d{1,3})\\s*\\|\\s*)?([^\\]|]*?)\\s*\\|\\s*([^\\]]*?)\\]\\]/g",
+    "replaceString": "<span class=\"pk-meter\" data-k=\"$1\"><span class=\"pk-meter-top\"><b>$1</b><span>$2 · $4</span></span><span class=\"pk-track\"><i style=\"width:$2%\"></i></span><em>$5</em></span>",
+    "trimStrings": [],
+    "placement": [
+      2
+    ],
+    "disabled": false,
+    "markdownOnly": true,
+    "promptOnly": false,
+    "runOnEdit": false,
+    "substituteRegex": 0,
+    "minDepth": null,
+    "maxDepth": null
+  },
+  {
+    "id": "efc3ba83-9153-56b9-a927-be33b2c7a62d",
+    "scriptName": "Nemo + Magpie · 12 stat",
+    "findRegex": "/\\[\\[stat\\s+([^\\]|]+?)\\s*\\|\\s*([^\\]|]+?)\\s*\\|\\s*(\\d{1,3})\\s*\\|\\s*([^\\]|]+?)\\s*\\]\\]/g",
+    "replaceString": "<span class=\"pk-stat\" data-k=\"$1\" data-c=\"$4\"><b>$1</b><span>$2</span><u><i style=\"width:$3%\"></i></u><em>$4</em></span>",
+    "trimStrings": [],
+    "placement": [
+      2
+    ],
+    "disabled": false,
+    "markdownOnly": true,
+    "promptOnly": false,
+    "runOnEdit": false,
+    "substituteRegex": 0,
+    "minDepth": null,
+    "maxDepth": null
+  },
+  {
+    "id": "87ee8145-a1a0-5a82-b2d9-053f8c130290",
+    "scriptName": "Nemo + Magpie · 13 item",
+    "findRegex": "/\\[\\[item\\s+([^\\s\\]|]+)\\s+([^\\]|]+?)\\s*(?:\\|\\s*([^\\]]*?)\\s*)?\\]\\]/g",
+    "replaceString": "<span class=\"pk-item\" data-t=\"$3\"><u>$1</u><b>$2</b><i>$3</i></span>",
+    "trimStrings": [],
+    "placement": [
+      2
+    ],
+    "disabled": false,
+    "markdownOnly": true,
+    "promptOnly": false,
+    "runOnEdit": false,
+    "substituteRegex": 0,
+    "minDepth": null,
+    "maxDepth": null
+  },
+  {
+    "id": "c0c538ea-3208-528d-8813-af431e77da1e",
+    "scriptName": "Nemo + Magpie · 14 tier badge",
+    "findRegex": "/\\[\\[tier\\s+([^\\]|]+?)\\s*(?:\\|\\s*([^\\]]*?)\\s*)?\\]\\]/g",
+    "replaceString": "<span class=\"pk-tier\" data-u=\"$2\"><b>$1</b><i>$2</i></span>",
+    "trimStrings": [],
+    "placement": [
+      2
+    ],
+    "disabled": false,
+    "markdownOnly": true,
+    "promptOnly": false,
+    "runOnEdit": false,
+    "substituteRegex": 0,
+    "minDepth": null,
+    "maxDepth": null
+  },
+  {
+    "id": "b5da2d57-fe4f-59d9-b8c7-6598107a1118",
+    "scriptName": "Nemo + Magpie · 4 dossier",
+    "findRegex": "/\\[\\[npc\\s+([^\\]|]+?)\\s*(?:\\|\\s*([^\\]|]*?)\\s*)?(?:\\|\\s*([^\\]]*?)\\s*)?\\]\\](?:[ \\t\\r\\n]|<br\\s*\\/?>|<\\/p>|<p>)*((?:(?!\\[\\[npc\\s)[\\s\\S])*?class=\"pk-(?:(?!\\[\\[npc\\s)[\\s\\S])*?)(?:[ \\t\\r\\n]|<br\\s*\\/?>|<\\/p>|<p>)*\\[\\[\\/npc\\]\\]/g",
+    "replaceString": "<style>.pk-h[data-s^=mind i]~.pk-r{--pk-sec:#8fa9c9}.pk-r[data-l^=state i]{font-size:1.25em;letter-spacing:.06em}.pk-r[data-l^=state i]>i{font-size:.55em}.pk-r[data-l^=monolog i]{display:block;margin:.55em 0 .8em;padding:.7em .95em .7em 1.05em;border-left:2px solid #8fa9c9;border-radius:0 .35rem .35rem 0;background:linear-gradient(95deg,rgba(143,169,201,.09),rgba(143,169,201,.015));font-style:italic;font-size:1.02em;line-height:1.65;color:#dfe6f0}.pk-r[data-l^=monolog i]>i{display:block;font-style:normal;margin-bottom:.35em;color:#8fa9c9;opacity:.7}.pk-r[data-l^=has wrong i],.pk-r[data-l^=doesn i]{color:#e8bdb0}.pk-r[data-l^=has wrong i]>i,.pk-r[data-l^=doesn i]>i{color:#c98570;opacity:.85}.pk-h[data-s^=voice i]~.pk-r{font-size:.94em;color:#b9b9c8}.pk-h[data-s^=voice i]~.pk-r>i{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.74em;letter-spacing:.06em;opacity:.5}.pk-h[data-s^=affinity i]~.pk-r{padding:.4em .75em;margin:.3em 0;border-radius:.4rem;background:linear-gradient(100deg,rgba(204,121,167,.1),rgba(204,121,167,.02));border:1px solid rgba(204,121,167,.22);grid-template-columns:minmax(5em,auto) 1fr}.pk-h[data-s^=affinity i]~.pk-r>i{color:#d59bbd;opacity:.8}.pk-h[data-s^=affinity i]~.pk-r{letter-spacing:.02em}.pk-h[data-s^=stats i]~.pk-r{font-variant-numeric:tabular-nums;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.88em;letter-spacing:.02em;color:#bcd0c4;padding:.25em .7em;margin:.2em 0;border-radius:.35rem;background:rgba(0,158,115,.055);border-left:2px solid rgba(0,158,115,.42)}.pk-h[data-s^=stats i]~.pk-r>i{font-family:inherit;color:#7fc0a3;opacity:.75}.pk-h[data-s^=carrying i]~.pk-r,.pk-h[data-s^=inventory i]~.pk-r{padding:.45em .8em;margin:.3em 0;border-radius:.4rem;background:rgba(230,159,0,.055);border:1px dashed rgba(230,159,0,.3);color:#e2d3b8}.pk-h[data-s^=carrying i]~.pk-r>i,.pk-h[data-s^=inventory i]~.pk-r>i{color:#d8a441;opacity:.8}.pk-h[data-s^=elsewhere i]{color:#9d8ec4;border-left-color:#9d8ec4}.pk-h[data-s^=elsewhere i]~.pk-r[data-l^=visibility i]{font-size:.78em;letter-spacing:.14em;text-transform:uppercase;opacity:.5;margin-top:.9em}.pk-h[data-s^=thread i]{color:#c49a6c;border-left-color:#c49a6c}.pk-h[data-s^=thread i]~.pk-r[data-l^=happening i]{display:block;padding:.5em .85em;margin:.4em 0;border-left:2px solid rgba(196,154,108,.5);background:rgba(196,154,108,.06);border-radius:0 .3rem .3rem 0;line-height:1.6}.pk-h[data-s^=thread i]~.pk-r[data-l^=happening i]>i{display:block;color:#c49a6c;opacity:.7;margin-bottom:.3em}.pk-h[data-s^=thread i]~.pk-r[data-l^=visibility i]{font-size:.8em;letter-spacing:.12em;text-transform:uppercase;opacity:.55}.pk-h[data-s^=narrator i]{color:#8d8d9c;border-left-color:#8d8d9c}.pk-h[data-s^=narrator i]~.pk-r{font-size:.92em;color:#b0b0bf}.pk-h[data-s^=stage i]~.pk-r>i{color:#9aa8b8;opacity:.72}.pk-h{display:block;margin:1.15em 0 .45em;padding-bottom:.28em;font-size:.7em;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--pk-accent,#8a8a96);border-bottom:1px solid rgba(140,140,155,.18)}.pk-h:first-child{margin-top:0}.pk-r{display:grid;grid-template-columns:minmax(5.5em,auto) 1fr;gap:.1em .9em;margin:.28em 0;line-height:1.55;align-items:baseline}.pk-r>i{font-style:normal;font-size:.82em;font-weight:600;letter-spacing:.03em;text-transform:uppercase;opacity:.45;text-align:right;white-space:nowrap}.pk-r>.pk-rv{display:block;grid-column:2;min-width:0;max-width:100%;overflow-wrap:anywhere;word-break:normal}.pk-v0,.pk-v0 q{color:#9E9E9E}.pk-v1,.pk-v1 q{color:#56B4E9}.pk-v2,.pk-v2 q{color:#E69F00}.pk-v3,.pk-v3 q{color:#009E73}.pk-v4,.pk-v4 q{color:#CC79A7}.pk-v5,.pk-v5 q{color:#D55E00}.pk-v6,.pk-v6 q{color:#F0E442}.pk-v7,.pk-v7 q{color:#B39DDB}.pk-v8,.pk-v8 q{color:#80CBC4}.pk-v9,.pk-v9 q{color:#FF8A80}.pk-v10,.pk-v10 q{color:#A5D6A7}.pk-v11,.pk-v11 q{color:#FFD180}.pk-v12,.pk-v12 q{color:#9FA8DA}.pk-v13,.pk-v13 q{color:#F48FB1}.pk-v14,.pk-v14 q{color:#BCAAA4}.pk-v15,.pk-v15 q{color:#4DD0E1}.pk-v16,.pk-v16 q{color:#DCE775}.pk-o{display:inline-block;margin-right:.45em;font-size:.72em;line-height:1;vertical-align:.14em;text-shadow:0 0 6px currentColor}@media(max-width:640px){.pk-r{grid-template-columns:1fr;gap:0}.pk-r>i{text-align:left;opacity:.4;margin-top:.35em}.pk-r>.pk-rv{grid-column:1}}.pk-npc{--pk-line:#cc79a7;position:relative;display:inline;cursor:help;outline:none;border-bottom:1px dotted var(--pk-line);text-underline-offset:3px}.pk-npc[data-tier^=mook i]{--pk-line:#9e9e9e}.pk-npc[data-tier^=side i]{--pk-line:#56b4e9}.pk-npc[data-tier^=main i]{--pk-line:#cc79a7}.pk-npc:hover,.pk-npc:focus{border-bottom-color:currentColor}.pk-npc>.pk-card{--pk-accent:#cc79a7;display:none;position:fixed;z-index:9999;left:50%;top:50%;transform:translate(-50%,-50%);width:min(36rem,92vw);max-height:min(74vh,38rem);overflow-y:auto;overscroll-behavior:contain;padding:0;text-align:left;white-space:normal;font-size:.92em;font-weight:400;font-style:normal;line-height:1.55;letter-spacing:0;color:#d8d8e0;background:linear-gradient(168deg,#191920 0%,#131318 62%,#101014 100%);border:1px solid color-mix(in srgb,var(--pk-accent) 38%,transparent);border-radius:.8rem;box-shadow:0 28px 80px rgba(0,0,0,.92),0 1px 0 rgba(255,255,255,.05) inset,0 0 0 100vmax rgba(0,0,0,.5)}.pk-npc>.pk-card[data-tier^=mook i]{--pk-accent:#9e9e9e}.pk-npc>.pk-card[data-tier^=side i]{--pk-accent:#56b4e9}.pk-npc>.pk-card[data-tier^=main i]{--pk-accent:#cc79a7}.pk-npc:hover>.pk-card,.pk-npc:focus>.pk-card,.pk-npc:focus-within>.pk-card{display:block}.pk-head{position:sticky;top:0;z-index:2;display:flex;align-items:center;gap:.55em;padding:.95rem 1.25rem .7rem;background:linear-gradient(180deg,#1c1c24,#191920);border-bottom:1px solid rgba(150,150,170,.2)}.pk-head::after{content:'';position:absolute;left:0;right:0;bottom:-1px;height:2px;background:linear-gradient(90deg,var(--pk-accent),transparent 72%)}.pk-title{font-size:1.12em;font-weight:600;letter-spacing:.01em;color:#f0f0f5;margin-right:auto}.pk-filetype,.pk-revision{display:inline-block;padding:.18em .5em;border-radius:999px;font-size:.62em;font-weight:700;letter-spacing:.12em;text-transform:uppercase;white-space:nowrap}.pk-filetype{color:var(--pk-accent);border:1px solid color-mix(in srgb,var(--pk-accent) 50%,transparent);background:color-mix(in srgb,var(--pk-accent) 10%,transparent)}.pk-filetype:empty::before{content:\"main\"}.pk-revision{color:#d8c8a4;border:1px solid rgba(216,200,164,.3);background:rgba(216,200,164,.07)}.pk-revision:empty{display:none}.pk-body{display:block;padding:.9rem 1.25rem 1.15rem}.pk-card::-webkit-scrollbar{width:7px}.pk-card::-webkit-scrollbar-track{background:transparent}.pk-card::-webkit-scrollbar-thumb{background:rgba(150,150,170,.3);border-radius:4px}@supports(anchor-name:--a){.pk-npc{anchor-name:--pkc;anchor-scope:--pkc}.pk-npc>.pk-card{position-anchor:--pkc;left:auto;top:auto;transform:none;position-area:block-end;position-try-fallbacks:block-start,inline-end block-end,inline-start block-end,flip-block;position-try-order:most-height;margin-block:.5rem;max-height:min(62vh,34rem);box-shadow:0 20px 56px rgba(0,0,0,.9),0 1px 0 rgba(255,255,255,.05) inset}}@media(max-width:640px){.pk-npc>.pk-card{width:93vw;max-height:76vh}.pk-head{flex-wrap:wrap}.pk-title{width:100%}}</style><span class=\"pk-npc\" data-tier=\"$2\" tabindex=\"0\">$1<span class=\"pk-card\" data-tier=\"$2\"><span class=\"pk-head\"><b class=\"pk-title\">$1</b><span class=\"pk-filetype\">$2</span><span class=\"pk-revision\">$3</span></span><span class=\"pk-body\">$4</span></span></span>",
+    "trimStrings": [],
+    "placement": [
+      2
+    ],
+    "disabled": false,
+    "markdownOnly": true,
+    "promptOnly": false,
+    "runOnEdit": false,
+    "substituteRegex": 0,
+    "minDepth": null,
+    "maxDepth": null
+  },
+  {
+    "id": "3c72a808-9b65-5ac2-9446-fbb9d3124251",
+    "scriptName": "Nemo + Magpie · 20 location file",
+    "findRegex": "/\\[\\[place\\s+([^\\]|]+?)\\s*(?:\\|\\s*([^\\]]*?)\\s*)?\\]\\](?:[ \\t\\r\\n]|<br\\s*\\/?>|<\\/p>|<p>)*((?:(?!\\[\\[place\\s)[\\s\\S])*?class=\"pk-(?:(?!\\[\\[place\\s)[\\s\\S])*?)(?:[ \\t\\r\\n]|<br\\s*\\/?>|<\\/p>|<p>)*\\[\\[\\/place\\]\\]/g",
+    "replaceString": "<style>.pk-place{--pk-accent:#56b4e9;position:relative;display:inline;cursor:help;outline:none;border-bottom:1px dotted var(--pk-accent);text-underline-offset:3px}.pk-place:hover,.pk-place:focus{border-bottom-color:currentColor}.pk-place>.pk-place-card{display:none;position:fixed;z-index:9999;left:50%;top:50%;transform:translate(-50%,-50%);width:min(36rem,92vw);max-height:min(74vh,38rem);overflow-y:auto;overscroll-behavior:contain;padding:0;text-align:left;white-space:normal;font-size:.92em;font-weight:400;font-style:normal;line-height:1.55;letter-spacing:0;color:#d8d8e0;background:linear-gradient(168deg,#191920 0%,#131318 62%,#101014 100%);border:1px solid color-mix(in srgb,var(--pk-accent) 38%,transparent);border-radius:.8rem;box-shadow:0 28px 80px rgba(0,0,0,.92),0 1px 0 rgba(255,255,255,.05) inset,0 0 0 100vmax rgba(0,0,0,.5)}.pk-place:hover>.pk-place-card,.pk-place:focus>.pk-place-card,.pk-place:focus-within>.pk-place-card{display:block}.pk-place-head{position:sticky;top:0;z-index:2;display:flex;align-items:center;gap:.55em;padding:.95rem 1.25rem .7rem;background:linear-gradient(180deg,#1c1c24,#191920);border-bottom:1px solid rgba(150,150,170,.2)}.pk-place-head::after{content:'';position:absolute;left:0;right:0;bottom:-1px;height:2px;background:linear-gradient(90deg,var(--pk-accent),transparent 72%)}.pk-place-title{font-size:1.12em;font-weight:600;letter-spacing:.01em;color:#f0f0f5;margin-right:auto}.pk-place-badge,.pk-place-revision{display:inline-block;padding:.18em .5em;border-radius:999px;font-size:.62em;font-weight:700;letter-spacing:.12em;text-transform:uppercase;white-space:nowrap}.pk-place-badge{color:var(--pk-accent);border:1px solid color-mix(in srgb,var(--pk-accent) 50%,transparent);background:color-mix(in srgb,var(--pk-accent) 10%,transparent)}.pk-place-revision{color:#d8c8a4;border:1px solid rgba(216,200,164,.3);background:rgba(216,200,164,.07)}.pk-place-revision:empty{display:none}.pk-place-body{display:block;padding:.9rem 1.25rem 1.15rem}.pk-place-card::-webkit-scrollbar{width:7px}.pk-place-card::-webkit-scrollbar-track{background:transparent}.pk-place-card::-webkit-scrollbar-thumb{background:rgba(150,150,170,.3);border-radius:4px}@supports(anchor-name:--a){.pk-place{anchor-name:--pkp;anchor-scope:--pkp}.pk-place>.pk-place-card{position-anchor:--pkp;left:auto;top:auto;transform:none;position-area:block-end;position-try-fallbacks:block-start,inline-end block-end,inline-start block-end,flip-block;position-try-order:most-height;margin-block:.5rem;max-height:min(62vh,34rem);box-shadow:0 20px 56px rgba(0,0,0,.9),0 1px 0 rgba(255,255,255,.05) inset}}@media(max-width:640px){.pk-place>.pk-place-card{width:93vw;max-height:76vh}.pk-place-head{flex-wrap:wrap}.pk-place-title{width:100%}}</style><span class=\"pk-place\" tabindex=\"0\">$1<span class=\"pk-place-card\"><span class=\"pk-place-head\"><b class=\"pk-place-title\">$1</b><span class=\"pk-place-badge\">LOCATION</span><span class=\"pk-place-revision\">$2</span></span><span class=\"pk-place-body\">$3</span></span></span>",
+    "trimStrings": [],
+    "placement": [
+      2
+    ],
+    "disabled": false,
+    "markdownOnly": true,
+    "promptOnly": false,
+    "runOnEdit": false,
+    "substituteRegex": 0,
+    "minDepth": null,
+    "maxDepth": null
+  },
+  {
+    "id": "43569082-f1bb-55da-83fa-bc16e0976d31",
+    "scriptName": "Nemo + Magpie · 21 important object file",
+    "findRegex": "/\\[\\[object\\s+([^\\]|]+?)\\s*(?:\\|\\s*([^\\]]*?)\\s*)?\\]\\](?:[ \\t\\r\\n]|<br\\s*\\/?>|<\\/p>|<p>)*((?:(?!\\[\\[object\\s)[\\s\\S])*?class=\"pk-(?:(?!\\[\\[object\\s)[\\s\\S])*?)(?:[ \\t\\r\\n]|<br\\s*\\/?>|<\\/p>|<p>)*\\[\\[\\/object\\]\\]/g",
+    "replaceString": "<style>.pk-object{--pk-accent:#e69f00;position:relative;display:inline;cursor:help;outline:none;border-bottom:1px dotted var(--pk-accent);text-underline-offset:3px}.pk-object:hover,.pk-object:focus{border-bottom-color:currentColor}.pk-object>.pk-object-card{display:none;position:fixed;z-index:9999;left:50%;top:50%;transform:translate(-50%,-50%);width:min(36rem,92vw);max-height:min(74vh,38rem);overflow-y:auto;overscroll-behavior:contain;padding:0;text-align:left;white-space:normal;font-size:.92em;font-weight:400;font-style:normal;line-height:1.55;letter-spacing:0;color:#d8d8e0;background:linear-gradient(168deg,#191920 0%,#131318 62%,#101014 100%);border:1px solid color-mix(in srgb,var(--pk-accent) 38%,transparent);border-radius:.8rem;box-shadow:0 28px 80px rgba(0,0,0,.92),0 1px 0 rgba(255,255,255,.05) inset,0 0 0 100vmax rgba(0,0,0,.5)}.pk-object:hover>.pk-object-card,.pk-object:focus>.pk-object-card,.pk-object:focus-within>.pk-object-card{display:block}.pk-object-head{position:sticky;top:0;z-index:2;display:flex;align-items:center;gap:.55em;padding:.95rem 1.25rem .7rem;background:linear-gradient(180deg,#1c1c24,#191920);border-bottom:1px solid rgba(150,150,170,.2)}.pk-object-head::after{content:'';position:absolute;left:0;right:0;bottom:-1px;height:2px;background:linear-gradient(90deg,var(--pk-accent),transparent 72%)}.pk-object-title{font-size:1.12em;font-weight:600;letter-spacing:.01em;color:#f0f0f5;margin-right:auto}.pk-object-badge,.pk-object-revision{display:inline-block;padding:.18em .5em;border-radius:999px;font-size:.62em;font-weight:700;letter-spacing:.12em;text-transform:uppercase;white-space:nowrap}.pk-object-badge{color:var(--pk-accent);border:1px solid color-mix(in srgb,var(--pk-accent) 50%,transparent);background:color-mix(in srgb,var(--pk-accent) 10%,transparent)}.pk-object-revision{color:#d8c8a4;border:1px solid rgba(216,200,164,.3);background:rgba(216,200,164,.07)}.pk-object-revision:empty{display:none}.pk-object-body{display:block;padding:.9rem 1.25rem 1.15rem}.pk-object-card::-webkit-scrollbar{width:7px}.pk-object-card::-webkit-scrollbar-track{background:transparent}.pk-object-card::-webkit-scrollbar-thumb{background:rgba(150,150,170,.3);border-radius:4px}@supports(anchor-name:--a){.pk-object{anchor-name:--pko;anchor-scope:--pko}.pk-object>.pk-object-card{position-anchor:--pko;left:auto;top:auto;transform:none;position-area:block-end;position-try-fallbacks:block-start,inline-end block-end,inline-start block-end,flip-block;position-try-order:most-height;margin-block:.5rem;max-height:min(62vh,34rem);box-shadow:0 20px 56px rgba(0,0,0,.9),0 1px 0 rgba(255,255,255,.05) inset}}@media(max-width:640px){.pk-object>.pk-object-card{width:93vw;max-height:76vh}.pk-object-head{flex-wrap:wrap}.pk-object-title{width:100%}}</style><span class=\"pk-object\" tabindex=\"0\">$1<span class=\"pk-object-card\"><span class=\"pk-object-head\"><b class=\"pk-object-title\">$1</b><span class=\"pk-object-badge\">IMPORTANT ITEM</span><span class=\"pk-object-revision\">$2</span></span><span class=\"pk-object-body\">$3</span></span></span>",
+    "trimStrings": [],
+    "placement": [
+      2
+    ],
+    "disabled": false,
+    "markdownOnly": true,
+    "promptOnly": false,
+    "runOnEdit": false,
+    "substituteRegex": 0,
+    "minDepth": null,
+    "maxDepth": null
+  },
+  {
+    "id": "8d70d4b2-611a-5d53-9fae-be45dd3c7e1c",
+    "scriptName": "Nemo + Magpie · 6 scene header",
+    "findRegex": "/<scene>((?:(?!<scene>)[\\s\\S])*?)<\\/scene>/g",
+    "replaceString": "<style>.pk-h{display:block;margin:1.15em 0 .45em;padding-bottom:.28em;font-size:.7em;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--pk-accent,#8a8a96);border-bottom:1px solid rgba(140,140,155,.18)}.pk-h:first-child{margin-top:0}.pk-r{display:grid;grid-template-columns:minmax(5.5em,auto) 1fr;gap:.1em .9em;margin:.28em 0;line-height:1.55;align-items:baseline}.pk-r>i{font-style:normal;font-size:.82em;font-weight:600;letter-spacing:.03em;text-transform:uppercase;opacity:.45;text-align:right;white-space:nowrap}.pk-r>.pk-rv{display:block;grid-column:2;min-width:0;max-width:100%;overflow-wrap:anywhere;word-break:normal}.pk-v0,.pk-v0 q{color:#9E9E9E}.pk-v1,.pk-v1 q{color:#56B4E9}.pk-v2,.pk-v2 q{color:#E69F00}.pk-v3,.pk-v3 q{color:#009E73}.pk-v4,.pk-v4 q{color:#CC79A7}.pk-v5,.pk-v5 q{color:#D55E00}.pk-v6,.pk-v6 q{color:#F0E442}.pk-v7,.pk-v7 q{color:#B39DDB}.pk-v8,.pk-v8 q{color:#80CBC4}.pk-v9,.pk-v9 q{color:#FF8A80}.pk-v10,.pk-v10 q{color:#A5D6A7}.pk-v11,.pk-v11 q{color:#FFD180}.pk-v12,.pk-v12 q{color:#9FA8DA}.pk-v13,.pk-v13 q{color:#F48FB1}.pk-v14,.pk-v14 q{color:#BCAAA4}.pk-v15,.pk-v15 q{color:#4DD0E1}.pk-v16,.pk-v16 q{color:#DCE775}.pk-o{display:inline-block;margin-right:.45em;font-size:.72em;line-height:1;vertical-align:.14em;text-shadow:0 0 6px currentColor}@media(max-width:640px){.pk-r{grid-template-columns:1fr;gap:0}.pk-r>i{text-align:left;opacity:.4;margin-top:.35em}.pk-r>.pk-rv{grid-column:1}}.pk-scene{display:block;margin:1.9em 0 1.3em;padding:.5rem 0;text-align:center;font-size:.72em;font-weight:600;letter-spacing:.28em;text-transform:uppercase;color:#6e6e80;border-top:1px solid rgba(140,140,160,.16);border-bottom:1px solid rgba(140,140,160,.16);position:relative}.pk-scene::before{content:'';position:absolute;left:50%;top:-3px;width:5px;height:5px;margin-left:-2.5px;transform:rotate(45deg);background:#6e6e80;opacity:.5}</style><span class=\"pk-scene\">$1</span>",
+    "trimStrings": [],
+    "placement": [
+      2
+    ],
+    "disabled": false,
+    "markdownOnly": true,
+    "promptOnly": false,
+    "runOnEdit": false,
+    "substituteRegex": 0,
+    "minDepth": null,
+    "maxDepth": null
+  },
+  {
+    "id": "6ef64c27-2f64-5b5d-ae1d-2d5dd8e9b56f",
+    "scriptName": "Nemo + Magpie · 7 skip offer",
+    "findRegex": "/<skip>((?:(?!<skip>)[\\s\\S])*?)<\\/skip>/g",
+    "replaceString": "<style>.pk-h{display:block;margin:1.15em 0 .45em;padding-bottom:.28em;font-size:.7em;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--pk-accent,#8a8a96);border-bottom:1px solid rgba(140,140,155,.18)}.pk-h:first-child{margin-top:0}.pk-r{display:grid;grid-template-columns:minmax(5.5em,auto) 1fr;gap:.1em .9em;margin:.28em 0;line-height:1.55;align-items:baseline}.pk-r>i{font-style:normal;font-size:.82em;font-weight:600;letter-spacing:.03em;text-transform:uppercase;opacity:.45;text-align:right;white-space:nowrap}.pk-r>.pk-rv{display:block;grid-column:2;min-width:0;max-width:100%;overflow-wrap:anywhere;word-break:normal}.pk-v0,.pk-v0 q{color:#9E9E9E}.pk-v1,.pk-v1 q{color:#56B4E9}.pk-v2,.pk-v2 q{color:#E69F00}.pk-v3,.pk-v3 q{color:#009E73}.pk-v4,.pk-v4 q{color:#CC79A7}.pk-v5,.pk-v5 q{color:#D55E00}.pk-v6,.pk-v6 q{color:#F0E442}.pk-v7,.pk-v7 q{color:#B39DDB}.pk-v8,.pk-v8 q{color:#80CBC4}.pk-v9,.pk-v9 q{color:#FF8A80}.pk-v10,.pk-v10 q{color:#A5D6A7}.pk-v11,.pk-v11 q{color:#FFD180}.pk-v12,.pk-v12 q{color:#9FA8DA}.pk-v13,.pk-v13 q{color:#F48FB1}.pk-v14,.pk-v14 q{color:#BCAAA4}.pk-v15,.pk-v15 q{color:#4DD0E1}.pk-v16,.pk-v16 q{color:#DCE775}.pk-o{display:inline-block;margin-right:.45em;font-size:.72em;line-height:1;vertical-align:.14em;text-shadow:0 0 6px currentColor}@media(max-width:640px){.pk-r{grid-template-columns:1fr;gap:0}.pk-r>i{text-align:left;opacity:.4;margin-top:.35em}.pk-r>.pk-rv{grid-column:1}}.pk-skip{display:block;margin:1.3em 0;padding:.85rem 1.15rem;font-size:.86em;color:#c9c9d4;border:1px solid rgba(140,140,160,.3);border-left:3px solid #8a7f5c;border-radius:.5rem;background:linear-gradient(100deg,rgba(138,127,92,.09),rgba(255,255,255,.015))}.pk-skip .pk-h{color:#a99a6d;margin-top:0}.pk-skip .pk-r{grid-template-columns:minmax(3.5em,auto) 1fr}</style><span class=\"pk-skip\">$1</span>",
+    "trimStrings": [],
+    "placement": [
+      2
+    ],
+    "disabled": false,
+    "markdownOnly": true,
+    "promptOnly": false,
+    "runOnEdit": false,
+    "substituteRegex": 0,
+    "minDepth": null,
+    "maxDepth": null
+  },
+  {
+    "id": "8edc4e8b-44ca-5dca-981c-3742d2c35947",
+    "scriptName": "Nemo + Magpie · 17 thread block",
+    "findRegex": "/\\[\\[thread\\s+([^\\]|]+?)\\s*(?:\\|\\s*([^\\]]*?)\\s*)?\\]\\](?:[ \\t\\r\\n]|<br\\s*\\/?>|<\\/p>|<p>)*((?:(?!\\[\\[thread\\s)[\\s\\S])*?)(?:[ \\t\\r\\n]|<br\\s*\\/?>|<\\/p>|<p>)*\\[\\[\\/thread\\]\\]/g",
+    "replaceString": "<style>.pk-thread{margin:.45em 0;border:1px solid rgba(196,154,108,.26);border-radius:.45rem;background:rgba(196,154,108,.045);overflow:hidden}.pk-thread>summary{cursor:pointer;list-style:none;padding:.42rem .7rem;display:flex;align-items:baseline;gap:.5em;font-size:.9em;font-weight:600;color:#d5bb9a;user-select:none;transition:background .15s;text-transform:capitalize}.pk-thread>summary::-webkit-details-marker{display:none}.pk-thread>summary::before{content:\"↦\";font-size:.95em;color:#c49a6c;opacity:.85;align-self:center}.pk-thread>summary>i{font-style:normal;font-size:.66em;font-weight:600;letter-spacing:.12em;text-transform:uppercase;opacity:.48;margin-left:auto;padding-left:.6em;white-space:nowrap}.pk-thread>summary::after{content:'';width:.38em;height:.38em;align-self:center;border-right:1.5px solid currentColor;border-bottom:1.5px solid currentColor;transform:rotate(45deg) translateY(-2px);opacity:.4;transition:transform .2s}.pk-thread[open]>summary::after{transform:rotate(225deg) translateY(-2px)}.pk-thread>summary:hover{background:rgba(196,154,108,.08)}.pk-thread[open]>summary{border-bottom:1px solid rgba(196,154,108,.2)}.pk-thread>div{padding:.65rem .85rem .8rem}.pk-thread .pk-h{display:none}.pk-else .pk-thread{margin-left:0}.pk-else .pk-thread:first-of-type{margin-top:1.3em;padding-top:0;border-top:1px solid rgba(196,154,108,.26)}.pk-thread{margin:.45em 0;border:1px solid rgba(196,154,108,.26);border-radius:.45rem;background:rgba(196,154,108,.045);overflow:hidden}.pk-thread>summary{cursor:pointer;list-style:none;padding:.42rem .7rem;display:flex;align-items:baseline;gap:.5em;font-size:.9em;font-weight:600;color:#d5bb9a;user-select:none;transition:background .15s;text-transform:capitalize}.pk-thread>summary::-webkit-details-marker{display:none}.pk-thread>summary::before{content:\"↦\";font-size:.95em;color:#c49a6c;opacity:.85;align-self:center}.pk-thread>summary>i{font-style:normal;font-size:.66em;font-weight:600;letter-spacing:.12em;text-transform:uppercase;opacity:.48;margin-left:auto;padding-left:.6em;white-space:nowrap}.pk-thread>summary::after{content:'';width:.38em;height:.38em;align-self:center;border-right:1.5px solid currentColor;border-bottom:1.5px solid currentColor;transform:rotate(45deg) translateY(-2px);opacity:.4;transition:transform .2s}.pk-thread[open]>summary::after{transform:rotate(225deg) translateY(-2px)}.pk-thread>summary:hover{background:rgba(196,154,108,.08)}.pk-thread[open]>summary{border-bottom:1px solid rgba(196,154,108,.2)}.pk-thread>div{padding:.65rem .85rem .8rem}.pk-thread .pk-h{display:none}.pk-else .pk-thread{margin-left:0}.pk-else .pk-thread:first-of-type{margin-top:1.3em;padding-top:0;border-top:1px solid rgba(196,154,108,.26)}</style><details class=\"pk-thread\"><summary>$1<i>$2</i></summary><div>$3</div></details>",
+    "trimStrings": [],
+    "placement": [
+      2
+    ],
+    "disabled": false,
+    "markdownOnly": true,
+    "promptOnly": false,
+    "runOnEdit": false,
+    "substituteRegex": 0,
+    "minDepth": null,
+    "maxDepth": null
+  },
+  {
+    "id": "9d5a79af-f6e0-5f80-84a8-196c070c2b38",
+    "scriptName": "Nemo + Magpie · 15 elsewhere block",
+    "findRegex": "/\\[\\[else\\s+([^\\]|]+?)\\s*\\]\\]\\s*((?:(?!\\[\\[else\\s)[\\s\\S])*?)\\s*\\[\\[\\/else\\]\\]/g",
+    "replaceString": "<style>.pk-else{margin:.55em 0;border:1px solid rgba(157,142,196,.28);border-radius:.5rem;background:linear-gradient(150deg,rgba(157,142,196,.07),rgba(157,142,196,.015));overflow:hidden}.pk-else>summary{cursor:pointer;list-style:none;padding:.5rem .8rem;display:flex;align-items:center;gap:.55em;font-size:.95em;font-weight:600;color:#c3b8e0;user-select:none;transition:background .15s}.pk-else>summary::-webkit-details-marker{display:none}.pk-else>summary::before{content:\"◈\";font-size:.85em;color:#9d8ec4;opacity:.85}.pk-else>summary>u{font-style:normal;text-decoration:none;font-size:.62em;font-weight:700;letter-spacing:.2em;text-transform:uppercase;opacity:.5;margin-right:.15em}.pk-else>summary::after{content:'';margin-left:auto;width:.42em;height:.42em;border-right:1.5px solid currentColor;border-bottom:1.5px solid currentColor;transform:rotate(45deg) translateY(-2px);opacity:.42;transition:transform .2s}.pk-else[open]>summary::after{transform:rotate(225deg) translateY(-2px)}.pk-else>summary:hover{background:rgba(157,142,196,.07)}.pk-else[open]>summary{border-bottom:1px solid rgba(157,142,196,.2)}.pk-else>div{padding:.85rem 1.05rem 1rem;line-height:1.7}.pk-else>div>p{margin:0 0 .9em}.pk-else .pk-r[data-l^=visibility i]{margin-top:1em;padding-top:.7em;border-top:1px solid rgba(157,142,196,.2);font-size:.78em;letter-spacing:.14em;text-transform:uppercase;opacity:.5}.pk-else{margin:.55em 0;border:1px solid rgba(157,142,196,.28);border-radius:.5rem;background:linear-gradient(150deg,rgba(157,142,196,.07),rgba(157,142,196,.015));overflow:hidden}.pk-else>summary{cursor:pointer;list-style:none;padding:.5rem .8rem;display:flex;align-items:center;gap:.55em;font-size:.95em;font-weight:600;color:#c3b8e0;user-select:none;transition:background .15s}.pk-else>summary::-webkit-details-marker{display:none}.pk-else>summary::before{content:\"◈\";font-size:.85em;color:#9d8ec4;opacity:.85}.pk-else>summary>u{font-style:normal;text-decoration:none;font-size:.62em;font-weight:700;letter-spacing:.2em;text-transform:uppercase;opacity:.5;margin-right:.15em}.pk-else>summary::after{content:'';margin-left:auto;width:.42em;height:.42em;border-right:1.5px solid currentColor;border-bottom:1.5px solid currentColor;transform:rotate(45deg) translateY(-2px);opacity:.42;transition:transform .2s}.pk-else[open]>summary::after{transform:rotate(225deg) translateY(-2px)}.pk-else>summary:hover{background:rgba(157,142,196,.07)}.pk-else[open]>summary{border-bottom:1px solid rgba(157,142,196,.2)}.pk-else>div{padding:.85rem 1.05rem 1rem;line-height:1.7}.pk-else>div>p{margin:0 0 .9em}.pk-else .pk-r[data-l^=visibility i]{margin-top:1em;padding-top:.7em;border-top:1px solid rgba(157,142,196,.2);font-size:.78em;letter-spacing:.14em;text-transform:uppercase;opacity:.5}.pk-room{margin:.55em 0;border:1px solid rgba(140,155,175,.26);border-radius:.5rem;background:linear-gradient(150deg,rgba(140,155,175,.06),rgba(140,155,175,.012));overflow:hidden}.pk-room>summary{cursor:pointer;list-style:none;padding:.5rem .8rem;display:flex;align-items:center;gap:.55em;font-size:.95em;font-weight:600;color:#b9c4d2;user-select:none;transition:background .15s}.pk-room>summary::-webkit-details-marker{display:none}.pk-room>summary::before{content:\"⌖\";font-size:.95em;color:#8fa3ba;opacity:.85}.pk-room>summary>u{font-style:normal;text-decoration:none;font-size:.62em;font-weight:700;letter-spacing:.2em;text-transform:uppercase;opacity:.5;margin-right:.15em}.pk-room>summary::after{content:'';margin-left:auto;width:.42em;height:.42em;border-right:1.5px solid currentColor;border-bottom:1.5px solid currentColor;transform:rotate(45deg) translateY(-2px);opacity:.42;transition:transform .2s}.pk-room[open]>summary::after{transform:rotate(225deg) translateY(-2px)}.pk-room>summary:hover{background:rgba(140,155,175,.07)}.pk-room[open]>summary{border-bottom:1px solid rgba(140,155,175,.18)}.pk-room>div{padding:.8rem 1rem .95rem}.pk-room .pk-h{display:none}.pk-else .pk-h[data-s^=thread i]{margin-top:1.5em;padding-top:1.1em;padding-left:.7em;border-top:1px solid rgba(157,142,196,.22)}.pk-else .pk-h[data-s^=thread i]:first-of-type{margin-top:1.2em}.pk-else .pk-r[data-l^=visibility i]{margin-top:.8em;padding-top:.5em;border-top:none;border-left:2px solid rgba(157,142,196,.3);padding-left:.6em}.pk-else>summary,.pk-room>summary,.pk-who>summary{text-transform:capitalize}.pk-else>summary>u,.pk-room>summary>u{text-transform:uppercase}.pk-meter-top span{text-transform:capitalize}.pk-tier>b{text-transform:uppercase}.pk-tier>i{text-transform:none}.pk-item>b{text-transform:capitalize}.pk-thread{margin:.45em 0;border:1px solid rgba(196,154,108,.26);border-radius:.45rem;background:rgba(196,154,108,.045);overflow:hidden}.pk-thread>summary{cursor:pointer;list-style:none;padding:.42rem .7rem;display:flex;align-items:baseline;gap:.5em;font-size:.9em;font-weight:600;color:#d5bb9a;user-select:none;transition:background .15s;text-transform:capitalize}.pk-thread>summary::-webkit-details-marker{display:none}.pk-thread>summary::before{content:\"↦\";font-size:.95em;color:#c49a6c;opacity:.85;align-self:center}.pk-thread>summary>i{font-style:normal;font-size:.66em;font-weight:600;letter-spacing:.12em;text-transform:uppercase;opacity:.48;margin-left:auto;padding-left:.6em;white-space:nowrap}.pk-thread>summary::after{content:'';width:.38em;height:.38em;align-self:center;border-right:1.5px solid currentColor;border-bottom:1.5px solid currentColor;transform:rotate(45deg) translateY(-2px);opacity:.4;transition:transform .2s}.pk-thread[open]>summary::after{transform:rotate(225deg) translateY(-2px)}.pk-thread>summary:hover{background:rgba(196,154,108,.08)}.pk-thread[open]>summary{border-bottom:1px solid rgba(196,154,108,.2)}.pk-thread>div{padding:.65rem .85rem .8rem}.pk-thread .pk-h{display:none}.pk-else .pk-thread{margin-left:0}.pk-else .pk-thread:first-of-type{margin-top:1.3em;padding-top:0;border-top:1px solid rgba(196,154,108,.26)}</style><details class=\"pk-else\"><summary><u>elsewhere</u>$1</summary><div>$2</div></details>",
+    "trimStrings": [],
+    "placement": [
+      2
+    ],
+    "disabled": false,
+    "markdownOnly": true,
+    "promptOnly": false,
+    "runOnEdit": false,
+    "substituteRegex": 0,
+    "minDepth": null,
+    "maxDepth": null
+  }
+]

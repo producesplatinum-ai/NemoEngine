@@ -1,0 +1,858 @@
+[
+  {
+    "order_index": 0,
+    "prompt_index": 0,
+    "identifier": "1770095491852-1nszrpl3",
+    "name": "=== 📁 Core ===",
+    "role": "system",
+    "shard": "prompts/prompts-000-010.json"
+  },
+  {
+    "order_index": 2,
+    "prompt_index": 2,
+    "identifier": "v11-000-variable-init",
+    "name": "🔧 Variable Init",
+    "role": "system",
+    "shard": "prompts/prompts-000-010.json"
+  },
+  {
+    "order_index": 3,
+    "prompt_index": 5,
+    "identifier": "nemo_premise",
+    "name": "🎭 The Premise",
+    "role": "system",
+    "shard": "prompts/prompts-000-010.json"
+  },
+  {
+    "order_index": 7,
+    "prompt_index": 7,
+    "identifier": "v11-header-core-augments",
+    "name": "<Core: Augments>",
+    "role": "system",
+    "shard": "prompts/prompts-000-010.json"
+  },
+  {
+    "order_index": 10,
+    "prompt_index": 10,
+    "identifier": "v11-header-core-narration",
+    "name": "<Core: Narration>",
+    "role": "system",
+    "shard": "prompts/prompts-000-010.json"
+  },
+  {
+    "order_index": 13,
+    "prompt_index": 13,
+    "identifier": "v11-030-narration-omega",
+    "name": "🧱 Narration: Omega",
+    "role": "system",
+    "shard": "prompts/prompts-011-017.json"
+  },
+  {
+    "order_index": 15,
+    "prompt_index": 15,
+    "identifier": "v11-header-core-speech",
+    "name": "<Core: Speech>",
+    "role": "system",
+    "shard": "prompts/prompts-011-017.json"
+  },
+  {
+    "order_index": 18,
+    "prompt_index": 18,
+    "identifier": "v11-033-speech-omega",
+    "name": "🗣️ Speech: Omega",
+    "role": "system",
+    "shard": "prompts/prompts-018-030.json"
+  },
+  {
+    "order_index": 20,
+    "prompt_index": 20,
+    "identifier": "v11-header-core-character",
+    "name": "<Core: Character>",
+    "role": "system",
+    "shard": "prompts/prompts-018-030.json"
+  },
+  {
+    "order_index": 22,
+    "prompt_index": 22,
+    "identifier": "v11-036-character-omega",
+    "name": "👤 Character: Omega",
+    "role": "system",
+    "shard": "prompts/prompts-018-030.json"
+  },
+  {
+    "order_index": 23,
+    "prompt_index": 23,
+    "identifier": "v11-header-core-development",
+    "name": "<Core: Development>",
+    "role": "system",
+    "shard": "prompts/prompts-018-030.json"
+  },
+  {
+    "order_index": 26,
+    "prompt_index": 26,
+    "identifier": "v11-037-development-omega",
+    "name": "🌱 Development: Omega",
+    "role": "system",
+    "shard": "prompts/prompts-018-030.json"
+  },
+  {
+    "order_index": 28,
+    "prompt_index": 28,
+    "identifier": "v11-header-core-grounding",
+    "name": "<Core: Grounding>",
+    "role": "system",
+    "shard": "prompts/prompts-018-030.json"
+  },
+  {
+    "order_index": 31,
+    "prompt_index": 31,
+    "identifier": "v11-040-grounding-omega",
+    "name": "⚖️ Grounding: Omega",
+    "role": "system",
+    "shard": "prompts/prompts-031-044.json"
+  },
+  {
+    "order_index": 33,
+    "prompt_index": 33,
+    "identifier": "v11-header-core-knowledge",
+    "name": "<Core: Knowledge>",
+    "role": "system",
+    "shard": "prompts/prompts-031-044.json"
+  },
+  {
+    "order_index": 36,
+    "prompt_index": 36,
+    "identifier": "v11-043-knowledge-omega",
+    "name": "🔍 Knowledge: Omega",
+    "role": "system",
+    "shard": "prompts/prompts-031-044.json"
+  },
+  {
+    "order_index": 37,
+    "prompt_index": 37,
+    "identifier": "v11-header-core-narrative",
+    "name": "<Core: Narrative>",
+    "role": "system",
+    "shard": "prompts/prompts-031-044.json"
+  },
+  {
+    "order_index": 40,
+    "prompt_index": 40,
+    "identifier": "v11-045-narrative-omega",
+    "name": "📖 Narrative: Omega",
+    "role": "system",
+    "shard": "prompts/prompts-031-044.json"
+  },
+  {
+    "order_index": 42,
+    "prompt_index": 42,
+    "identifier": "1770095491852-4oavigaf",
+    "name": "=== 🎭 Vex Personality ===",
+    "role": "system",
+    "shard": "prompts/prompts-031-044.json"
+  },
+  {
+    "order_index": 44,
+    "prompt_index": 44,
+    "identifier": "v11-header-vex-modern",
+    "name": "<Vex Personas>",
+    "role": "system",
+    "shard": "prompts/prompts-031-044.json"
+  },
+  {
+    "order_index": 60,
+    "prompt_index": 60,
+    "identifier": "v11-305-vex-narrative-vex",
+    "name": "🎭 Narrative Vex",
+    "role": "system",
+    "shard": "prompts/prompts-058-061.json"
+  },
+  {
+    "order_index": 78,
+    "prompt_index": 78,
+    "identifier": "v11-010-core-assembler",
+    "name": "📦 Core Assembler",
+    "role": "system",
+    "shard": "prompts/prompts-074-081.json"
+  },
+  {
+    "order_index": 79,
+    "prompt_index": 79,
+    "identifier": "nemo_magpie_files_header",
+    "name": "=== 🗂️ Magpie Files ===",
+    "role": "system",
+    "shard": "prompts/prompts-074-081.json"
+  },
+  {
+    "order_index": 83,
+    "prompt_index": 83,
+    "identifier": "nemo_consequence_header",
+    "name": "=== ⚰️ Consequence ===",
+    "role": "system",
+    "shard": "prompts/prompts-082-125.json"
+  },
+  {
+    "order_index": 84,
+    "prompt_index": 84,
+    "identifier": "nemo_consequence_core",
+    "name": "⚰️ Consequence Core",
+    "role": "system",
+    "shard": "prompts/prompts-082-125.json"
+  },
+  {
+    "order_index": 88,
+    "prompt_index": 88,
+    "identifier": "nemo_consequence_epilogue",
+    "name": "⚰️ The Epilogue",
+    "role": "system",
+    "shard": "prompts/prompts-082-125.json"
+  },
+  {
+    "order_index": 92,
+    "prompt_index": 92,
+    "identifier": "header_language_control",
+    "name": "=== 🌐 Language Control ===",
+    "role": "system",
+    "shard": "prompts/prompts-082-125.json"
+  },
+  {
+    "order_index": 93,
+    "prompt_index": 93,
+    "identifier": "header_think_lang",
+    "name": "<Think Language>",
+    "role": "system",
+    "shard": "prompts/prompts-082-125.json"
+  },
+  {
+    "order_index": 94,
+    "prompt_index": 94,
+    "identifier": "think_lang_english",
+    "name": "🇺🇸 Plan: English",
+    "role": "system",
+    "shard": "prompts/prompts-082-125.json"
+  },
+  {
+    "order_index": 106,
+    "prompt_index": 106,
+    "identifier": "header_narrate_lang",
+    "name": "<Narrate Language>",
+    "role": "system",
+    "shard": "prompts/prompts-082-125.json"
+  },
+  {
+    "order_index": 107,
+    "prompt_index": 107,
+    "identifier": "narrate_lang_english",
+    "name": "🇺🇸 Narrate: English",
+    "role": "system",
+    "shard": "prompts/prompts-082-125.json"
+  },
+  {
+    "order_index": 119,
+    "prompt_index": 119,
+    "identifier": "1770095491850-aqupr9vk",
+    "name": "📜 Language Runtime Resolver",
+    "role": "system",
+    "shard": "prompts/prompts-082-125.json"
+  },
+  {
+    "order_index": 120,
+    "prompt_index": 120,
+    "identifier": "language_styling",
+    "name": "🌐 Language Styling",
+    "role": "system",
+    "shard": "prompts/prompts-082-125.json"
+  },
+  {
+    "order_index": 132,
+    "prompt_index": 132,
+    "identifier": "1770095491852-6k39uvjz",
+    "name": "=== 🧭 Planning ===",
+    "role": "system",
+    "shard": "prompts/prompts-126-140.json"
+  },
+  {
+    "order_index": 133,
+    "prompt_index": 133,
+    "identifier": "header_cot_steps",
+    "name": "<Planning Steps>",
+    "role": "system",
+    "shard": "prompts/prompts-126-140.json"
+  },
+  {
+    "order_index": 136,
+    "prompt_index": 136,
+    "identifier": "cot_step_infoasymmetry",
+    "name": "🧭 Plan: Information Asymmetry",
+    "role": "system",
+    "shard": "prompts/prompts-126-140.json"
+  },
+  {
+    "order_index": 138,
+    "prompt_index": 138,
+    "identifier": "cot_step_charstate",
+    "name": "🧭 Plan: Character State",
+    "role": "system",
+    "shard": "prompts/prompts-126-140.json"
+  },
+  {
+    "order_index": 140,
+    "prompt_index": 140,
+    "identifier": "cot_step_coursecorrect",
+    "name": "🧭 Plan: Course Correction",
+    "role": "system",
+    "shard": "prompts/prompts-126-140.json"
+  },
+  {
+    "order_index": 143,
+    "prompt_index": 143,
+    "identifier": "cot_step_nsfwfocus",
+    "name": "🧭 Plan: NSFW Focus",
+    "role": "system",
+    "shard": "prompts/prompts-141-152.json"
+  },
+  {
+    "order_index": 144,
+    "prompt_index": 144,
+    "identifier": "cot_step_voicecraft",
+    "name": "🧭 Plan: Voice Crafting",
+    "role": "system",
+    "shard": "prompts/prompts-141-152.json"
+  },
+  {
+    "order_index": 145,
+    "prompt_index": 145,
+    "identifier": "cot_step_subtext",
+    "name": "🧭 Plan: Subtext Layer",
+    "role": "system",
+    "shard": "prompts/prompts-141-152.json"
+  },
+  {
+    "order_index": 146,
+    "prompt_index": 146,
+    "identifier": "cot_step_relationshipstage",
+    "name": "🧭 Plan: Relationship Stage",
+    "role": "system",
+    "shard": "prompts/prompts-141-152.json"
+  },
+  {
+    "order_index": 147,
+    "prompt_index": 147,
+    "identifier": "cot_step_physicalground",
+    "name": "🧭 Plan: Physical Grounding",
+    "role": "system",
+    "shard": "prompts/prompts-141-152.json"
+  },
+  {
+    "order_index": 156,
+    "prompt_index": 156,
+    "identifier": "1770095491833-adrmydb8",
+    "name": "🧭 Main Plan",
+    "role": "system",
+    "shard": "prompts/prompts-153-159.json"
+  },
+  {
+    "order_index": 161,
+    "prompt_index": 161,
+    "identifier": "1770095491852-d833xu2d",
+    "name": "=== 🎬 Genre ===",
+    "role": "system",
+    "shard": "prompts/prompts-160-175.json"
+  },
+  {
+    "order_index": 177,
+    "prompt_index": 177,
+    "identifier": "header_action_authors",
+    "name": "<Action & Adventure Authors>",
+    "role": "system",
+    "shard": "prompts/prompts-176-204.json"
+  },
+  {
+    "order_index": 183,
+    "prompt_index": 183,
+    "identifier": "header_horror_authors",
+    "name": "<Horror & Psychological Authors>",
+    "role": "system",
+    "shard": "prompts/prompts-176-204.json"
+  },
+  {
+    "order_index": 188,
+    "prompt_index": 188,
+    "identifier": "header_comedy_authors",
+    "name": "<Comedy & Satire Authors>",
+    "role": "system",
+    "shard": "prompts/prompts-176-204.json"
+  },
+  {
+    "order_index": 191,
+    "prompt_index": 191,
+    "identifier": "header_literary_fiction",
+    "name": "<Literary Fiction Authors>",
+    "role": "system",
+    "shard": "prompts/prompts-176-204.json"
+  },
+  {
+    "order_index": 201,
+    "prompt_index": 201,
+    "identifier": "header_romance_emotional",
+    "name": "<Romance & Emotional Authors>",
+    "role": "system",
+    "shard": "prompts/prompts-176-204.json"
+  },
+  {
+    "order_index": 205,
+    "prompt_index": 205,
+    "identifier": "header_formats",
+    "name": "<Formats>",
+    "role": "system",
+    "shard": "prompts/prompts-205-234.json"
+  },
+  {
+    "order_index": 216,
+    "prompt_index": 216,
+    "identifier": "header_fantasy_mythology",
+    "name": "<Fantasy & Mythology>",
+    "role": "system",
+    "shard": "prompts/prompts-205-234.json"
+  },
+  {
+    "order_index": 221,
+    "prompt_index": 221,
+    "identifier": "header_regional_styles",
+    "name": "<Regional Styles>",
+    "role": "system",
+    "shard": "prompts/prompts-205-234.json"
+  },
+  {
+    "order_index": 229,
+    "prompt_index": 229,
+    "identifier": "header_utility_styles",
+    "name": "<Utility Styles>",
+    "role": "system",
+    "shard": "prompts/prompts-205-234.json"
+  },
+  {
+    "order_index": 236,
+    "prompt_index": 236,
+    "identifier": "1770095491852-xaivbsx2",
+    "name": "=== ⏱️ Plot Pacing ===",
+    "role": "system",
+    "shard": "prompts/prompts-235-257.json"
+  },
+  {
+    "order_index": 243,
+    "prompt_index": 243,
+    "identifier": "header_story_agency",
+    "name": "=== 🎮 Story Agency ===",
+    "role": "system",
+    "shard": "prompts/prompts-235-257.json"
+  },
+  {
+    "order_index": 245,
+    "prompt_index": 245,
+    "identifier": "v11-126-agency-collaborative",
+    "name": "🎮 Collaborative",
+    "role": "system",
+    "shard": "prompts/prompts-235-257.json"
+  },
+  {
+    "order_index": 249,
+    "prompt_index": 249,
+    "identifier": "worldlogic_section_header",
+    "name": "=== 🌐 World Logic ===",
+    "role": "system",
+    "shard": "prompts/prompts-235-257.json"
+  },
+  {
+    "order_index": 260,
+    "prompt_index": 260,
+    "identifier": "v11-133-world-logic-anime",
+    "name": "🌐 Anime",
+    "role": "system",
+    "shard": "prompts/prompts-258-280.json"
+  },
+  {
+    "order_index": 264,
+    "prompt_index": 264,
+    "identifier": "nemo-section-world-augments",
+    "name": "=== 🌍 World Augments ===",
+    "role": "system",
+    "shard": "prompts/prompts-258-280.json"
+  },
+  {
+    "order_index": 265,
+    "prompt_index": 265,
+    "identifier": "v11-027-living-embodied-salience",
+    "name": "🫀 Living World: Embodied Salience",
+    "role": "system",
+    "shard": "prompts/prompts-258-280.json"
+  },
+  {
+    "order_index": 266,
+    "prompt_index": 266,
+    "identifier": "v11-028-living-dormant-threads-offscreen-motion",
+    "name": "🧵 Living World: Dormant Threads / Offscreen Motion",
+    "role": "system",
+    "shard": "prompts/prompts-258-280.json"
+  },
+  {
+    "order_index": 267,
+    "prompt_index": 267,
+    "identifier": "v11-029-living-beat-logic-scene-discipline",
+    "name": "🎬 Living World: Beat Logic / Scene Turn Discipline",
+    "role": "system",
+    "shard": "prompts/prompts-258-280.json"
+  },
+  {
+    "order_index": 292,
+    "prompt_index": 292,
+    "identifier": "1770095491852-x5vbcjo5",
+    "name": "=== 🛠️ Utility ===",
+    "role": "system",
+    "shard": "prompts/prompts-289-298.json"
+  },
+  {
+    "order_index": 293,
+    "prompt_index": 293,
+    "identifier": "v11-header-utility-formatting-interface",
+    "name": "<Utility: Formatting & Interface>",
+    "role": "system",
+    "shard": "prompts/prompts-289-298.json"
+  },
+  {
+    "order_index": 294,
+    "prompt_index": 294,
+    "identifier": "v11-252-utility-visual-styling",
+    "name": "🔧︱Utility: Color Formatting (v6)",
+    "role": "system",
+    "shard": "prompts/prompts-289-298.json"
+  },
+  {
+    "order_index": 295,
+    "prompt_index": 295,
+    "identifier": "v11-631-utility-scene-header-time-location-weather",
+    "name": "⏳ Scene Header (Time/Location/Weather)",
+    "role": "system",
+    "shard": "prompts/prompts-289-298.json"
+  },
+  {
+    "order_index": 296,
+    "prompt_index": 296,
+    "identifier": "nemo-machinery-visible",
+    "name": "🪟 Machinery Display: Visible",
+    "role": "system",
+    "shard": "prompts/prompts-289-298.json"
+  },
+  {
+    "order_index": 300,
+    "prompt_index": 300,
+    "identifier": "v11-header-utility-response-discipline",
+    "name": "<Utility: Response Discipline>",
+    "role": "system",
+    "shard": "prompts/prompts-299-317.json"
+  },
+  {
+    "order_index": 301,
+    "prompt_index": 301,
+    "identifier": "v11-633-utility-anti-echo-user-agency",
+    "name": "🪞 Anti Echo / User Agency",
+    "role": "system",
+    "shard": "prompts/prompts-299-317.json"
+  },
+  {
+    "order_index": 302,
+    "prompt_index": 302,
+    "identifier": "nemo-header-user-role-modes",
+    "name": "=== 🎭 User Role Modes ===",
+    "role": "system",
+    "shard": "prompts/prompts-299-317.json"
+  },
+  {
+    "order_index": 303,
+    "prompt_index": 303,
+    "identifier": "nemo-user-role-character",
+    "name": "👤 User is a Character",
+    "role": "system",
+    "shard": "prompts/prompts-299-317.json"
+  },
+  {
+    "order_index": 311,
+    "prompt_index": 311,
+    "identifier": "v11-header-utility-character-dialogue",
+    "name": "<Utility: Character & Dialogue>",
+    "role": "system",
+    "shard": "prompts/prompts-299-317.json"
+  },
+  {
+    "order_index": 312,
+    "prompt_index": 312,
+    "identifier": "v11-240-utility-more-dialogue",
+    "name": "🛠️ More Dialogue",
+    "role": "system",
+    "shard": "prompts/prompts-299-317.json"
+  },
+  {
+    "order_index": 314,
+    "prompt_index": 314,
+    "identifier": "v11-243-utility-proactive-characters",
+    "name": "🛠️ Proactive Characters",
+    "role": "system",
+    "shard": "prompts/prompts-299-317.json"
+  },
+  {
+    "order_index": 315,
+    "prompt_index": 315,
+    "identifier": "v11-634-utility-proactive-dialogue-engaging-npcs",
+    "name": "🗣️ Proactive Dialogue / Engaging NPCs",
+    "role": "system",
+    "shard": "prompts/prompts-299-317.json"
+  },
+  {
+    "order_index": 316,
+    "prompt_index": 316,
+    "identifier": "v11-636-utility-rotating-npc-spotlight",
+    "name": "👥 NPC Spotlight",
+    "role": "system",
+    "shard": "prompts/prompts-299-317.json"
+  },
+  {
+    "order_index": 320,
+    "prompt_index": 320,
+    "identifier": "v11-header-utility-style-extras",
+    "name": "<Utility: Style, Format & Extras>",
+    "role": "system",
+    "shard": "prompts/prompts-318-336.json"
+  },
+  {
+    "order_index": 324,
+    "prompt_index": 324,
+    "identifier": "v11-header-utility-resolver",
+    "name": "<Utility: Resolver>",
+    "role": "system",
+    "shard": "prompts/prompts-318-336.json"
+  },
+  {
+    "order_index": 325,
+    "prompt_index": 325,
+    "identifier": "v11-635-utility-ooc-resolver",
+    "name": "🧷 Utility OOC Resolver",
+    "role": "user",
+    "shard": "prompts/prompts-318-336.json"
+  },
+  {
+    "order_index": 326,
+    "prompt_index": 326,
+    "identifier": "1770095491852-awpwqax7",
+    "name": "<Utility: Difficulty>",
+    "role": "system",
+    "shard": "prompts/prompts-318-336.json"
+  },
+  {
+    "order_index": 327,
+    "prompt_index": 327,
+    "identifier": "v11-100-difficulty-balanced",
+    "name": "⚙️ Balanced",
+    "role": "system",
+    "shard": "prompts/prompts-318-336.json"
+  },
+  {
+    "order_index": 335,
+    "prompt_index": 335,
+    "identifier": "1770095491852-6gk7jr7f",
+    "name": "<Utility: Perspective, Interiority & Tense>",
+    "role": "system",
+    "shard": "prompts/prompts-318-336.json"
+  },
+  {
+    "order_index": 339,
+    "prompt_index": 339,
+    "identifier": "v11-111-perspective-third-person-omniscient",
+    "name": "👁️ Third Person Omniscient",
+    "role": "system",
+    "shard": "prompts/prompts-337-367.json"
+  },
+  {
+    "order_index": 341,
+    "prompt_index": 341,
+    "identifier": "v11-111b-npc-interiority-on",
+    "name": "🧠 NPC Interiority: ON",
+    "role": "system",
+    "shard": "prompts/prompts-337-367.json"
+  },
+  {
+    "order_index": 344,
+    "prompt_index": 344,
+    "identifier": "v11-113-tense-present-tense",
+    "name": "⏺️ Present Tense",
+    "role": "system",
+    "shard": "prompts/prompts-337-367.json"
+  },
+  {
+    "order_index": 346,
+    "prompt_index": 346,
+    "identifier": "1770095491852-myr4rfed",
+    "name": "<Utility: Response Length>",
+    "role": "system",
+    "shard": "prompts/prompts-337-367.json"
+  },
+  {
+    "order_index": 347,
+    "prompt_index": 347,
+    "identifier": "v11-115-length-long",
+    "name": "📏 Long",
+    "role": "system",
+    "shard": "prompts/prompts-337-367.json"
+  },
+  {
+    "order_index": 351,
+    "prompt_index": 351,
+    "identifier": "1770095491852-jxjk3hrm",
+    "name": "<Utility: RPG>",
+    "role": "system",
+    "shard": "prompts/prompts-337-367.json"
+  },
+  {
+    "order_index": 355,
+    "prompt_index": 355,
+    "identifier": "1770095491852-72zpomku",
+    "name": "<Utility: Trackers>",
+    "role": "system",
+    "shard": "prompts/prompts-337-367.json"
+  },
+  {
+    "order_index": 356,
+    "prompt_index": 356,
+    "identifier": "f7b7c4db-75d2-4bdb-98b8-5d8a759c0f7e",
+    "name": "🖥️ HTML/CSS Render",
+    "role": "system",
+    "shard": "prompts/prompts-337-367.json"
+  },
+  {
+    "order_index": 391,
+    "prompt_index": 391,
+    "identifier": "3499e906-80f1-4016-9679-6fef4aac10f4",
+    "name": "Tracker Toggle",
+    "role": "system",
+    "shard": "prompts/prompts-381-396.json"
+  },
+  {
+    "order_index": 392,
+    "prompt_index": 392,
+    "identifier": "nemo_pad_consequence",
+    "name": "🗒️ Pad Tab: Consequence",
+    "role": "user",
+    "shard": "prompts/prompts-381-396.json"
+  },
+  {
+    "order_index": 403,
+    "prompt_index": 403,
+    "identifier": "nemo-pad-loader-resolver",
+    "name": "🧩 Scratchpad Loader Resolver",
+    "role": "user",
+    "shard": "prompts/prompts-397-411.json"
+  },
+  {
+    "order_index": 405,
+    "prompt_index": 405,
+    "identifier": "1770095491852-bnk32vkw",
+    "name": "=== 🔞 NSFW ===",
+    "role": "system",
+    "shard": "prompts/prompts-397-411.json"
+  },
+  {
+    "order_index": 410,
+    "prompt_index": 410,
+    "identifier": "v11-180-nsfw-nsfw-core",
+    "name": "🔞 NSFW Core",
+    "role": "system",
+    "shard": "prompts/prompts-397-411.json"
+  },
+  {
+    "order_index": 420,
+    "prompt_index": 420,
+    "identifier": "1770095491852-zbyjkp37",
+    "name": "=== 🎀 Fetish ===",
+    "role": "system",
+    "shard": "prompts/prompts-412-428.json"
+  },
+  {
+    "order_index": 438,
+    "prompt_index": 438,
+    "identifier": "1770095491852-vouskndq",
+    "name": "=== 💾 Databank ===",
+    "role": "system",
+    "shard": "prompts/prompts-429-454.json"
+  },
+  {
+    "order_index": 439,
+    "prompt_index": 439,
+    "identifier": "1770095491852-0l2gtxvq",
+    "name": "💾 Databank: Unified Card Context",
+    "role": "user",
+    "shard": "prompts/prompts-429-454.json"
+  },
+  {
+    "order_index": 440,
+    "prompt_index": 440,
+    "identifier": "1770095491852-dplzxppa",
+    "name": "=== ⚙️ System ===",
+    "role": "system",
+    "shard": "prompts/prompts-429-454.json"
+  },
+  {
+    "order_index": 441,
+    "prompt_index": 441,
+    "identifier": "v11-classic-user-message-separator",
+    "name": "🪞 System: Current Message Separator",
+    "role": "user",
+    "shard": "prompts/prompts-429-454.json"
+  },
+  {
+    "order_index": 442,
+    "prompt_index": 442,
+    "identifier": "v11-260-system-sudo-prefill-assistant",
+    "name": "🪞 System: Assistant Sudo Prefill",
+    "role": "assistant",
+    "shard": "prompts/prompts-429-454.json"
+  },
+  {
+    "order_index": 443,
+    "prompt_index": 443,
+    "identifier": "main",
+    "name": "Main Prompt",
+    "role": "system",
+    "shard": "prompts/prompts-429-454.json"
+  },
+  {
+    "order_index": 447,
+    "prompt_index": 447,
+    "identifier": "chatHistory",
+    "name": "Chat History",
+    "role": "system",
+    "shard": "prompts/prompts-429-454.json"
+  },
+  {
+    "order_index": 448,
+    "prompt_index": 448,
+    "identifier": "worldInfoAfter",
+    "name": "World Info (after)",
+    "role": "system",
+    "shard": "prompts/prompts-429-454.json"
+  },
+  {
+    "order_index": 449,
+    "prompt_index": 449,
+    "identifier": "worldInfoBefore",
+    "name": "World Info (before)",
+    "role": "system",
+    "shard": "prompts/prompts-429-454.json"
+  },
+  {
+    "order_index": 455,
+    "prompt_index": 455,
+    "identifier": "v11-classic-user-message-ender",
+    "name": "🔚 System: Final User-Role Tail / Runtime Reminder",
+    "role": "user",
+    "shard": "prompts/prompts-455-455.json"
+  }
+]

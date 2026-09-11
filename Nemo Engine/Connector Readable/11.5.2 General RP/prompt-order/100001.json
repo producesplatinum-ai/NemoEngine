@@ -1,0 +1,1829 @@
+{
+  "character_id": 100001,
+  "order": [
+    {
+      "identifier": "1770095491852-1nszrpl3",
+      "enabled": true
+    },
+    {
+      "identifier": "nemo-success-dice",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-000-variable-init",
+      "enabled": true
+    },
+    {
+      "identifier": "nemo_premise",
+      "enabled": true
+    },
+    {
+      "identifier": "nemo_retro_frame",
+      "enabled": false
+    },
+    {
+      "identifier": "nemo_magpie_frame",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-251-utility-anti-chekhov-s-gun",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-header-core-augments",
+      "enabled": true
+    },
+    {
+      "identifier": "v11-612-augment-consequences",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-615-augment-social-consequence-realism",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-header-core-narration",
+      "enabled": true
+    },
+    {
+      "identifier": "v11-020-default-narration",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-031-narration-alpha",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-030-narration-omega",
+      "enabled": true
+    },
+    {
+      "identifier": "v11-032-narration-understated",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-header-core-speech",
+      "enabled": true
+    },
+    {
+      "identifier": "v11-021-default-speech",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-034-speech-alpha",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-033-speech-omega",
+      "enabled": true
+    },
+    {
+      "identifier": "v11-035-speech-theta",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-header-core-character",
+      "enabled": true
+    },
+    {
+      "identifier": "v11-022-default-character",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-036-character-omega",
+      "enabled": true
+    },
+    {
+      "identifier": "v11-header-core-development",
+      "enabled": true
+    },
+    {
+      "identifier": "v11-023-default-development",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-038-development-alpha",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-037-development-omega",
+      "enabled": true
+    },
+    {
+      "identifier": "v11-039-development-theta",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-header-core-grounding",
+      "enabled": true
+    },
+    {
+      "identifier": "v11-024-default-grounding",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-041-grounding-alpha",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-040-grounding-omega",
+      "enabled": true
+    },
+    {
+      "identifier": "v11-042-grounding-theta",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-header-core-knowledge",
+      "enabled": true
+    },
+    {
+      "identifier": "v11-025-default-knowledge",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-044-knowledge-alpha-theta",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-043-knowledge-omega",
+      "enabled": true
+    },
+    {
+      "identifier": "v11-header-core-narrative",
+      "enabled": true
+    },
+    {
+      "identifier": "v11-026-default-narrative",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-046-narrative-alpha",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-045-narrative-omega",
+      "enabled": true
+    },
+    {
+      "identifier": "v11-047-narrative-theta",
+      "enabled": false
+    },
+    {
+      "identifier": "1770095491852-4oavigaf",
+      "enabled": true
+    },
+    {
+      "identifier": "v11-299-default-vex",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-header-vex-modern",
+      "enabled": true
+    },
+    {
+      "identifier": "v11-301-vex-brooding-vex",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-300-vex-bubbly-vex",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-322-vex-chaotic-vex",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-319-vex-clinical-vex",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-317-vex-cozy-vex",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-323-vex-crescent-vex",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-311-vex-dark-urban-fantasy-vex",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-324-vex-epic-vex",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-315-vex-explosive-vex",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-313-vex-gamemaster-vex",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-325-vex-gentle-vex",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-316-vex-grimdark-vex",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-326-vex-haar-vex",
+      "enabled": true
+    },
+    {
+      "identifier": "v11-327-vex-lustful-vex",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-314-vex-morbid-vex",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-305-vex-narrative-vex",
+      "enabled": true
+    },
+    {
+      "identifier": "v11-312-vex-noir-vex",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-303-vex-obsessive-vex",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-302-vex-petrichor-vex",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-321-vex-philosophical-vex",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-309-vex-sensory-vex",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-310-vex-shadowy-vex",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-320-vex-soft-romance-vex",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-306-vex-tactical-vex",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-318-vex-tsundere-vex",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-308-vex-underdog-vex",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-328-vex-unhinged-vex",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-307-vex-whimsical-vex",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-304-vex-goon-gremlin-vex",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-329-vex-gooner-vex",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-514-classicvex-midnight-courier",
+      "enabled": false
+    },
+    {
+      "identifier": "vex_commentary",
+      "enabled": false
+    },
+    {
+      "identifier": "nemo_vex_meta_commentary",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-010-core-assembler",
+      "enabled": true
+    },
+    {
+      "identifier": "nemo_magpie_files_header",
+      "enabled": true
+    },
+    {
+      "identifier": "nemo_magpie_character_files",
+      "enabled": false
+    },
+    {
+      "identifier": "nemo_magpie_location_files",
+      "enabled": false
+    },
+    {
+      "identifier": "nemo_magpie_object_files",
+      "enabled": false
+    },
+    {
+      "identifier": "nemo_consequence_header",
+      "enabled": true
+    },
+    {
+      "identifier": "nemo_consequence_core",
+      "enabled": true
+    },
+    {
+      "identifier": "nemo_consequence_somewhere_else",
+      "enabled": false
+    },
+    {
+      "identifier": "nemo_consequence_return_by_death",
+      "enabled": false
+    },
+    {
+      "identifier": "nemo_consequence_roll_another",
+      "enabled": false
+    },
+    {
+      "identifier": "nemo_consequence_epilogue",
+      "enabled": true
+    },
+    {
+      "identifier": "nemo_consequence_never_the_kill",
+      "enabled": false
+    },
+    {
+      "identifier": "nemo_consequence_directors_chair",
+      "enabled": false
+    },
+    {
+      "identifier": "nemo_consequence_still_here",
+      "enabled": false
+    },
+    {
+      "identifier": "header_language_control",
+      "enabled": true
+    },
+    {
+      "identifier": "header_think_lang",
+      "enabled": true
+    },
+    {
+      "identifier": "think_lang_english",
+      "enabled": true
+    },
+    {
+      "identifier": "think_lang_chinese",
+      "enabled": false
+    },
+    {
+      "identifier": "think_lang_russian",
+      "enabled": false
+    },
+    {
+      "identifier": "think_lang_japanese",
+      "enabled": false
+    },
+    {
+      "identifier": "think_lang_korean",
+      "enabled": false
+    },
+    {
+      "identifier": "think_lang_portuguese",
+      "enabled": false
+    },
+    {
+      "identifier": "think_lang_spanish",
+      "enabled": false
+    },
+    {
+      "identifier": "think_lang_thai",
+      "enabled": false
+    },
+    {
+      "identifier": "think_lang_romanian",
+      "enabled": false
+    },
+    {
+      "identifier": "think_lang_ukrainian",
+      "enabled": false
+    },
+    {
+      "identifier": "think_lang_french",
+      "enabled": false
+    },
+    {
+      "identifier": "think_lang_arabic",
+      "enabled": false
+    },
+    {
+      "identifier": "header_narrate_lang",
+      "enabled": true
+    },
+    {
+      "identifier": "narrate_lang_english",
+      "enabled": true
+    },
+    {
+      "identifier": "narrate_lang_chinese",
+      "enabled": false
+    },
+    {
+      "identifier": "narrate_lang_russian",
+      "enabled": false
+    },
+    {
+      "identifier": "narrate_lang_japanese",
+      "enabled": false
+    },
+    {
+      "identifier": "narrate_lang_korean",
+      "enabled": false
+    },
+    {
+      "identifier": "narrate_lang_portuguese",
+      "enabled": false
+    },
+    {
+      "identifier": "narrate_lang_spanish",
+      "enabled": false
+    },
+    {
+      "identifier": "narrate_lang_thai",
+      "enabled": false
+    },
+    {
+      "identifier": "narrate_lang_romanian",
+      "enabled": false
+    },
+    {
+      "identifier": "narrate_lang_ukrainian",
+      "enabled": false
+    },
+    {
+      "identifier": "narrate_lang_french",
+      "enabled": false
+    },
+    {
+      "identifier": "narrate_lang_arabic",
+      "enabled": false
+    },
+    {
+      "identifier": "1770095491850-aqupr9vk",
+      "enabled": true
+    },
+    {
+      "identifier": "language_styling",
+      "enabled": true
+    },
+    {
+      "identifier": "v11-section-classic",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-603-helper-brazilian-friend",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-604-helper-nemo-s-experimental",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-528-classic-mode-council",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-535-classic-council-prefil",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-525-classic-vex-identity",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-526-classic-directors-cut",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-527-classic-mode-single-lens",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-602-helper-forsaken-ghost-13-core",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-601-helper-interiority-protocol",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-600-helper-nokiaarmour-core",
+      "enabled": false
+    },
+    {
+      "identifier": "1770095491852-6k39uvjz",
+      "enabled": true
+    },
+    {
+      "identifier": "header_cot_steps",
+      "enabled": true
+    },
+    {
+      "identifier": "cot_step_knowledgemap",
+      "enabled": false
+    },
+    {
+      "identifier": "nemo-world-knowledge-infusion",
+      "enabled": false
+    },
+    {
+      "identifier": "cot_step_infoasymmetry",
+      "enabled": true
+    },
+    {
+      "identifier": "cot_step_lastcritique",
+      "enabled": false
+    },
+    {
+      "identifier": "cot_step_charstate",
+      "enabled": true
+    },
+    {
+      "identifier": "cot_step_character_turn_simulation",
+      "enabled": false
+    },
+    {
+      "identifier": "cot_step_coursecorrect",
+      "enabled": true
+    },
+    {
+      "identifier": "cot_step_pacingbeats",
+      "enabled": true
+    },
+    {
+      "identifier": "cot_step_narrativehook",
+      "enabled": true
+    },
+    {
+      "identifier": "cot_step_nsfwfocus",
+      "enabled": true
+    },
+    {
+      "identifier": "cot_step_voicecraft",
+      "enabled": true
+    },
+    {
+      "identifier": "cot_step_subtext",
+      "enabled": true
+    },
+    {
+      "identifier": "cot_step_relationshipstage",
+      "enabled": true
+    },
+    {
+      "identifier": "cot_step_physicalground",
+      "enabled": true
+    },
+    {
+      "identifier": "cot_step_fulldraft",
+      "enabled": false
+    },
+    {
+      "identifier": "cot_tail_magpie_workbench",
+      "enabled": false
+    },
+    {
+      "identifier": "cot_step_emotionalmatrix",
+      "enabled": false
+    },
+    {
+      "identifier": "cot_step_htmldesign",
+      "enabled": false
+    },
+    {
+      "identifier": "cot_step_htmlmarkers",
+      "enabled": false
+    },
+    {
+      "identifier": "1770095491833-k4vjf2f1",
+      "enabled": false
+    },
+    {
+      "identifier": "1770095491833-8jtqr5y4",
+      "enabled": false
+    },
+    {
+      "identifier": "1770095491833-6qezelnl",
+      "enabled": false
+    },
+    {
+      "identifier": "1770095491833-adrmydb8",
+      "enabled": true
+    },
+    {
+      "identifier": "v11-261-cot-council-functional",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-529-classiccot-gemini-council-classic",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-531-classiccot-gemini-fast-council-classic",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-533-classiccot-thinking-gemini-classic",
+      "enabled": false
+    },
+    {
+      "identifier": "1770095491852-d833xu2d",
+      "enabled": true
+    },
+    {
+      "identifier": "v11-185-genre-angst",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-186-genre-ao3-style",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-187-genre-comedy",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-188-genre-dead-dove",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-189-genre-erotica",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-190-genre-fluff",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-191-genre-high-fantasy",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-192-genre-html-reality",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-193-genre-medieval",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-194-genre-melancholy",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-195-genre-romance",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-196-genre-slice-of-life",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-197-genre-texting-format",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-198-genre-thriller",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-199-genre-tragedy",
+      "enabled": false
+    },
+    {
+      "identifier": "header_action_authors",
+      "enabled": true
+    },
+    {
+      "identifier": "v11-200-influence-jin-yong",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-201-influence-gu-long",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-202-influence-kamachi-kazuma",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-203-influence-masashi-kishimoto",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-204-influence-quentin-tarantino",
+      "enabled": false
+    },
+    {
+      "identifier": "header_horror_authors",
+      "enabled": true
+    },
+    {
+      "identifier": "v11-205-influence-chuck-palahniuk",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-206-influence-fyodor-dostoevsky",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-207-influence-akira-denpa-style",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-208-influence-stephen-king",
+      "enabled": false
+    },
+    {
+      "identifier": "header_comedy_authors",
+      "enabled": true
+    },
+    {
+      "identifier": "v11-209-influence-douglas-adams",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-210-influence-terry-pratchett",
+      "enabled": false
+    },
+    {
+      "identifier": "header_literary_fiction",
+      "enabled": true
+    },
+    {
+      "identifier": "v11-211-influence-yasunari-kawabata",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-212-influence-haruki-murakami",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-213-influence-garca-mrquez",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-214-influence-salman-rushdie",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-215-influence-lu-xun",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-216-influence-wang-xiaobo",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-217-influence-li-bihua",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-218-influence-cormac-mccarthy",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-219-influence-ernest-hemingway",
+      "enabled": false
+    },
+    {
+      "identifier": "header_romance_emotional",
+      "enabled": true
+    },
+    {
+      "identifier": "v11-220-influence-jun-maeda-key",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-221-influence-nisio-isin",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-222-influence-jane-austen",
+      "enabled": false
+    },
+    {
+      "identifier": "header_formats",
+      "enabled": true
+    },
+    {
+      "identifier": "v11-137-format-ao3-style",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-138-format-erotica",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-139-format-light-novel",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-140-format-web-novel",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-141-format-roleplay-format",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-142-format-modern-literature",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-143-format-classical-literature",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-144-format-epic-saga-edda",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-145-format-stage-play",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-146-format-stream-of-consciousness",
+      "enabled": false
+    },
+    {
+      "identifier": "header_fantasy_mythology",
+      "enabled": true
+    },
+    {
+      "identifier": "v11-223-influence-arabian-nights",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-224-influence-medieval-setting",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-225-influence-brandon-sanderson",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-226-influence-neil-gaiman",
+      "enabled": false
+    },
+    {
+      "identifier": "header_regional_styles",
+      "enabled": true
+    },
+    {
+      "identifier": "v11-227-influence-japanese-literature",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-228-influence-chinese-literature",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-229-influence-indian-literature",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-230-influence-middle-eastern-literature",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-231-influence-latin-american-literature",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-232-influence-german-literature",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-233-influence-scandinavian-literature",
+      "enabled": false
+    },
+    {
+      "identifier": "header_utility_styles",
+      "enabled": true
+    },
+    {
+      "identifier": "v11-234-influence-japanese-honorifics",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-235-influence-regional-dialect",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-236-influence-cyberpunk-noir",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-237-influence-nemo-writing",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-238-influence-gritty-prose",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-608-influence-vtm-narration",
+      "enabled": false
+    },
+    {
+      "identifier": "1770095491852-xaivbsx2",
+      "enabled": true
+    },
+    {
+      "identifier": "v11-119-pacing-literary-mode",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-120-pacing-narrative-pressure",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-121-pacing-active-mode",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-122-pacing-slow-burn",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-123-pacing-sandbox-mode",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-124-pacing-episodic-mode",
+      "enabled": false
+    },
+    {
+      "identifier": "header_story_agency",
+      "enabled": true
+    },
+    {
+      "identifier": "v11-125-agency-user-driven",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-126-agency-collaborative",
+      "enabled": true
+    },
+    {
+      "identifier": "v11-127-agency-ai-driven",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-249-utility-decentered-protagonist",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-250-utility-parallel-storylines",
+      "enabled": false
+    },
+    {
+      "identifier": "worldlogic_section_header",
+      "enabled": true
+    },
+    {
+      "identifier": "v11-128-world-logic-literary",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-147-engine-literary-archetypes-engine",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-129-world-logic-grounded",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-148-engine-grounded-archetypes-engine",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-130-world-logic-realism",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-149-engine-realism-archetypes-engine",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-131-world-logic-genre-logic",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-150-engine-genre-archetypes-engine",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-132-world-logic-video-game",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-151-engine-video-game-archetypes-engine",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-133-world-logic-anime",
+      "enabled": true
+    },
+    {
+      "identifier": "v11-152-engine-anime-archetypes-engine",
+      "enabled": false
+    },
+    {
+      "identifier": "nemo_anime_erotic_calibration",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-134-world-logic-hentai",
+      "enabled": false
+    },
+    {
+      "identifier": "nemo-section-world-augments",
+      "enabled": true
+    },
+    {
+      "identifier": "v11-027-living-embodied-salience",
+      "enabled": true
+    },
+    {
+      "identifier": "v11-028-living-dormant-threads-offscreen-motion",
+      "enabled": true
+    },
+    {
+      "identifier": "v11-029-living-beat-logic-scene-discipline",
+      "enabled": true
+    },
+    {
+      "identifier": "v11-153-world-augments-aura-of-emotions",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-154-world-augments-bustling-environment",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-155-world-augments-dreamscape-reality",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-156-world-augments-the-honesty-plague",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-157-world-augments-prophecy-magnet",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-158-world-augments-slow-burn-mysteries",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-159-world-augments-ambient-monster-threat",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-160-world-augments-dungeon-delve-focus",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-161-world-augments-environmental-descriptions",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-162-world-augments-everything-is-alive",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-163-world-augments-foreigner-user",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-164-world-augments-gynocentric-society",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-165-world-augments-physiological-environmental-realism",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-610-augment-violence-realism",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-614-augment-logistical-survival-realism",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-617-augment-grounded-realism-gritty-detail",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-616-augment-harsh-realism",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-619-augment-unpredictable-realism",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-618-augment-realism-overall",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-611-augment-manipulation-realism",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-613-augment-psychological-emotional-realism",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-607-vtm-blood-bond",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-605-vtm-masquerade-setting",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-606-vtm-masquerade-alt",
+      "enabled": false
+    },
+    {
+      "identifier": "1770095491852-x5vbcjo5",
+      "enabled": true
+    },
+    {
+      "identifier": "v11-header-utility-formatting-interface",
+      "enabled": true
+    },
+    {
+      "identifier": "v11-252-utility-visual-styling",
+      "enabled": true
+    },
+    {
+      "identifier": "v11-631-utility-scene-header-time-location-weather",
+      "enabled": true
+    },
+    {
+      "identifier": "nemo-machinery-visible",
+      "enabled": true
+    },
+    {
+      "identifier": "nemo-machinery-hidden",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-253-utility-auto-image-gen",
+      "enabled": false
+    },
+    {
+      "identifier": "immersive_world_html",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-header-utility-response-discipline",
+      "enabled": true
+    },
+    {
+      "identifier": "v11-633-utility-anti-echo-user-agency",
+      "enabled": true
+    },
+    {
+      "identifier": "nemo-header-user-role-modes",
+      "enabled": true
+    },
+    {
+      "identifier": "nemo-user-role-character",
+      "enabled": true
+    },
+    {
+      "identifier": "nemo_cowriter_frame",
+      "enabled": false
+    },
+    {
+      "identifier": "nemo_anime_cowriter_frame",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-637-utility-director-mode",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-638-utility-user-as-director",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-632-utility-dehedge-response-discipline",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-239-utility-danger-protocol",
+      "enabled": false
+    },
+    {
+      "identifier": "3d3756b0-f03d-447a-9ee4-4d568c503683",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-header-utility-character-dialogue",
+      "enabled": true
+    },
+    {
+      "identifier": "v11-240-utility-more-dialogue",
+      "enabled": true
+    },
+    {
+      "identifier": "v11-242-utility-character-naming",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-243-utility-proactive-characters",
+      "enabled": true
+    },
+    {
+      "identifier": "v11-634-utility-proactive-dialogue-engaging-npcs",
+      "enabled": true
+    },
+    {
+      "identifier": "v11-636-utility-rotating-npc-spotlight",
+      "enabled": true
+    },
+    {
+      "identifier": "v11-244-utility-character-friction",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-628-utility-fuck-robots",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-629-utility-swipe-enhancer",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-header-utility-style-extras",
+      "enabled": true
+    },
+    {
+      "identifier": "v11-241-utility-rp-markdown",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-245-utility-manga-side-character-intro",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-247-utility-literary-chameleon",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-header-utility-resolver",
+      "enabled": true
+    },
+    {
+      "identifier": "v11-635-utility-ooc-resolver",
+      "enabled": true
+    },
+    {
+      "identifier": "1770095491852-awpwqax7",
+      "enabled": true
+    },
+    {
+      "identifier": "v11-100-difficulty-balanced",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-101-difficulty-cozy",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-102-difficulty-hard-gritty",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-103-difficulty-heroic",
+      "enabled": true
+    },
+    {
+      "identifier": "v11-104-difficulty-ironman",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-105-difficulty-nightmare",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-106-difficulty-story-mode",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-107-difficulty-god-mode",
+      "enabled": false
+    },
+    {
+      "identifier": "1770095491852-6gk7jr7f",
+      "enabled": true
+    },
+    {
+      "identifier": "v11-108-perspective-first-person",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-109-perspective-second-person",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-110-perspective-third-person-limited",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-111-perspective-third-person-omniscient",
+      "enabled": true
+    },
+    {
+      "identifier": "v11-111a-npc-interiority-default",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-111b-npc-interiority-on",
+      "enabled": true
+    },
+    {
+      "identifier": "v11-111c-npc-interiority-off",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-112-tense-past-tense",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-113-tense-present-tense",
+      "enabled": true
+    },
+    {
+      "identifier": "v11-114-tense-future-tense",
+      "enabled": false
+    },
+    {
+      "identifier": "1770095491852-myr4rfed",
+      "enabled": true
+    },
+    {
+      "identifier": "v11-115-length-long",
+      "enabled": true
+    },
+    {
+      "identifier": "v11-116-length-medium",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-117-length-organic",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-118-length-short",
+      "enabled": false
+    },
+    {
+      "identifier": "1770095491852-jxjk3hrm",
+      "enabled": true
+    },
+    {
+      "identifier": "v11-135-world-logic-video-game-litrpg",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-246-utility-tactical-combat",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-136-world-logic-video-game-ttrpg",
+      "enabled": false
+    },
+    {
+      "identifier": "1770095491852-72zpomku",
+      "enabled": true
+    },
+    {
+      "identifier": "f7b7c4db-75d2-4bdb-98b8-5d8a759c0f7e",
+      "enabled": false
+    },
+    {
+      "identifier": "1770095491838-tdl85l34",
+      "enabled": false
+    },
+    {
+      "identifier": "f21f6d62-7d63-41a8-b8e3-compact-regex-trackers",
+      "enabled": false
+    },
+    {
+      "identifier": "tracker_light_mode",
+      "enabled": false
+    },
+    {
+      "identifier": "9fbaf3a2-15cd-42ff-8dce-4c5a6d3a8c11",
+      "enabled": false
+    },
+    {
+      "identifier": "94ea2a5b-bc71-4c56-9838-f44e46c2d7e1",
+      "enabled": false
+    },
+    {
+      "identifier": "b215ff02-9c4f-48c1-9fd0-3fd1f1ab3a27",
+      "enabled": false
+    },
+    {
+      "identifier": "65df6f0a-9851-4c89-81c6-cf85d1d7f2b4",
+      "enabled": false
+    },
+    {
+      "identifier": "2857fc16-22dd-4c4a-9b4c-e8e49fa5ef31",
+      "enabled": false
+    },
+    {
+      "identifier": "19c6e102-ef1e-4e1f-8798-b5cbfd42d0f2",
+      "enabled": false
+    },
+    {
+      "identifier": "d0532876-712f-42ad-b8f5-03b2436bc8a8",
+      "enabled": false
+    },
+    {
+      "identifier": "0ced8cc6-85df-4dbe-a6c2-b7d90533a5e7",
+      "enabled": false
+    },
+    {
+      "identifier": "9e63d716-e7b5-47e2-841c-8a021d2ff2ec",
+      "enabled": false
+    },
+    {
+      "identifier": "3f91deac-e569-4a1b-aea9-84b30e7519f0",
+      "enabled": false
+    },
+    {
+      "identifier": "e399d4e1-7608-49d4-aa9e-2a863a1f7f82",
+      "enabled": false
+    },
+    {
+      "identifier": "1770095491838-tzqljonp",
+      "enabled": false
+    },
+    {
+      "identifier": "1770095491838-bxxnfri2",
+      "enabled": false
+    },
+    {
+      "identifier": "nemo_tracker_cyoa_three_paths",
+      "enabled": false
+    },
+    {
+      "identifier": "1770095491839-npsjusbc",
+      "enabled": false
+    },
+    {
+      "identifier": "1770095491839-m9rg73a5",
+      "enabled": false
+    },
+    {
+      "identifier": "1770095491839-c6om818e",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-700-tracker-game-mechanic",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-701-tracker-social-web",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-702-tracker-karma-ledger",
+      "enabled": false
+    },
+    {
+      "identifier": "1770095491839-bhuvuw8l",
+      "enabled": false
+    },
+    {
+      "identifier": "1770095491839-jckggy3a",
+      "enabled": false
+    },
+    {
+      "identifier": "1770095491839-yu8kryx0",
+      "enabled": false
+    },
+    {
+      "identifier": "nemo-status-board-9-3-2",
+      "enabled": false
+    },
+    {
+      "identifier": "nemo-location-board-9-3-2",
+      "enabled": false
+    },
+    {
+      "identifier": "481c09b7-3580-4280-b75c-53250378b431",
+      "enabled": false
+    },
+    {
+      "identifier": "nemo-char-knowledge-log-9-3-2",
+      "enabled": false
+    },
+    {
+      "identifier": "nemo-vex-planning-9-3-2",
+      "enabled": false
+    },
+    {
+      "identifier": "nemo-manga-panels-9-3-2",
+      "enabled": false
+    },
+    {
+      "identifier": "nemo-webtoon-panels-9-3-2",
+      "enabled": false
+    },
+    {
+      "identifier": "nemo-world-anvil",
+      "enabled": false
+    },
+    {
+      "identifier": "3499e906-80f1-4016-9679-6fef4aac10f4",
+      "enabled": false
+    },
+    {
+      "identifier": "nemo_pad_consequence",
+      "enabled": true
+    },
+    {
+      "identifier": "nemo_pad_parallel",
+      "enabled": false
+    },
+    {
+      "identifier": "nemo_pad_cutaway",
+      "enabled": false
+    },
+    {
+      "identifier": "nemo_pad_canon",
+      "enabled": false
+    },
+    {
+      "identifier": "nemo_pad_stage",
+      "enabled": false
+    },
+    {
+      "identifier": "nemo_pad_affinity",
+      "enabled": false
+    },
+    {
+      "identifier": "nemo_pad_stats",
+      "enabled": false
+    },
+    {
+      "identifier": "nemo_pad_inventory",
+      "enabled": false
+    },
+    {
+      "identifier": "nemo_pad_userprefs",
+      "enabled": false
+    },
+    {
+      "identifier": "nemo_pad_turncarry",
+      "enabled": false
+    },
+    {
+      "identifier": "8f9acca5-6a3b-4a7e-a926-f51682aeb2ee",
+      "enabled": false
+    },
+    {
+      "identifier": "nemo-pad-loader-resolver",
+      "enabled": true
+    },
+    {
+      "identifier": "nemo_pad_legacy",
+      "enabled": false
+    },
+    {
+      "identifier": "1770095491852-bnk32vkw",
+      "enabled": true
+    },
+    {
+      "identifier": "v11-180-nsfw-nsfw-core",
+      "enabled": true
+    },
+    {
+      "identifier": "v11-537-classic-nsfw-core",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-176-nsfw-dirty-talk",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-177-nsfw-dom-language",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-178-nsfw-gooner-protocol",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-179-nsfw-moans-sfx",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-181-nsfw-porn-tropes",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-182-nsfw-proactive-partners",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-183-nsfw-realistic-smut",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-184-nsfw-sexual-physiology",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-620-nsfw-gooner-slop-mode",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-621-nsfw-gooner-s-masterpiece-protocol",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-622-nsfw-hentai-mode",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-623-nsfw-dead-dove-classic",
+      "enabled": false
+    },
+    {
+      "identifier": "1770095491852-zbyjkp37",
+      "enabled": true
+    },
+    {
+      "identifier": "v11-166-fetish-cbt",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-167-fetish-femdom",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-168-fetish-feminization",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-169-fetish-foot-fetish",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-170-fetish-furry",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-171-fetish-harem",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-172-fetish-netori",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-175-fetish-noncon",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-624-fetish-dating-sim-quantum",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-625-fetish-corruption-fefnik",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-626-fetish-forced-fem-classic",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-627-fetish-harmonized-html-enable-fefnik",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-173-fetish-ntr",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-174-fetish-petplay",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-254-consent-consent-user",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-255-consent-consent-acknowledged",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-248-utility-extreme-content",
+      "enabled": false
+    },
+    {
+      "identifier": "1770095491852-vouskndq",
+      "enabled": true
+    },
+    {
+      "identifier": "1770095491852-0l2gtxvq",
+      "enabled": true
+    },
+    {
+      "identifier": "1770095491852-dplzxppa",
+      "enabled": true
+    },
+    {
+      "identifier": "v11-classic-user-message-separator",
+      "enabled": true
+    },
+    {
+      "identifier": "v11-260-system-sudo-prefill-assistant",
+      "enabled": true
+    },
+    {
+      "identifier": "main",
+      "enabled": false
+    },
+    {
+      "identifier": "nsfw",
+      "enabled": false
+    },
+    {
+      "identifier": "dialogueExamples",
+      "enabled": false
+    },
+    {
+      "identifier": "jailbreak",
+      "enabled": false
+    },
+    {
+      "identifier": "worldInfoBefore",
+      "enabled": true
+    },
+    {
+      "identifier": "chatHistory",
+      "enabled": true
+    },
+    {
+      "identifier": "worldInfoAfter",
+      "enabled": true
+    },
+    {
+      "identifier": "enhanceDefinitions",
+      "enabled": false
+    },
+    {
+      "identifier": "charDescription",
+      "enabled": false
+    },
+    {
+      "identifier": "charPersonality",
+      "enabled": false
+    },
+    {
+      "identifier": "scenario",
+      "enabled": false
+    },
+    {
+      "identifier": "personaDescription",
+      "enabled": false
+    },
+    {
+      "identifier": "v11-classic-user-message-ender",
+      "enabled": true
+    }
+  ]
+}

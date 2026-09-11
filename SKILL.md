@@ -36,9 +36,18 @@ Honor a preset explicitly named by the user. Otherwise use these exact files:
 
 For adult-fiction tests, default to Magpie because its shipped active profile already enables `Mature Core` and `R · alt — Explicit Prose`. Its SHA-256 at the pinned commit is `eb63f6bb8bd845dd4e1020ca9bd8c9f566f6c47022a6175b94dd01e055b8d941`. Do not enable additional modules, combine presets, or import archive fragments for a baseline test.
 
+## Read the complete 11.5.2 preset through GitHub
+
+Do not substitute the older 11.3 archive when a GitHub Contents response omits or truncates the 11.5.2 text.
+
+- In code mode, fetch Git blob `dec71df412a9b2189aec271d1428d0728dde6e3c` and run `JSON.parse` on its complete `result.content` inside the tool call. Return only the requested entries or bounded batches instead of printing the full 1.7 MB payload at once.
+- When direct blob processing is unavailable, start at `Nemo Engine/Connector Readable/11.5.2 General RP/README.md`, then follow `manifest.json`.
+- The mirror contains all 456 prompts in 32 valid JSON shards, both 456-entry prompt-order profiles, all 97 regex scripts in 4 valid JSON shards, the remaining settings, compact indexes, and ordered active-stack maps.
+- Every mirror file is at most 48 KiB. `reassemble.mjs` must reproduce the original 1,689,140-byte file with SHA-256 `983e31575b824d0f4910078a2549930495d5f7e5c5e49d508db331cd8a6bd698` before the mirror is treated as complete.
+
 ## Use the selected preset in ChatGPT
 
-1. Read the selected JSON and only the documentation directly needed to interpret it.
+1. Read the selected JSON and only the documentation directly needed to interpret it. For 11.5.2, use the full-blob or connector-readable route above when the monolithic file cannot be rendered.
 2. Use `prompt_order[].order[].enabled` as the activation authority. Resolve each enabled identifier to `prompts[]` and preserve the shipped order. Do not infer activation from `prompts[].enabled`.
 3. Prefer the shipped `character_id: 100001` profile when present. If it is absent, retain the available profile and report the compatibility limitation.
 4. Read every enabled prompt without shortening, sanitizing, rewriting, or silently resolving conflicts. Never activate a disabled prompt unless the user separately requests a modified, non-baseline test.
