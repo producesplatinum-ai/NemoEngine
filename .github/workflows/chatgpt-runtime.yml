@@ -1,0 +1,29 @@
+name: ChatGPT runtime
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Test ChatGPT runtime adapter
+        run: node --test scripts/test-nemo-chatgpt-runtime.mjs
+
+      - name: Verify connector-readable mirror
+        run: node 'Nemo Engine/tools/build-connector-readable-11.5.2.mjs' --check
