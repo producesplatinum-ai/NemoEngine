@@ -14,7 +14,19 @@ assert.equal(
   'Refusing to build from an unknown General RP source',
 );
 
-const source = JSON.parse(sourceRaw);
+function sortSourceKeys(value) {
+  if (Array.isArray(value)) return value.map(sortSourceKeys);
+  if (value && typeof value === 'object') {
+    return Object.fromEntries(
+      Object.keys(value).sort().map((key) => [key, sortSourceKeys(value[key])]),
+    );
+  }
+  return value;
+}
+
+// Keep generated files byte-for-byte stable even when the canonical source
+// uses a different insertion order for otherwise identical JSON objects.
+const source = sortSourceKeys(JSON.parse(sourceRaw));
 assert.equal(source.prompts.length, 456);
 const baseProfile = source.prompt_order.find((profile) => profile.character_id === 100001);
 assert(baseProfile, 'Source profile 100001 is missing');
