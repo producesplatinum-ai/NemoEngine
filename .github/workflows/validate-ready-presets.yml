@@ -1,0 +1,30 @@
+name: Validate Nemo Ready presets
+
+on:
+  push:
+    paths:
+      - "Nemo Engine/Nemo Engine 11.5.2 - General RP.json"
+      - "Nemo Engine/Ready/**"
+      - "Nemo Engine/tools/validate-ready-presets.mjs"
+      - ".github/workflows/validate-ready-presets.yml"
+  pull_request:
+    paths:
+      - "Nemo Engine/Nemo Engine 11.5.2 - General RP.json"
+      - "Nemo Engine/Ready/**"
+      - "Nemo Engine/tools/validate-ready-presets.mjs"
+      - ".github/workflows/validate-ready-presets.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node "Nemo Engine/tools/validate-ready-presets.mjs"
+
