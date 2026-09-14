@@ -2,12 +2,13 @@ import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 
-const SOURCE_SHA256 = '983e31575b824d0f4910078a2549930495d5f7e5c5e49d508db331cd8a6bd698';
+const SOURCE_SHA256 = 'c5e13e951340d17addef0e16e7a7152a8256c41f2c046a52e81d86e1feef31d4';
 const here = new URL('.', import.meta.url);
 const sourceUrl = new URL('../Nemo Engine 11.5.2 - General RP.json', here);
 const variants = [
   ['general', new URL('../Ready/Nemo Engine 11.5.2 - Ready RU RP.json', here), 109],
   ['gooner', new URL('../Ready/Nemo Engine 11.5.2 - Ready RU Gooner RP.json', here), 111],
+  ['psychology-humiliation-joi', new URL('../Ready/Nemo Engine 11.5.2 - Ready RU Psychology Humiliation JOI RP.json', here), 115],
 ];
 
 const rawSource = await readFile(sourceUrl, 'utf8');
@@ -19,6 +20,15 @@ assert(source100001, 'source profile 100001 is missing');
 
 const idAt = (index) => source.prompts[index].identifier;
 const range = (first, count) => Array.from({ length: count }, (_, offset) => first + offset);
+const categoryIndices = (category) => source.prompts.flatMap((prompt, index) => {
+  const match = prompt.content.match(/@category\s+([^\s}]+)/);
+  const sectionHeader = /@section-header\s+true/.test(prompt.content);
+  return match?.[1] === category && !sectionHeader ? [index] : [];
+});
+
+assert.equal(source.prompts.length, 458, 'source prompt count');
+assert.equal(idAt(455), 'v11-639-fetish-humiliation');
+assert.equal(idAt(456), 'v11-640-fetish-joi');
 const groups = {
   vex: [43, ...range(45, 31)],
   difficulty: range(327, 8),
@@ -27,9 +37,11 @@ const groups = {
   planningLanguage: range(94, 12),
   narrationLanguage: range(107, 12),
   trackers: range(356, 36),
-  fetish: range(421, 14),
+  fetish: categoryIndices('Fetish'),
   nsfw: range(406, 14),
 };
+
+assert.equal(groups.fetish.length, 16, 'Unexpected Fetish module count');
 
 function expectedState(kind) {
   const state = new Map(source100001.order.map((entry) => [entry.identifier, Boolean(entry.enabled)]));
@@ -62,6 +74,9 @@ function expectedState(kind) {
     set(408, true);
     set(412, true);
   }
+  if (kind === 'psychology-humiliation-joi') {
+    for (const index of [287, 288, 406, 407, 455, 456]) set(index, true);
+  }
   return state;
 }
 
@@ -85,20 +100,20 @@ function compileStoredRegex(value) {
 }
 
 function validatePreset(preset, kind, expectedActiveCount) {
-  assert.equal(preset.prompts.length, 456, `${kind}: prompt count`);
+  assert.equal(preset.prompts.length, 458, `${kind}: prompt count`);
   assert.equal(preset.prompt_order.length, 2, `${kind}: profile count`);
   assert.equal(preset.extensions.regex_scripts.length, 97, `${kind}: regex count`);
   assert.deepEqual(preset.prompts, source.prompts, `${kind}: prompt definitions must remain unchanged`);
 
   const promptIds = preset.prompts.map((prompt) => prompt.identifier);
-  assert.equal(new Set(promptIds).size, 456, `${kind}: duplicate prompt id`);
+  assert.equal(new Set(promptIds).size, 458, `${kind}: duplicate prompt id`);
   assert.deepEqual(preset.prompt_order.map((profile) => profile.character_id), [100000, 100001], `${kind}: profile ids`);
   assert.deepEqual(preset.prompt_order[0].order, preset.prompt_order[1].order, `${kind}: profiles diverge`);
 
   const expected = expectedState(kind);
   for (const profile of preset.prompt_order) {
-    assert.equal(profile.order.length, 456, `${kind}/${profile.character_id}: order count`);
-    assert.equal(new Set(profile.order.map((entry) => entry.identifier)).size, 456, `${kind}/${profile.character_id}: duplicate order id`);
+    assert.equal(profile.order.length, 458, `${kind}/${profile.character_id}: order count`);
+    assert.equal(new Set(profile.order.map((entry) => entry.identifier)).size, 458, `${kind}/${profile.character_id}: duplicate order id`);
     assert.deepEqual(profile.order.map((entry) => entry.identifier), source100001.order.map((entry) => entry.identifier), `${kind}/${profile.character_id}: identifier order changed`);
     for (const entry of profile.order) assert.equal(entry.enabled, expected.get(entry.identifier), `${kind}/${profile.character_id}: unexpected state for ${entry.identifier}`);
     assert.equal(profile.order.at(-1).identifier, 'v11-classic-user-message-ender', `${kind}: final tail is not last`);
@@ -112,13 +127,25 @@ function validatePreset(preset, kind, expectedActiveCount) {
   for (const index of [57, 260, 296, 330, 404, 419]) assert(!active.has(idAt(index)), `${kind}: conflicting prompt ${index} is on`);
   assert(active.has(idAt(96)) && active.has(idAt(109)), `${kind}: Russian language selectors are not active`);
   assert(groups.trackers.every((index) => !active.has(idAt(index))), `${kind}: a tracker is unexpectedly active`);
-  assert(groups.fetish.every((index) => !active.has(idAt(index))), `${kind}: a Fetish toggle is unexpectedly active`);
+  const activeFetish = groups.fetish.filter((index) => active.has(idAt(index)));
+  if (kind === 'psychology-humiliation-joi') {
+    assert.deepEqual(activeFetish, [455, 456], `${kind}: wrong Fetish selection`);
+  } else {
+    assert.equal(activeFetish.length, 0, `${kind}: a Fetish toggle is unexpectedly active`);
+  }
 
   if (kind === 'general') {
     assert(active.has(idAt(60)) && !active.has(idAt(74)) && !active.has(idAt(408)), 'general: wrong Vex/NSFW overlay');
-  } else {
+  } else if (kind === 'gooner') {
     assert(active.has(idAt(74)) && active.has(idAt(408)) && active.has(idAt(412)), 'gooner: required stack is incomplete');
     assert(!active.has(idAt(415)) && !active.has(idAt(416)), 'gooner: Slop or Masterpiece must stay off');
+  } else {
+    for (const index of [60, 287, 288, 406, 407, 410, 455, 456]) {
+      assert(active.has(idAt(index)), `${kind}: required prompt ${index} is off`);
+    }
+    for (const index of [74, 408, 412, 415, 416]) {
+      assert(!active.has(idAt(index)), `${kind}: conflicting prompt ${index} is on`);
+    }
   }
 
   assert.equal(preset.show_thoughts, false, `${kind}: private planning display must be off`);
@@ -143,8 +170,7 @@ function validatePreset(preset, kind, expectedActiveCount) {
 for (const [kind, url, expectedCount] of variants) {
   const preset = JSON.parse(await readFile(url, 'utf8'));
   validatePreset(preset, kind, expectedCount);
-  console.log(`PASS ${kind}: 456 prompts, ${expectedCount} active, 97 regex`);
+  console.log(`PASS ${kind}: 458 prompts, ${expectedCount} active, 97 regex`);
 }
 
 console.log('PASS source integrity:', sourceHash);
-

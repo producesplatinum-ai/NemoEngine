@@ -531,7 +531,7 @@ The Fetish category includes:
 <details>
 <summary><strong>Show fetish modules</strong></summary>
 
-🎀 CBT, 🎀 Femdom, 🎀 Feminization, 🎀 Foot Fetish, 🎀 Furry, 🎀 Harem, 🎀 Netori, 🎀 NonCon, 🎀 Dating Sim (Quantum), 🎀 Corruption (Fefnik), 🎀 Forced Fem (Classic), 🎀 Harmonized HTML Enable (fefnik), 🎀 NTR, 🎀 Petplay
+🎀 CBT, 🎀 Femdom, 🎀 Feminization, 🎀 Foot Fetish, 🎀 Furry, 🎀 Harem, 🎀 Netori, 🎀 NonCon, 🎀 Dating Sim (Quantum), 🎀 Corruption (Fefnik), 🎀 Forced Fem (Classic), 🎀 Harmonized HTML Enable (fefnik), 🎀 NTR, 🎀 Petplay, 🎀 Humiliation, 🎀 JOI
 
 </details>
 

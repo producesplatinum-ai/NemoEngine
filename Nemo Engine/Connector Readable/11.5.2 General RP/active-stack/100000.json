@@ -776,83 +776,83 @@
     "shard": "prompts/prompts-412-428.json"
   },
   {
-    "order_index": 438,
+    "order_index": 440,
     "prompt_index": 438,
     "identifier": "1770095491852-vouskndq",
     "name": "=== 💾 Databank ===",
     "role": "system",
-    "shard": "prompts/prompts-429-454.json"
+    "shard": "prompts/prompts-429-455.json"
   },
   {
-    "order_index": 439,
+    "order_index": 441,
     "prompt_index": 439,
     "identifier": "1770095491852-0l2gtxvq",
     "name": "💾 Databank: Unified Card Context",
     "role": "user",
-    "shard": "prompts/prompts-429-454.json"
+    "shard": "prompts/prompts-429-455.json"
   },
   {
-    "order_index": 440,
+    "order_index": 442,
     "prompt_index": 440,
     "identifier": "1770095491852-dplzxppa",
     "name": "=== ⚙️ System ===",
     "role": "system",
-    "shard": "prompts/prompts-429-454.json"
+    "shard": "prompts/prompts-429-455.json"
   },
   {
-    "order_index": 441,
+    "order_index": 443,
     "prompt_index": 441,
     "identifier": "v11-classic-user-message-separator",
     "name": "🪞 System: Current Message Separator",
     "role": "user",
-    "shard": "prompts/prompts-429-454.json"
+    "shard": "prompts/prompts-429-455.json"
   },
   {
-    "order_index": 442,
+    "order_index": 444,
     "prompt_index": 442,
     "identifier": "v11-260-system-sudo-prefill-assistant",
     "name": "🪞 System: Assistant Sudo Prefill",
     "role": "assistant",
-    "shard": "prompts/prompts-429-454.json"
+    "shard": "prompts/prompts-429-455.json"
   },
   {
-    "order_index": 443,
+    "order_index": 445,
     "prompt_index": 443,
     "identifier": "main",
     "name": "Main Prompt",
     "role": "system",
-    "shard": "prompts/prompts-429-454.json"
+    "shard": "prompts/prompts-429-455.json"
   },
   {
-    "order_index": 447,
+    "order_index": 449,
     "prompt_index": 447,
     "identifier": "chatHistory",
     "name": "Chat History",
     "role": "system",
-    "shard": "prompts/prompts-429-454.json"
+    "shard": "prompts/prompts-429-455.json"
   },
   {
-    "order_index": 448,
+    "order_index": 450,
     "prompt_index": 448,
     "identifier": "worldInfoAfter",
     "name": "World Info (after)",
     "role": "system",
-    "shard": "prompts/prompts-429-454.json"
+    "shard": "prompts/prompts-429-455.json"
   },
   {
-    "order_index": 449,
+    "order_index": 451,
     "prompt_index": 449,
     "identifier": "worldInfoBefore",
     "name": "World Info (before)",
     "role": "system",
-    "shard": "prompts/prompts-429-454.json"
+    "shard": "prompts/prompts-429-455.json"
   },
   {
-    "order_index": 455,
-    "prompt_index": 455,
+    "order_index": 457,
+    "prompt_index": 457,
     "identifier": "v11-classic-user-message-ender",
     "name": "🔚 System: Final User-Role Tail / Runtime Reminder",
     "role": "user",
-    "shard": "prompts/prompts-455-455.json"
+    "shard": "prompts/prompts-456-457.json"
   }
 ]

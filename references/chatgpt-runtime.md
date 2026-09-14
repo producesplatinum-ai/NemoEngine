@@ -5,8 +5,8 @@ Use this reference when compiling or applying NemoEngine in ChatGPT. It defines 
 ## Source and activation
 
 - Canonical preset: `Nemo Engine/Nemo Engine 11.5.2 - General RP.json`.
-- Canonical SHA-256: `983e31575b824d0f4910078a2549930495d5f7e5c5e49d508db331cd8a6bd698`.
-- Expected inventory: 456 prompts, two `prompt_order` profiles, and 97 regex scripts.
+- Canonical SHA-256: `c5e13e951340d17addef0e16e7a7152a8256c41f2c046a52e81d86e1feef31d4`.
+- Expected inventory: 458 prompts, two `prompt_order` profiles, and 97 regex scripts.
 - Default profile: `100001`.
 - Activation authority: the chosen profile's `prompt_order[].order[].enabled` values.
 - Do not activate a module because its own `prompts[].enabled` field is true or because its prose contains the word “Active”.
@@ -74,7 +74,7 @@ node scripts/nemo-chatgpt-runtime.mjs \
   --mode source --profile 100001 --out "$nemo_run_dir/source-bundle.json"
 ```
 
-Query the saved inventory for the needed exact name or identifier; do not print all 456 entries into one tool result.
+Query the saved inventory for the needed exact name or identifier; do not print all 458 entries into one tool result.
 
 After drafting user-facing prose, sanitize through files and read the bounded cleaned file:
 
@@ -123,7 +123,7 @@ Before compilation, write `context.json` from semantic values the user actually 
 
 `--sanitize-output PATH` reads a drafted answer from that path, while `--sanitize-output -` reads stdin. Sanitization is standalone; in this skill, always provide `--out`. A blank or unsafe result is an error.
 
-`SELECTOR` accepts an exact identifier or a normalized exact name. `LIST` accepts comma-separated names/identifiers or repeated flags. `none` clears a family where supported. `--enable` and `--disable` address any of the source's 456 entries and are applied after family selections; the family flags provide stricter, convenient replacement semantics for Vex, NSFW, and Fetish selections. Use `--list modules` to inspect the complete inventory. Invalid or ambiguous selectors fail with exit status 1 instead of guessing.
+`SELECTOR` accepts an exact identifier or a normalized exact name. `LIST` accepts comma-separated names/identifiers or repeated flags. `none` clears a family where supported. `--enable` and `--disable` address any of the source's 458 entries and are applied after family selections; the family flags provide stricter, convenient replacement semantics for Vex, NSFW, and Fetish selections. Use `--list modules` to inspect the complete inventory. Invalid or ambiguous selectors fail with exit status 1 instead of guessing.
 
 ## Selection rules
 
@@ -161,7 +161,24 @@ Forced Fem (Classic)
 Harmonized HTML Enable (fefnik)
 NTR
 Petplay
+Humiliation
+JOI
 ```
+
+Psychology, Humiliation, and JOI are independently selectable. For the complete compatible stack, compile both psychological augments through generic overrides and the two adult procedures through the Fetish family:
+
+```bash
+node scripts/nemo-chatgpt-runtime.mjs \
+  --enable "v11-611-augment-manipulation-realism,v11-613-augment-psychological-emotional-realism" \
+  --fetish "Humiliation,JOI" \
+  --pretty \
+  --out build/nemo-psychology-humiliation-joi.json
+```
+
+- `Humiliation` supports either direct adult address or in-scene character dynamics. Keep its claims anchored to supplied facts and the current fiction; it must not invent the user's actions, inner state, or response.
+- `JOI` is an adult opt-in, turn-by-turn procedure. It waits for the user's report after each instruction, honors `pause` and `stop` immediately, and never pretends to observe the body or run a live timer.
+- The psychology augments affect character and world realism. They do not authorize diagnosis of the user or weaken JOI's consent, state, stop, and timing rules.
+- Additional Fetish modules may be combined only when explicitly requested. Selecting `Humiliation` or `JOI` never silently enables Femdom, NTR, CBT, Gooner, or another fetish.
 
 Resolve known semantic conflicts from the user's stated role and desired behavior:
 
@@ -205,7 +222,7 @@ Keep user intent above optional style defaults. In particular:
 
 ## Portability boundary
 
-The compiler can address all 456 source prompt entries in deterministic selected-profile order. They are entries, not 456 independently portable capabilities. Default portable mode extracts only behavior it can represent and reports the rest:
+The compiler can address all 458 source prompt entries in deterministic selected-profile order. They are entries, not 458 independently portable capabilities. Default portable mode extracts only behavior it can represent and reports the rest:
 
 - ChatGPT does not execute SillyTavern `setvar`, `addvar`, `getvar`, or `trim` macros. Portable mode may evaluate only the compiler's supported simple forms; unresolved forms remain diagnostics, never an implied capability.
 - ChatGPT does not execute SillyTavern role/depth injection or conversation-history placement. Any retained fields are metadata only.

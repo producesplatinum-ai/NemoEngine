@@ -1,6 +1,6 @@
 # Nemo Engine 11.5.2 — Ready RU
 
-Это две готовые русскоязычные сборки Nemo Engine для SillyTavern. Исходные `General RP` и `Default RP` не изменены.
+Это три готовые русскоязычные сборки Nemo Engine для SillyTavern. Каждая воспроизводимо собирается из канонического `General RP`; `Default RP` не изменён.
 
 ## Какой файл выбрать
 
@@ -8,6 +8,7 @@
 | --- | --- |
 | `Nemo Engine 11.5.2 - Ready RU RP.json` | Обычный связный RP, включая взрослые сцены, когда они нужны сюжету |
 | `Nemo Engine 11.5.2 - Ready RU Gooner RP.json` | Gooner Vex, Gooner Protocol и инициативные партнёры без Slop/Masterpiece |
+| `Nemo Engine 11.5.2 - Ready RU Psychology Humiliation JOI RP.json` | Narrative Vex, психологический реализм, Humiliation и JOI с прямой речью и управляемой процедурой |
 
 ## Установка
 
@@ -34,7 +35,7 @@
 
 ## Fetish
 
-Все Fetish-переключатели по умолчанию выключены: заголовок раздела сам ничего не активирует. В Prompt Manager можно включить нужный модуль; это обычный переключатель, не программирование.
+В обычной и Gooner-сборках все Fetish-переключатели выключены: заголовок раздела сам ничего не активирует. В Psychology Humiliation JOI включены только `Humiliation` и `JOI`; остальные Fetish-модули остаются выключенными. В Prompt Manager можно изменить выбор вручную.
 
 Без специального замысла не включайте вместе:
 
@@ -43,6 +44,12 @@
 - несколько обязательных HTML-панелей.
 
 Для `Dating Sim`, `Corruption` или `Forced Fem Classic` включите также `Harmonized HTML`.
+
+## Psychology Humiliation JOI
+
+Третья сборка основана на обычном Narrative-профиле, а не на Gooner Vex. В ней включены `Dirty Talk`, `Dom Language`, `Manipulation Realism`, `Psychological & Emotional Realism`, `Humiliation` и `JOI`. JOI ведёт интерактивную процедуру по подтверждённому состоянию разговора, поддерживает остановку и паузу и завершает сессию явным выходом и нейтральной проверкой состояния; она не имитирует настоящий таймер и не выдумывает действия пользователя.
+
+Остальные Fetish-модули, Gooner Protocol, Proactive Partners, Slop и Masterpiece остаются выключенными, поэтому профиль не смешивает несовместимые режимы автоматически.
 
 ## Gooner
 
@@ -65,5 +72,4 @@ Trackers по умолчанию выключены, поэтому они не 
 
 ## Проверка
 
-GitHub Actions запускает `Nemo Engine/tools/validate-ready-presets.mjs`. Проверяются исходный SHA-256, все 456 prompts, оба prompt-order, взаимоисключающие группы, planning/scratchpad-зависимости, взрослый стек, финальный runtime-tail и 97 regex.
-
+GitHub Actions сначала пересобирает Ready-файлы, затем запускает `Nemo Engine/tools/validate-ready-presets.mjs` и проверяет отсутствие расхождений с генератором. Проверяются исходный SHA-256, все 458 prompts, три варианта, оба prompt-order, взаимоисключающие группы, planning/scratchpad-зависимости, взрослый стек, финальный runtime-tail и 97 regex.

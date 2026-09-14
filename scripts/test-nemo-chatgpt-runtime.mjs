@@ -24,14 +24,21 @@ const sourcePath = path.join(
   'Nemo Engine',
   'Nemo Engine 11.5.2 - General RP.json',
 );
+const psychologyHumiliationJoiReadyPath = path.join(
+  repositoryRoot,
+  'Nemo Engine',
+  'Ready',
+  'Nemo Engine 11.5.2 - Ready RU Psychology Humiliation JOI RP.json',
+);
 
 const EXPECTED_SOURCE_SHA256 =
-  '983e31575b824d0f4910078a2549930495d5f7e5c5e49d508db331cd8a6bd698';
-const EXPECTED_SOURCE_PROMPTS = 456;
+  'c5e13e951340d17addef0e16e7a7152a8256c41f2c046a52e81d86e1feef31d4';
+const EXPECTED_SOURCE_PROMPTS = 458;
 const EXPECTED_SOURCE_PROFILES = 2;
 const EXPECTED_SOURCE_REGEX_SCRIPTS = 97;
 const EXPECTED_DEFAULT_ENABLED_PROMPTS = 106;
 const EXPECTED_DEFAULT_PORTABLE_PROMPTS = 26;
+const EXPECTED_FETISH_PROMPTS = 16;
 const MAX_DEFAULT_PORTABLE_CHARACTERS = 170_000;
 
 const IDS = Object.freeze({
@@ -42,15 +49,23 @@ const IDS = Object.freeze({
   goonGremlinVex: 'v11-304-vex-goon-gremlin-vex',
   modernNsfwCore: 'v11-180-nsfw-nsfw-core',
   classicNsfwCore: 'v11-537-classic-nsfw-core',
+  dirtyTalk: 'v11-176-nsfw-dirty-talk',
+  domLanguage: 'v11-177-nsfw-dom-language',
   goonerProtocol: 'v11-178-nsfw-gooner-protocol',
   goonerSlop: 'v11-620-nsfw-gooner-slop-mode',
   goonerMasterpiece: 'v11-621-nsfw-gooner-s-masterpiece-protocol',
   cbt: 'v11-166-fetish-cbt',
+  femdom: 'v11-167-fetish-femdom',
   ntr: 'v11-173-fetish-ntr',
+  petplay: 'v11-174-fetish-petplay',
+  humiliation: 'v11-639-fetish-humiliation',
+  joi: 'v11-640-fetish-joi',
   datingSim: 'v11-624-fetish-dating-sim-quantum',
   corruption: 'v11-625-fetish-corruption-fefnik',
   forcedFemClassic: 'v11-626-fetish-forced-fem-classic',
   harmonizedHtml: 'v11-627-fetish-harmonized-html-enable-fefnik',
+  manipulationRealism: 'v11-611-augment-manipulation-realism',
+  psychologicalRealism: 'v11-613-augment-psychological-emotional-realism',
   characterFriction: 'v11-244-utility-character-friction',
   moreDialogue: 'v11-240-utility-more-dialogue',
   balancedDifficulty: 'v11-100-difficulty-balanced',
@@ -201,7 +216,7 @@ function assertEmissionDirectory(directory, bundle, directInstructions) {
   const { manifest, instructions } = emission;
 
   assert.equal(manifest.schemaVersion, 'nemo-chatgpt-runtime-emission/v1');
-  assert.equal(manifest.sourceSha256, EXPECTED_SOURCE_SHA256);
+  assert.equal(manifest.sourceSha256, bundle.source.sha256);
   assert.deepEqual(manifest.profile, bundle.profile);
   assert.equal(manifest.mode, 'portable');
   assert.deepEqual(manifest.selections, bundle.selections);
@@ -276,6 +291,79 @@ test('source fixture has the pinned byte hash and complete 11.5.2 counts', () =>
     [EXPECTED_SOURCE_PROMPTS, EXPECTED_SOURCE_PROMPTS],
   );
   assert.equal(source.extensions.regex_scripts.length, EXPECTED_SOURCE_REGEX_SCRIPTS);
+});
+
+test('Humiliation and JOI are complete disabled Fetish modules in every source profile', () => {
+  const expectedHeadings = new Map([
+    [
+      IDS.humiliation,
+      [
+        '[LAW] Adult Consent Frame',
+        '[DIRECTIVE] Fetish: Humiliation',
+        '[DIRECTIVE] Addressed And Scenic Modes',
+        '[DIRECTIVE] Anchor To Consequence',
+        '[DIRECTIVE] Consequences In Action',
+        '[DIRECTIVE] Intensity Calibration',
+        '[DIRECTIVE] Stack Compatibility',
+        '[BOUNDARY] Preserve User State And Localize The Target',
+      ],
+    ],
+    [
+      IDS.joi,
+      [
+        '[LAW] Adult Opt-In And Procedure Priority',
+        '[LAW] User Owns Body And State',
+        '[DIRECTIVE] Conversational State Machine',
+        '[DIRECTIVE] One-Turn Instruction Loop',
+        '[BOUNDARY] No Pretend Clock',
+        '[BOUNDARY] Physical Safety',
+        '[BOUNDARY] Clean Termination',
+      ],
+    ],
+  ]);
+
+  for (const [id, headings] of expectedHeadings) {
+    const matchingPrompts = source.prompts.filter((prompt) => prompt.identifier === id);
+    assert.equal(matchingPrompts.length, 1, `${id} must be unique in prompts[]`);
+    const [prompt] = matchingPrompts;
+    assert.equal(prompt.role, 'system');
+    assert.equal(prompt.injection_position, 0);
+    assert.equal(prompt.injection_depth, 4);
+    assert.equal(prompt.injection_order, 100);
+    assert.equal(prompt.system_prompt, false);
+    assert.equal(prompt.marker, false);
+    assert.equal(prompt.enabled, false);
+    assert.equal(prompt.forbid_overrides, false);
+    assert.deepEqual(prompt.injection_trigger, []);
+    assert.equal(categoryOf(prompt), 'Fetish');
+    assert.equal(isSectionHeader(prompt), false);
+    assert.match(prompt.content, /@badge TOGGLE/);
+    assert.match(prompt.content, /setvar::FetishName::/);
+    for (const heading of headings) assert.ok(prompt.content.includes(heading), `${id}: ${heading}`);
+  }
+
+  for (const profile of source.prompt_order) {
+    const orderIds = profile.order.map((entry) => entry.identifier);
+    const petplayIndex = orderIds.indexOf(IDS.petplay);
+    const humiliationIndex = orderIds.indexOf(IDS.humiliation);
+    const joiIndex = orderIds.indexOf(IDS.joi);
+    assert.ok(petplayIndex >= 0, `${profile.character_id}: Petplay missing`);
+    assert.equal(humiliationIndex, petplayIndex + 1, `${profile.character_id}: Humiliation order`);
+    assert.equal(joiIndex, humiliationIndex + 1, `${profile.character_id}: JOI order`);
+    assert.equal(
+      orderIds.filter((id) => id === IDS.humiliation).length,
+      1,
+      `${profile.character_id}: duplicate Humiliation order entry`,
+    );
+    assert.equal(
+      orderIds.filter((id) => id === IDS.joi).length,
+      1,
+      `${profile.character_id}: duplicate JOI order entry`,
+    );
+    assert.equal(profile.order[humiliationIndex].enabled, false);
+    assert.equal(profile.order[joiIndex].enabled, false);
+    assert.equal(orderIds.at(-1), 'v11-classic-user-message-ender');
+  }
 });
 
 test('default compilation reports its source exactly', () => {
@@ -435,6 +523,54 @@ test('emit-dir round-trips deterministic Unicode-safe chunks', async (t) => {
         '--fetish',
         'CBT,NTR',
       ],
+      expected: {
+        vex: IDS.goonerVex,
+        nsfw: [IDS.modernNsfwCore, IDS.goonerProtocol],
+        fetish: [IDS.cbt, IDS.ntr],
+        operative: [IDS.cbt, IDS.ntr],
+      },
+    },
+    {
+      name: 'full psychology, Humiliation, and JOI stack',
+      args: [
+        '--enable',
+        IDS.manipulationRealism,
+        '--enable',
+        IDS.psychologicalRealism,
+        '--vex',
+        IDS.goonerVex,
+        '--nsfw',
+        `${IDS.modernNsfwCore},${IDS.goonerProtocol}`,
+        '--fetish',
+        `${IDS.femdom},${IDS.ntr},${IDS.humiliation},${IDS.joi}`,
+      ],
+      expected: {
+        vex: IDS.goonerVex,
+        nsfw: [IDS.modernNsfwCore, IDS.goonerProtocol],
+        fetish: [IDS.femdom, IDS.ntr, IDS.humiliation, IDS.joi],
+        operative: [
+          IDS.manipulationRealism,
+          IDS.psychologicalRealism,
+          IDS.humiliation,
+          IDS.joi,
+        ],
+      },
+    },
+    {
+      name: 'ready Psychology Humiliation JOI preset',
+      args: ['--preset', psychologyHumiliationJoiReadyPath],
+      expected: {
+        vex: IDS.narrativeVex,
+        nsfw: [IDS.modernNsfwCore, IDS.dirtyTalk, IDS.domLanguage],
+        fetish: [IDS.humiliation, IDS.joi],
+        operative: [
+          IDS.manipulationRealism,
+          IDS.psychologicalRealism,
+          IDS.humiliation,
+          IDS.joi,
+        ],
+        enabledPrompts: 115,
+      },
     },
   ];
 
@@ -467,13 +603,18 @@ test('emit-dir round-trips deterministic Unicode-safe chunks', async (t) => {
           );
         }
 
-        if (sample.name !== 'default') {
-          assert.equal(bundle.selections.vex.id, IDS.goonerVex);
-          assert.deepEqual(selectedIds(bundle.selections.nsfw), [
-            IDS.modernNsfwCore,
-            IDS.goonerProtocol,
-          ]);
-          assert.deepEqual(selectedIds(bundle.selections.fetish), [IDS.cbt, IDS.ntr]);
+        if (sample.expected) {
+          assert.equal(bundle.selections.vex.id, sample.expected.vex);
+          assert.deepEqual(selectedIds(bundle.selections.nsfw), sample.expected.nsfw);
+          assert.deepEqual(selectedIds(bundle.selections.fetish), sample.expected.fetish);
+          if (sample.expected.enabledPrompts !== undefined) {
+            assert.equal(bundle.stats.enabledPrompts, sample.expected.enabledPrompts);
+          }
+          const omittedIds = new Set(first.manifest.omittedModules.map((module) => module.id));
+          for (const id of sample.expected.operative) {
+            assert.ok(first.manifest.orderedEmittedIds.includes(id), `${id} was not emitted`);
+            assert.ok(!omittedIds.has(id), `${id} was incorrectly omitted`);
+          }
           assert.ok(bundle.stats.instructionChars <= MAX_DEFAULT_PORTABLE_CHARACTERS);
         }
       } finally {
@@ -678,7 +819,7 @@ test('folded-state classification requires an observable emitted consumer', () =
   }
 });
 
-test('module inventory exposes all 456 source prompts as addressable selectors', () => {
+test('module inventory exposes all source prompts as addressable selectors', () => {
   const { bundle: inventory } = invokeBundle(['--list', 'modules']);
   const expectedIds = source.prompts.map((prompt) => prompt.identifier);
 
@@ -688,7 +829,10 @@ test('module inventory exposes all 456 source prompts as addressable selectors',
     inventory.modules.map((module) => module.id),
     expectedIds,
   );
-  assert.equal(new Set(inventory.modules.map((module) => module.id)).size, 456);
+  assert.equal(
+    new Set(inventory.modules.map((module) => module.id)).size,
+    EXPECTED_SOURCE_PROMPTS,
+  );
   for (const [index, module] of inventory.modules.entries()) {
     assert.equal(module.sourceIndex, index);
     assert.equal(Number.isInteger(module.profileOrderIndex), true, module.id);
@@ -865,6 +1009,95 @@ test('selected NSFW and fetish modules are exact and profile ordered', () => {
   assert.ok(!moduleIds(bundle).includes(IDS.goonerMasterpiece));
 });
 
+test('Fetish inventory exposes Humiliation and JOI as disabled exact selectors', () => {
+  const { bundle: inventory } = invokeBundle(['--list', 'fetish']);
+  const entries = inventory.families.fetish;
+  const byId = new Map(entries.map((entry) => [entry.id, entry]));
+
+  assert.equal(inventory.schemaVersion, 'nemo-chatgpt-runtime/v1/inventory');
+  assert.equal(entries.length, EXPECTED_FETISH_PROMPTS);
+  assert.deepEqual(byId.get(IDS.humiliation), {
+    id: IDS.humiliation,
+    name: '🎀 Humiliation',
+    profileEnabled: false,
+    enabled: false,
+  });
+  assert.deepEqual(byId.get(IDS.joi), {
+    id: IDS.joi,
+    name: '🎀 JOI',
+    profileEnabled: false,
+    enabled: false,
+  });
+});
+
+test('Humiliation and JOI resolve identically by exact name and identifier', () => {
+  const byName = invokeRuntime(['--fetish', 'Humiliation,JOI', '--pretty']);
+  const byIdentifier = invokeRuntime([
+    '--fetish',
+    `${IDS.humiliation},${IDS.joi}`,
+    '--pretty',
+  ]);
+
+  assert.equal(byName.status, 0, byName.stderr);
+  assert.equal(byIdentifier.status, 0, byIdentifier.stderr);
+  assert.equal(byName.stderr, '');
+  assert.equal(byIdentifier.stderr, '');
+  assert.equal(byIdentifier.stdout, byName.stdout);
+
+  const bundle = JSON.parse(byName.stdout);
+  assert.deepEqual(selectedIds(bundle.selections.fetish), [IDS.humiliation, IDS.joi]);
+  for (const id of [IDS.humiliation, IDS.joi]) {
+    assert.equal(bundle.modules.find((module) => module.id === id)?.emission, 'portable');
+    assert.ok(bundle.prompts.some((prompt) => prompt.id === id), `${id} was not emitted`);
+  }
+  const joiPrompt = bundle.prompts.find((prompt) => prompt.id === IDS.joi);
+  assert.doesNotMatch(joiPrompt.content, /<\/?joi-state\b|\[\[\/?joi-state\b/i);
+  assertPortableInstructionText(renderBundleInstructions(bundle), 'Humiliation + JOI runtime');
+});
+
+test('psychology, Gooner, Humiliation, JOI, Femdom, and NTR compile as one exact stack', () => {
+  const { bundle } = invokeBundle([
+    '--enable',
+    IDS.manipulationRealism,
+    '--enable',
+    IDS.psychologicalRealism,
+    '--vex',
+    IDS.goonerVex,
+    '--nsfw',
+    `${IDS.modernNsfwCore},${IDS.goonerProtocol}`,
+    '--fetish',
+    `${IDS.femdom},${IDS.ntr},${IDS.humiliation},${IDS.joi}`,
+  ]);
+  const requestedOperativeIds = [
+    IDS.manipulationRealism,
+    IDS.psychologicalRealism,
+    IDS.humiliation,
+    IDS.joi,
+  ];
+
+  assert.equal(bundle.selections.vex.id, IDS.goonerVex);
+  assert.deepEqual(selectedIds(bundle.selections.nsfw), [
+    IDS.modernNsfwCore,
+    IDS.goonerProtocol,
+  ]);
+  assert.deepEqual(selectedIds(bundle.selections.fetish), [
+    IDS.femdom,
+    IDS.ntr,
+    IDS.humiliation,
+    IDS.joi,
+  ]);
+  assert.deepEqual(
+    selectedIds(bundle.selections.overrides.enabled),
+    [IDS.manipulationRealism, IDS.psychologicalRealism],
+  );
+  for (const id of requestedOperativeIds) {
+    assert.equal(bundle.modules.find((module) => module.id === id)?.emission, 'portable');
+    assert.ok(bundle.prompts.some((prompt) => prompt.id === id), `${id} was not emitted`);
+  }
+  assert.ok(bundle.stats.instructionChars <= MAX_DEFAULT_PORTABLE_CHARACTERS);
+  assertPortableInstructionText(renderBundleInstructions(bundle), 'full psychology/adult stack');
+});
+
 test('UI-dependent fetish modules degrade to safe plain text in portable mode', async (t) => {
   const cases = [
     ['Dating Sim (Quantum)', IDS.datingSim],
@@ -918,7 +1151,7 @@ test('UI-dependent fetish modules degrade to safe plain text in portable mode', 
 });
 
 test('every Fetish module is individually selectable by its exact identifier', async (t) => {
-  assert.equal(fetishIds.size, 14);
+  assert.equal(fetishIds.size, EXPECTED_FETISH_PROMPTS);
   for (const id of fetishIds) {
     await t.test(id, () => {
       const { bundle } = invokeBundle(['--fetish', id]);
@@ -1067,9 +1300,44 @@ test('duplicate and mutually exclusive family selections fail closed', async (t)
       error: /Duplicate Fetish selection/i,
     },
     {
+      name: 'duplicate JOI',
+      args: ['--fetish', 'JOI,JOI'],
+      error: /Duplicate Fetish selection.*JOI/i,
+    },
+    {
+      name: 'none combined with JOI',
+      args: ['--fetish', 'none,JOI'],
+      error: /Fetish selector "none" cannot be combined/i,
+    },
+    {
       name: 'modern and classic NSFW cores',
       args: ['--nsfw', 'NSFW Core,NSFW Core (Classic) [V6]'],
       error: /Mutual-exclusive selection conflict.*NSFW-Core/i,
+    },
+  ];
+
+  for (const sample of cases) {
+    await t.test(sample.name, () => {
+      const result = invokeRuntime(sample.args);
+      assert.equal(result.status, 1);
+      assert.equal(result.stdout, '');
+      assert.match(result.stderr, /^Error:/);
+      assert.match(result.stderr, sample.error);
+    });
+  }
+});
+
+test('JOI aliases and contradictory generic overrides fail closed', async (t) => {
+  const cases = [
+    {
+      name: 'unsupported Orgasm Control alias',
+      args: ['--fetish', 'Orgasm Control'],
+      error: /Unknown Fetish selector.*Orgasm Control/i,
+    },
+    {
+      name: 'same JOI module enabled and disabled',
+      args: ['--enable', IDS.joi, '--disable', IDS.joi],
+      error: /same module cannot be passed to both --enable and --disable.*JOI/i,
     },
   ];
 
@@ -1198,6 +1466,40 @@ test('output sanitizer removes runtime, language, and service scaffolding', () =
   );
 });
 
+test('output sanitizer preserves public JOI controls without treating them as service data', () => {
+  const input = 'Pause now. Say "resume" to start again, or "stop" to end. Release remains your choice.';
+  const result = invokeRuntime(['--sanitize-output', '-'], { input });
+
+  assert.equal(result.status, 0, result.stderr);
+  assert.equal(result.stderr, '');
+  assert.equal(result.stdout, `${input}\n`);
+});
+
+test('output sanitizer rejects JOI state wrappers instead of exposing session machinery', async (t) => {
+  const cases = [
+    {
+      name: 'XML state wrapper',
+      input: '<joi-state>EDGE</joi-state>',
+      error: /unsafe|residual|service|tag/i,
+    },
+    {
+      name: 'tracker-style state wrapper',
+      input: 'Continue.\n[[joi-state EDGE]]',
+      error: /unsafe|residual|tracker|service|DSL/i,
+    },
+  ];
+
+  for (const sample of cases) {
+    await t.test(sample.name, () => {
+      const result = invokeRuntime(['--sanitize-output', '-'], { input: sample.input });
+      assert.equal(result.status, 1);
+      assert.equal(result.stdout, '');
+      assert.match(result.stderr, /^Error:/);
+      assert.match(result.stderr, sample.error);
+    });
+  }
+});
+
 test('output sanitizer rejects residual raw HTML instead of guessing', () => {
   const result = invokeRuntime(['--sanitize-output', '-'], {
     input: '<nemo-final><script>hidden()</script>Visible prose.</nemo-final>',
@@ -1321,12 +1623,16 @@ test('output sanitizer fails closed when cleanup is empty or unsafe', async (t) 
 
 test('identical inputs produce byte-identical JSON output', () => {
   const args = [
+    '--enable',
+    IDS.manipulationRealism,
+    '--enable',
+    IDS.psychologicalRealism,
     '--vex',
     IDS.goonerVex,
     '--nsfw',
-    IDS.goonerProtocol,
+    `${IDS.modernNsfwCore},${IDS.goonerProtocol}`,
     '--fetish',
-    `${IDS.cbt},${IDS.ntr}`,
+    `${IDS.femdom},${IDS.ntr},${IDS.humiliation},${IDS.joi}`,
     '--pretty',
   ];
   const first = invokeRuntime(args);
