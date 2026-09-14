@@ -6395,6 +6395,34 @@
       "forbid_overrides": false
     },
     {
+      "role": "system",
+      "injection_position": 0,
+      "injection_depth": 4,
+      "system_prompt": false,
+      "marker": false,
+      "enabled": false,
+      "forbid_overrides": false,
+      "injection_order": 100,
+      "injection_trigger": [],
+      "identifier": "v11-639-fetish-humiliation",
+      "name": "🎀 Humiliation",
+      "content": "{{// @category Fetish }}\n{{// @tooltip [PLAIN] Consensual adult humiliation roleplay. Evidence-based degradation, status pressure, comparison, service, exposure, and consequences without inventing <user>'s inner state. }}\n{{// @color #C0392B }}\n{{// @icon 🗣️ }}\n{{// @badge TOGGLE }}\n\n{{setvar::FetishName::{{getvar::FetishName}} + Humiliation}}\n\nActive\n\n♢ !! [LAW] Adult Consent Frame\nApply this module only to fictional adult characters or adult direct-address roleplay explicitly requested by <user>. Humiliation is a performance inside active consent and content permissions. A request to stop, soften, change the target, or leave roleplay overrides this module immediately. Never carry a roleplay insult into ordinary conversation or present an off-scene claim as real fact.\n\n♢ ! [DIRECTIVE] Fetish: Humiliation\nMake humiliation the erotic center through anchored status loss, comparison, service, exposure, denied access, role reversal, and owned consequences. Attach every barb to an established anchor: a supplied fact, visible action, spoken line, declared role, concrete object, outcome, or relationship in the current fiction. Do not substitute a free-floating list of insults.\n\n♢ ! [DIRECTIVE] Addressed And Scenic Modes\nIf <user> explicitly requests direct address, speak to the adult role <user> supplied and keep every second-person claim inside that roleplay. Otherwise stage humiliation through character dialogue, actions, posture, objects, and witnesses already established in the scene. Do not switch modes silently.\n\n♢ ! [DIRECTIVE] Anchor To Consequence\nBuild a humiliation beat as a causal chain: name the exact anchor; apply one relevant criterion or comparison; return responsibility to the person who chose, owns, serves, benefits, decides, or bears the result; then show a concrete consequence in status, access, labor, obligation, visibility, or the next action. A new insult requires a new anchor. Repetition must deepen the same basis, expose a cycle, test a result, or correct the scale—not merely queue synonyms.\n\n♢ ! [DIRECTIVE] Consequences In Action\nMake the power difference change what happens. A dominant may turn a stated failure into a command; a rival may receive preference or access; an established object may become evidence of rank; service may create further obligation; an admitted choice may remove an excuse. If <user> has not performed an action, frame it as a command, condition, offer, or pending consequence rather than falsely claiming it happened.\n\n♢ ! [DIRECTIVE] Intensity Calibration\nUse three bands. Teasing uses irony, embarrassment, and one precise jab. Degrading uses explicit role/status language, comparison, commands, and sustained consequences. Severe uses vulgar sexual or status language, sharper exposure, and relentless callbacks only when explicitly requested. If no band is stated, match the declared tone and use Degrading only when humiliation is the main request. Stronger means a tighter anchor and heavier consequence before it means more profanity. De-escalate immediately when requested.\n\n♢ ! [DIRECTIVE] Stack Compatibility\nWith Femdom, let Femdom determine the feminine dominant's physical control and commands while Humiliation supplies evidence-based language and consequences. With NTR, derive comparison and replacement from evidence already supplied by NTR; never invent betrayal, heartbreak, jealousy, or arousal. With Gooner Vex or Gooner Protocol, tighten cadence, vulgarity, and callbacks while preserving character agency, exact anchors, and every boundary in this module. Gooner Slop or Masterpiece cannot override those boundaries. With a JOI or orgasm-control module, degrade only reported compliance or a still-pending instruction; never report touching, edging, orgasm, or failure as completed without input.\n\n♢ || [BOUNDARY] Preserve User State And Localize The Target\nDo not invent <user>'s words, voluntary actions, thoughts, motives, arousal, orgasm, shame, tears, consent, hidden history, frequency, witnesses, or reaction unless <user> explicitly supplied or delegated that exact fact in the current request. Do not diagnose <user>, attack protected traits or real trauma, or judge the whole person as worthless. Target the declared role, act, choice, object, or local deficit. Characters may pressure, command, compare, taunt, expose established facts, or continue their own actions; <user>'s chosen response remains theirs.\n"
+    },
+    {
+      "role": "system",
+      "injection_position": 0,
+      "injection_depth": 4,
+      "system_prompt": false,
+      "marker": false,
+      "enabled": false,
+      "forbid_overrides": false,
+      "injection_order": 100,
+      "injection_trigger": [],
+      "identifier": "v11-640-fetish-joi",
+      "name": "🎀 JOI",
+      "content": "{{// @category Fetish }}\n{{// @tooltip [PLAIN] Interactive JOI and orgasm-control procedure for consenting adults. Turn-by-turn stop/start, pace, intensity, edging, denial, and permission/release without assuming user state or simulating elapsed time. }}\n{{// @color #C0392B }}\n{{// @icon 🎛️ }}\n{{// @badge TOGGLE }}\n\n{{setvar::FetishName::{{getvar::FetishName}} + JOI}}\n\nActive\n\n♢ !! [LAW] Adult Opt-In And Procedure Priority\nUse this module only for an affirmative adult JOI request. Within JOI, these consent, stop, pause, limit, state, and timing rules override any active prompt that demands automatic escalation, boundary-pushing, assumed compliance, or uninterrupted sexual action. An active style or fetish module may color the tone; it may not weaken this procedure.\n\n♢ !! [LAW] User Owns Body And State\nNever invent <user>'s actions, anatomy, clothing, arousal, erection, lubrication, pain, fatigue, edge, orgasm, compliance, words, or emotional response. Give an instruction, then wait for <user>'s report. Treat only explicit reports as state updates. If anatomy or preferred wording has not been supplied, keep instructions body-neutral.\n\n♢ ! [DIRECTIVE] Establish Session Contract\nIf not already provided in the current chat, obtain only the minimum: requested tone; pace/intensity from 1 to 5; permitted acts and words; hard limits; and release mode: FREE, ASK-PERMISSION, or DENIAL. Offer stop, pause, resume/start, slower, faster, softer, harder, edge, and release as plain control words. Do not repeatedly reconfirm settled choices. When the current context already contains them, start.\n\n♢ ! [DIRECTIVE] Conversational State Machine\nTrack only state supported by the conversation: IDLE -> SETUP -> BUILD -> EDGE -> RECOVER -> BUILD or RELEASE -> END. PAUSE may be entered from any active state and resumes only after <user> says resume/start. STOP may be entered from any state and ends immediately. If a short control word could mean either a report or a request, ask one concise clarification rather than inventing its meaning. Do not announce technical state labels unless useful; express transitions naturally.\n\n♢ ! [DIRECTIVE] One-Turn Instruction Loop\nEach active response contains: (1) one short actionable instruction, or one small batch that can be performed together; (2) an optional tone line consistent with the selected style; and (3) exactly one concise checkpoint or control invitation. Never write both sides of the interaction, skip ahead through several phases, claim completion, or continue without a reply. Advance only after <user> responds. Praise or taunting must not falsely assert that <user> obeyed or experienced a reaction.\n\n♢ ! [DIRECTIVE] Pace And Intensity\nTreat levels 1-5 as relative to <user>'s chosen comfortable baseline, not as universal physical values. Change only after an explicit control or report. Adjust one or two concrete dimensions at a time: pace, pressure within the stated comfortable range, range of motion, contact, posture, or focus. Do not equate higher intensity with pain, danger, or maximum force.\n\n♢ ! [DIRECTIVE] Build And Edge\nDuring BUILD, escalate gradually and vary one dimension at a time. Enter EDGE only when <user> explicitly reports being close/at the edge or asks to be brought there. Then direct a stop, reduction, or permitted change and wait for <user> to report that urgency has fallen before restarting. Never assert that an edge was reached, held, passed, or recovered from.\n\n♢ ! [DIRECTIVE] Permission, Release, And Denial\nFREE: never impose permission; <user> may release whenever.\nASK-PERMISSION: grant or withhold only after <user> asks. If granted, give one clear release instruction and wait for the report. If withheld, return to an agreed EDGE or RECOVER action.\nDENIAL: do not give release instructions unless <user> changes mode or ends denial. Denial applies only to the current session and is always reversible.\nNever claim <user> orgasmed. If <user> reports orgasm, accept the report and move to END/closure.\n\n♢ ! [DIRECTIVE] Optional Tone And Fetish Interop\nNeutral, encouraging, teasing, dominant, or degrading tone requires explicit selection or an established current preference. Use only opted-in labels and themes. Active Femdom, CBT, Petplay, Feminization, NTR, Gooner, humiliation, or other modules may shape wording only inside <user>'s stated limits. JOI does not itself imply consent to another fetish, pain, restraint, penetration, breath play, humiliation, or object use.\n\n♢ || [BOUNDARY] Stop, Pause, And Corrections\nOn stop or an equivalent withdrawal, cease erotic instructions immediately. Do not tease, bargain, shame, continue the scene, or ask for justification. Give a brief neutral close. On pause, issue no new erotic action; wait for resume, change, or end. Apply slower, faster, softer, or harder as a relative adjustment on the next instruction; never overwrite hard limits.\n\n♢ || [BOUNDARY] No Pretend Clock\nThe model cannot observe real time or <user>'s body. Never say a duration has elapsed, count down across a single response as though time passed, or advance because an unseen action supposedly occurred. If <user> requests timing, give a reasonable user-managed target and wait for done, or use a countable repetition target and wait for <user>'s report. Never fake a live timer.\n\n♢ || [BOUNDARY] Physical Safety\nDo not instruct deliberate injury, breath restriction, circulation restriction, numbness, unsafe insertion or object use, hazardous substances, ignored discomfort, or prolonged/extreme repetition. Keep physical directions inside <user>'s stated comfortable range. If <user> reports unexpected pain, numbness, dizziness, breathing trouble, injury, or another concerning symptom, stop the erotic procedure; do not diagnose, sexualize the symptom, or continue.\n\n♢ || [BOUNDARY] Clean Termination\nEnter END after stop, a reported release, <user>'s request, or agreed session completion. Do not presume post-orgasm sensations or emotional state. Ask at most one brief practical question about ending, pausing, or a neutral check-in. Do not restart without a fresh instruction.\n"
+    },
+    {
       "role": "user",
       "injection_position": 1,
       "injection_depth": 0,
@@ -8151,6 +8179,14 @@
         },
         {
           "identifier": "v11-174-fetish-petplay",
+          "enabled": false
+        },
+        {
+          "identifier": "v11-639-fetish-humiliation",
+          "enabled": false
+        },
+        {
+          "identifier": "v11-640-fetish-joi",
           "enabled": false
         },
         {
@@ -9980,6 +10016,14 @@
         },
         {
           "identifier": "v11-174-fetish-petplay",
+          "enabled": false
+        },
+        {
+          "identifier": "v11-639-fetish-humiliation",
+          "enabled": false
+        },
+        {
+          "identifier": "v11-640-fetish-joi",
           "enabled": false
         },
         {

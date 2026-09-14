@@ -1,16 +1,19 @@
 name: Validate Nemo Ready presets
 
 on:
+  workflow_dispatch:
   push:
     paths:
       - "Nemo Engine/Nemo Engine 11.5.2 - General RP.json"
       - "Nemo Engine/Ready/**"
+      - "Nemo Engine/tools/build-ready-presets.mjs"
       - "Nemo Engine/tools/validate-ready-presets.mjs"
       - ".github/workflows/validate-ready-presets.yml"
   pull_request:
     paths:
       - "Nemo Engine/Nemo Engine 11.5.2 - General RP.json"
       - "Nemo Engine/Ready/**"
+      - "Nemo Engine/tools/build-ready-presets.mjs"
       - "Nemo Engine/tools/validate-ready-presets.mjs"
       - ".github/workflows/validate-ready-presets.yml"
 
@@ -26,5 +29,11 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - run: node "Nemo Engine/tools/validate-ready-presets.mjs"
-
+      - name: Build Ready presets
+        run: node "Nemo Engine/tools/build-ready-presets.mjs"
+      - name: Validate Ready presets
+        run: node "Nemo Engine/tools/validate-ready-presets.mjs"
+      - name: Verify generated Ready presets are current
+        run: |
+          git add --intent-to-add -- "Nemo Engine/Ready"
+          git diff --exit-code -- "Nemo Engine/Ready"

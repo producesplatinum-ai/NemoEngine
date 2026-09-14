@@ -3,18 +3,18 @@
   "purpose": "Connector-readable, byte-reconstructable mirror; original preset remains authoritative",
   "source": {
     "repository": "producesplatinum-ai/NemoEngine",
-    "commit": "ba88f80eb97608d55306e8fd34462d754c908d88",
+    "commit": "6de820a723a5d68d5d3a288fdfd14a43c4951d1a",
     "filename": "Nemo Engine 11.5.2 - General RP.json",
     "path": "Nemo Engine/Nemo Engine 11.5.2 - General RP.json",
-    "git_blob_sha1": "dec71df412a9b2189aec271d1428d0728dde6e3c",
-    "bytes": 1689140,
-    "characters": 1679435,
-    "lines": 11747,
+    "git_blob_sha1": "34a469106a1df6fa88a77e3ae0673d0271e21fee",
+    "bytes": 1700950,
+    "characters": 1691189,
+    "lines": 11791,
     "encoding": "UTF-8",
     "bom": false,
     "line_ending": "LF",
     "final_newline": true,
-    "sha256": "983e31575b824d0f4910078a2549930495d5f7e5c5e49d508db331cd8a6bd698"
+    "sha256": "c5e13e951340d17addef0e16e7a7152a8256c41f2c046a52e81d86e1feef31d4"
   },
   "format": {
     "indent": 2,
@@ -24,11 +24,11 @@
   },
   "counts": {
     "top_level_keys": 49,
-    "prompts": 456,
+    "prompts": 458,
     "prompt_order_profiles": 2,
     "prompt_order_entries_per_profile": [
-      456,
-      456
+      458,
+      458
     ],
     "regex_scripts": 97,
     "active_regex_scripts": 95
@@ -96,13 +96,13 @@
       "path": "active-stack/100000.json",
       "count": 107,
       "bytes": 22457,
-      "sha256": "ee2fe211e1fe3060fc9865d4ebcd4bb316262e3e9cf28a4ba60e46bd564ac3d9"
+      "sha256": "6ff4239246a03722da5a67e39c1ca1275c97160665d80df129210666db531ea7"
     },
     "100001": {
       "path": "active-stack/100001.json",
       "count": 107,
       "bytes": 22450,
-      "sha256": "ed005fd62adf2e35b5b5d1f2d690ae81d4c52cc3a052bea64bd212779bec5585"
+      "sha256": "7f800bec640f2232d5ea96d6f36f8b712b8567e4a756c8177052a4465b0646d6"
     }
   },
   "prompt_shards": [
@@ -347,20 +347,20 @@
       "sha256": "1ec9d5aff3e1dcfb6d0c743814bb9a5a1a8f7014a095c477206139568c82ab9e"
     },
     {
-      "path": "prompts/prompts-429-454.json",
+      "path": "prompts/prompts-429-455.json",
       "start": 429,
-      "end": 454,
-      "count": 26,
-      "bytes": 43098,
-      "sha256": "a5187e1eafef2c6a2c10374babb8495123a2dbc1eca36042f3721fb21a52ab0a"
+      "end": 455,
+      "count": 27,
+      "bytes": 47925,
+      "sha256": "ad49e1f1780c87e31a1c5f40b1408418850dd561ea593009c540e037213bacd2"
     },
     {
-      "path": "prompts/prompts-455-455.json",
-      "start": 455,
-      "end": 455,
-      "count": 1,
-      "bytes": 8018,
-      "sha256": "b31151947c68fcf747558ece25ca6d97349ca7e7c908b7265dcec2a9ffb23548"
+      "path": "prompts/prompts-456-457.json",
+      "start": 456,
+      "end": 457,
+      "count": 2,
+      "bytes": 14553,
+      "sha256": "1740a5a6e6461c2946dc3a35090511c8e488a76d1e189408bc31b16791e06e80"
     }
   ],
   "prompt_order": [
@@ -368,21 +368,21 @@
       "path": "prompt-order/100000.json",
       "index": 0,
       "character_id": 100000,
-      "entries": 456,
+      "entries": 458,
       "enabled": 107,
-      "disabled": 349,
-      "bytes": 39579,
-      "sha256": "3134d5b4a2d42c889750e5313ab52e56a10f418b13a2db80689026d87936a4e5"
+      "disabled": 351,
+      "bytes": 39743,
+      "sha256": "7d9e6ff05dde3ef869d42dd90eceeaf425a7ab9aa8e4c172c82348604ec3d596"
     },
     {
       "path": "prompt-order/100001.json",
       "index": 1,
       "character_id": 100001,
-      "entries": 456,
+      "entries": 458,
       "enabled": 107,
-      "disabled": 349,
-      "bytes": 39579,
-      "sha256": "3541ccae31e50ed00a65ce442d80b8487c7a4ee5d3832b65c47e54d081925417"
+      "disabled": 351,
+      "bytes": 39743,
+      "sha256": "96505dadda1c0f6f3e0061d608b13c12fa85170c423670f796987373b03aa095"
     }
   ],
   "regex_shards": [
@@ -423,27 +423,27 @@
     {
       "path": "active-stack/100000.json",
       "bytes": 22457,
-      "sha256": "ee2fe211e1fe3060fc9865d4ebcd4bb316262e3e9cf28a4ba60e46bd564ac3d9"
+      "sha256": "6ff4239246a03722da5a67e39c1ca1275c97160665d80df129210666db531ea7"
     },
     {
       "path": "active-stack/100001.json",
       "bytes": 22450,
-      "sha256": "ed005fd62adf2e35b5b5d1f2d690ae81d4c52cc3a052bea64bd212779bec5585"
+      "sha256": "7f800bec640f2232d5ea96d6f36f8b712b8567e4a756c8177052a4465b0646d6"
     },
     {
       "path": "prompt-index.jsonl",
-      "bytes": 48498,
-      "sha256": "0a4cebcccb0cac93bc426880797880af5d1db21a39d30a800feb5ae9e2570576"
+      "bytes": 48678,
+      "sha256": "bab08a26cda7ebb8c334edd6c04083d78f6343a1b2dee166bfa277dc5de20d0a"
     },
     {
       "path": "prompt-order/100000.json",
-      "bytes": 39579,
-      "sha256": "3134d5b4a2d42c889750e5313ab52e56a10f418b13a2db80689026d87936a4e5"
+      "bytes": 39743,
+      "sha256": "7d9e6ff05dde3ef869d42dd90eceeaf425a7ab9aa8e4c172c82348604ec3d596"
     },
     {
       "path": "prompt-order/100001.json",
-      "bytes": 39579,
-      "sha256": "3541ccae31e50ed00a65ce442d80b8487c7a4ee5d3832b65c47e54d081925417"
+      "bytes": 39743,
+      "sha256": "96505dadda1c0f6f3e0061d608b13c12fa85170c423670f796987373b03aa095"
     },
     {
       "path": "prompts/prompts-000-010.json",
@@ -596,19 +596,19 @@
       "sha256": "1ec9d5aff3e1dcfb6d0c743814bb9a5a1a8f7014a095c477206139568c82ab9e"
     },
     {
-      "path": "prompts/prompts-429-454.json",
-      "bytes": 43098,
-      "sha256": "a5187e1eafef2c6a2c10374babb8495123a2dbc1eca36042f3721fb21a52ab0a"
+      "path": "prompts/prompts-429-455.json",
+      "bytes": 47925,
+      "sha256": "ad49e1f1780c87e31a1c5f40b1408418850dd561ea593009c540e037213bacd2"
     },
     {
-      "path": "prompts/prompts-455-455.json",
-      "bytes": 8018,
-      "sha256": "b31151947c68fcf747558ece25ca6d97349ca7e7c908b7265dcec2a9ffb23548"
+      "path": "prompts/prompts-456-457.json",
+      "bytes": 14553,
+      "sha256": "1740a5a6e6461c2946dc3a35090511c8e488a76d1e189408bc31b16791e06e80"
     },
     {
       "path": "README.md",
       "bytes": 1792,
-      "sha256": "8ae9859360f3954f3203d5ef8c04b78f57bbb911e419fba400c44b499bb40c26"
+      "sha256": "804c61eb9ade6ef3731182c16ae93b328a15b8401c2b9bddac27cea02814b906"
     },
     {
       "path": "reassemble.mjs",

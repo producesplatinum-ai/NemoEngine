@@ -36,7 +36,7 @@ node scripts/nemo-chatgpt-runtime.mjs \
   --out build/nemo-chatgpt-runtime.json
 ```
 
-Every one of the preset's 456 prompt entries can be addressed with the generic,
+Every one of the preset's 458 prompt entries can be addressed with the generic,
 repeatable `--enable LIST` and `--disable LIST` overrides; each list accepts
 comma-separated identifiers or display names and is applied after the family
 selectors. `--vex SELECTOR`,
@@ -53,6 +53,17 @@ node scripts/nemo-chatgpt-runtime.mjs \
   --enable "Character Friction" \
   --disable "More Dialogue" \
   --pretty
+```
+
+Psychology, Humiliation, and interactive JOI can be compiled together without
+enabling unrelated Fetish modules:
+
+```sh
+node scripts/nemo-chatgpt-runtime.mjs \
+  --enable "v11-611-augment-manipulation-realism,v11-613-augment-psychological-emotional-realism" \
+  --fetish "Humiliation,JOI" \
+  --pretty \
+  --out build/nemo-psychology-humiliation-joi.json
 ```
 
 For the adapter's supported semantics, output contract, integration notes, and
@@ -74,7 +85,7 @@ byte-verifiable view of the authoritative monolithic preset. Its entry point is
 `Nemo Engine/Connector Readable/11.5.2 General RP/README.md`.
 
 In code mode, a GitHub connector can alternatively fetch blob
-`dec71df412a9b2189aec271d1428d0728dde6e3c` and parse the full tool result
+`34a469106a1df6fa88a77e3ae0673d0271e21fee` and parse the full tool result
 without printing the entire payload into a model response. Do not substitute
 the older 11.3 prompt archive.
 

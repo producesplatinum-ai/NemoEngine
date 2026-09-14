@@ -11,8 +11,8 @@ const engineRoot = path.resolve(here, '..');
 const sourcePath = path.join(engineRoot, 'Nemo Engine 11.5.2 - General RP.json');
 const outputRoot = path.join(engineRoot, 'Connector Readable', '11.5.2 General RP');
 const fileLimit = 49_152;
-const sourceCommit = 'ba88f80eb97608d55306e8fd34462d754c908d88';
-const sourceBlob = 'dec71df412a9b2189aec271d1428d0728dde6e3c';
+const sourceCommit = '6de820a723a5d68d5d3a288fdfd14a43c4951d1a';
+const sourceBlob = '34a469106a1df6fa88a77e3ae0673d0271e21fee';
 
 function sha256(data) {
   return crypto.createHash('sha256').update(data).digest('hex');
@@ -319,11 +319,11 @@ function validateSource(sourceRaw, source) {
   assert.ok(sourceRaw.endsWith('\n'), 'source must have a final LF');
   assert.ok(!sourceRaw.includes('\r'), 'source must use LF only');
   assert.equal(`${JSON.stringify(source, null, 2)}\n`, sourceRaw, 'source must be canonical 2-space JSON');
-  assert.equal(source.prompts.length, 456, 'prompt count');
+  assert.equal(source.prompts.length, 458, 'prompt count');
   assert.equal(source.prompt_order.length, 2, 'profile count');
-  assert.deepEqual(source.prompt_order.map((profile) => profile.order.length), [456, 456]);
+  assert.deepEqual(source.prompt_order.map((profile) => profile.order.length), [458, 458]);
   assert.equal(source.extensions.regex_scripts.length, 97, 'regex count');
-  assert.equal(sha256(sourceRaw), '983e31575b824d0f4910078a2549930495d5f7e5c5e49d508db331cd8a6bd698');
+  assert.equal(sha256(sourceRaw), 'c5e13e951340d17addef0e16e7a7152a8256c41f2c046a52e81d86e1feef31d4');
   assert.equal(gitBlobOid(sourceRaw), sourceBlob);
 
   const ids = source.prompts.map((prompt) => prompt.identifier);
@@ -335,7 +335,7 @@ function validateSource(sourceRaw, source) {
   }
 }
 
-function verifyOutput(expectedFiles) {
+function verifyOutput(expectedFiles, root = outputRoot) {
   const actualFiles = [];
   const walk = (directory, prefix = '') => {
     for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
@@ -344,18 +344,73 @@ function verifyOutput(expectedFiles) {
       else actualFiles.push(relativePath);
     }
   };
-  walk(outputRoot);
+  walk(root);
   actualFiles.sort();
   assert.deepEqual(actualFiles, [...expectedFiles.keys()].sort(), 'generated file set');
 
   for (const [relativePath, expected] of expectedFiles) {
-    const actual = fs.readFileSync(path.join(outputRoot, relativePath), 'utf8');
+    const actual = fs.readFileSync(path.join(root, relativePath), 'utf8');
     assert.equal(actual, expected, relativePath);
     assert.ok(Buffer.byteLength(actual) <= fileLimit, `${relativePath} exceeds connector limit`);
   }
 
-  const result = fs.readFileSync(path.join(outputRoot, 'manifest.json'), 'utf8');
+  const result = fs.readFileSync(path.join(root, 'manifest.json'), 'utf8');
   assert.ok(result.length > 0);
+}
+
+function writeOutput(root, expectedFiles) {
+  for (const [relativePath, content] of expectedFiles) {
+    const destination = path.join(root, relativePath);
+    fs.mkdirSync(path.dirname(destination), { recursive: true });
+    fs.writeFileSync(destination, content, 'utf8');
+  }
+}
+
+function replaceOutputAtomically(expectedFiles) {
+  fs.mkdirSync(path.dirname(outputRoot), { recursive: true });
+  const stagingRoot = fs.mkdtempSync(
+    path.join(path.dirname(outputRoot), `${path.basename(outputRoot)}.staging-`),
+  );
+  const backupRoot = `${stagingRoot}.previous`;
+  let movedExistingOutput = false;
+
+  try {
+    writeOutput(stagingRoot, expectedFiles);
+    verifyOutput(expectedFiles, stagingRoot);
+
+    if (fs.existsSync(outputRoot)) {
+      const status = fs.lstatSync(outputRoot);
+      assert.ok(
+        status.isDirectory() && !status.isSymbolicLink(),
+        `refusing to replace non-directory or symbolic-link output: ${outputRoot}`,
+      );
+      fs.renameSync(outputRoot, backupRoot);
+      movedExistingOutput = true;
+    }
+
+    try {
+      fs.renameSync(stagingRoot, outputRoot);
+    } catch (error) {
+      if (movedExistingOutput) fs.renameSync(backupRoot, outputRoot);
+      throw error;
+    }
+
+    if (movedExistingOutput) {
+      fs.rmSync(backupRoot, { recursive: true, force: true });
+    }
+  } catch (error) {
+    if (fs.existsSync(stagingRoot)) {
+      fs.rmSync(stagingRoot, { recursive: true, force: true });
+    }
+    if (
+      movedExistingOutput &&
+      fs.existsSync(backupRoot) &&
+      !fs.existsSync(outputRoot)
+    ) {
+      fs.renameSync(backupRoot, outputRoot);
+    }
+    throw error;
+  }
 }
 
 const sourceRaw = fs.readFileSync(sourcePath, 'utf8');
@@ -365,14 +420,7 @@ const expectedFiles = buildFiles(sourceRaw, source);
 const command = process.argv[2] ?? '--check';
 
 if (command === '--write') {
-  if (fs.existsSync(outputRoot)) {
-    throw new Error(`Refusing to overwrite existing output: ${outputRoot}`);
-  }
-  for (const [relativePath, content] of expectedFiles) {
-    const destination = path.join(outputRoot, relativePath);
-    fs.mkdirSync(path.dirname(destination), { recursive: true });
-    fs.writeFileSync(destination, content, 'utf8');
-  }
+  replaceOutputAtomically(expectedFiles);
 } else if (command !== '--check') {
   throw new Error('Usage: build-connector-readable-11.5.2.mjs [--write|--check]');
 }
