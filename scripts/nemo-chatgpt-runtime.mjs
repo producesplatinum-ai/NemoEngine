@@ -5,6 +5,7 @@ import { lstat, mkdir, readFile, readdir, realpath, stat, writeFile } from 'node
 import path from 'node:path';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
+import { TextDecoder } from 'node:util';
 
 const SCHEMA_VERSION = 'nemo-chatgpt-runtime/v1';
 const DEFAULT_PROFILE = '100001';
@@ -88,6 +89,10 @@ Options:
   --enable LIST       Enable any prompt(s) after family selections. Repeatable.
   --disable LIST      Disable any prompt(s) after family selections. Repeatable.
                       LIST accepts comma-separated identifiers or display names.
+  --nsfw-one SELECTOR, --fetish-one SELECTOR
+  --enable-one SELECTOR, --disable-one SELECTOR
+                      Append one unsplit selector. Use these for display names
+                      that themselves contain a comma.
   --sanitize-output PATH
                       Strip hidden planning boundaries from PATH; use - for stdin.
                       This mode does not compile a preset. Combine with --out.
@@ -150,6 +155,13 @@ function addListValue(options, key, value, option) {
 
   if (options[key] === null) options[key] = [];
   options[key].push(...parts);
+}
+
+function addSingleListValue(options, key, value, option) {
+  const selector = value.trim();
+  if (selector.length === 0) fail(`${option} requires a non-empty selector.`);
+  if (options[key] === null) options[key] = [];
+  options[key].push(selector);
 }
 
 function parseArgs(argv) {
@@ -215,10 +227,11 @@ function parseArgs(argv) {
         break;
       case '--max-portable-chars': {
         const raw = readValue();
-        if (!/^\d+$/.test(raw) || Number(raw) < 1) {
-          fail('--max-portable-chars must be a positive integer.');
+        const parsed = Number(raw);
+        if (!/^\d+$/.test(raw) || !Number.isSafeInteger(parsed) || parsed < 1) {
+          fail('--max-portable-chars must be a positive safe integer.');
         }
-        options.maxPortableChars = Number(raw);
+        options.maxPortableChars = parsed;
         break;
       }
       case '--instructions-only':
@@ -236,14 +249,26 @@ function parseArgs(argv) {
       case '--nsfw':
         addListValue(options, 'nsfw', readValue(), '--nsfw');
         break;
+      case '--nsfw-one':
+        addSingleListValue(options, 'nsfw', readValue(), '--nsfw-one');
+        break;
       case '--fetish':
         addListValue(options, 'fetish', readValue(), '--fetish');
+        break;
+      case '--fetish-one':
+        addSingleListValue(options, 'fetish', readValue(), '--fetish-one');
         break;
       case '--enable':
         addListValue(options, 'enable', readValue(), '--enable');
         break;
+      case '--enable-one':
+        addSingleListValue(options, 'enable', readValue(), '--enable-one');
+        break;
       case '--disable':
         addListValue(options, 'disable', readValue(), '--disable');
+        break;
+      case '--disable-one':
+        addSingleListValue(options, 'disable', readValue(), '--disable-one');
         break;
       case '--sanitize-output':
         if (options.sanitizeOutput !== null) {
@@ -1201,7 +1226,7 @@ function renderPortableInstructions(prompts) {
     .map(
       (prompt, index) =>
         `## Nemo module ${index + 1}: ${prompt.name}\n` +
-        `Role: ${prompt.role}\n` +
+        `Source role metadata (not host role): ${prompt.role}\n` +
         `Identifier: ${prompt.id}\n\n` +
         prompt.content,
     )
@@ -1353,6 +1378,10 @@ function compileSelectedPrompts({ activeReferences, promptById, mode, context, m
 const INTERNAL_OUTPUT_TAG =
   '(?:think(?:ing)?|plan(?:ning)?|analysis|scratchpad|nemo-pad|service|' +
   'runtime_settings_reminder|language_runtime(?:_resolver)?)';
+const FLEXIBLE_INTERNAL_OUTPUT_NAME =
+  '(?:think(?:ing)?|plan(?:ning)?|analysis|scratchpad|' +
+  'nemo\\s*[-_]?\\s*(?:pad|final)|service|' +
+  'runtime_settings_reminder|language_runtime(?:_resolver)?)';
 
 function stripBalancedInternalBlocks(text) {
   const tokenPattern = new RegExp(`<(/?)(${INTERNAL_OUTPUT_TAG})\\b[^>]*>`, 'gi');
@@ -1394,6 +1423,24 @@ function stripBalancedInternalBlocks(text) {
 
 export function sanitizeOutput(text) {
   let cleaned = String(text).replace(/\r\n?/g, '\n');
+  if (/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f-\u009f]/.test(cleaned)) {
+    fail('Unsafe sanitizer output contains forbidden control characters.');
+  }
+  const malformedInternalTag = cleaned.match(
+    new RegExp(`<(?:\\s+\\/?\\s*|/\\s+)${FLEXIBLE_INTERNAL_OUTPUT_NAME}\\b`, 'i'),
+  );
+  if (malformedInternalTag) {
+    fail('Unsafe sanitizer output contains a malformed private or service boundary.');
+  }
+  const encodedInternalTag = cleaned.match(
+    new RegExp(
+      `&(?:lt|#0*60|#x0*3c);?\\s*\\/?\\s*${FLEXIBLE_INTERNAL_OUTPUT_NAME}\\b`,
+      'i',
+    ),
+  );
+  if (encodedInternalTag) {
+    fail('Unsafe sanitizer output contains an encoded private or service boundary.');
+  }
   const finalTokens = [...cleaned.matchAll(/<(\/?)nemo-final\s*>/gi)];
   const openings = finalTokens.filter((match) => match[1] !== '/');
   const closings = finalTokens.filter((match) => match[1] === '/');
@@ -1457,7 +1504,7 @@ export function sanitizeOutput(text) {
   }
   const unsafeResidual = cleaned.match(/<\/?[A-Za-z][A-Za-z0-9:_-]*\b[^>]*>/);
   if (unsafeResidual) {
-    fail(`Unsafe sanitizer output contains residual service markup: ${unsafeResidual[0]}.`);
+    fail('Unsafe sanitizer output contains residual service markup.');
   }
   if (/\(OOC:/i.test(cleaned)) {
     fail('Unsafe sanitizer output contains unparsed OOC scaffolding.');
@@ -1816,7 +1863,15 @@ async function emitPortableDirectory(directory, bundle, instructionsText) {
 async function readStdinText() {
   const chunks = [];
   for await (const chunk of process.stdin) chunks.push(Buffer.from(chunk));
-  return Buffer.concat(chunks).toString('utf8');
+  return decodeUtf8(Buffer.concat(chunks), 'standard input');
+}
+
+function decodeUtf8(bytes, label) {
+  try {
+    return new TextDecoder('utf-8', { fatal: true }).decode(bytes);
+  } catch {
+    fail(`Cannot decode ${label} as valid UTF-8.`);
+  }
 }
 
 async function runSanitizer(options) {
@@ -1840,7 +1895,9 @@ async function runSanitizer(options) {
     options.sanitizeOutput === '-'
       ? null
       : path.resolve(process.cwd(), options.sanitizeOutput);
-  const input = inputPath ? await readFile(inputPath, 'utf8') : await readStdinText();
+  const input = inputPath
+    ? decodeUtf8(await readFile(inputPath), JSON.stringify(inputPath))
+    : await readStdinText();
   const cleaned = sanitizeOutput(input);
 
   await emitPlainText(cleaned, options, inputPath);
