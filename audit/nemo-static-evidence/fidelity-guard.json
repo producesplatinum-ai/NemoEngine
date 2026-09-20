@@ -1,0 +1,785 @@
+[
+  {
+    "guard_id": "FG-C002",
+    "registered_discrepancy_id": "C002",
+    "affected_module_identifier": "v11-514-classicvex-midnight-courier",
+    "module_name": "♠️ Midnight Courier Vex",
+    "affected_modules": [
+      {
+        "index": 75,
+        "identifier": "v11-514-classicvex-midnight-courier",
+        "name": "♠️ Midnight Courier Vex"
+      }
+    ],
+    "discrepancy_class": "SOURCE_INTERNAL_CONFLICT",
+    "secondary_classes": [],
+    "repository": "producesplatinum-ai/NemoEngine",
+    "ref": "b988a06eedb24b916182d0b5d545eb9a2dbabe02",
+    "source_evidence_path": "Nemo Engine/Connector Readable/11.5.2 General RP/prompts/prompts-074-081.json",
+    "source_json_pointer": "/1/content",
+    "source_blob_sha": "3032aef0c012e32fe0d93b56290d47330d87bc30",
+    "source_excerpt": "{{// @category Vex-Personality }}\n{{// @tooltip Midnight Courier Vex: old interview preserved, wrapped in v11 Vex variables.  }}\n{{// @color #B8860B }}\n{{// @icon ♠️ }}\n{{// @badge VEX }}\n\n{{setvar::ClassicVexName::{{getvar::ClassicVexName}} + Midnight Courier Vex}}\n{{setvar::VexPersona::♢ @ [LENS] Midnight Courier Vex\nMidnight Courier Vex is an active Vex narrator personality, not decorative flavor.",
+    "source_evidence_id": "src-courier",
+    "runtime_evidence_path": "scripts/nemo-chatgpt-runtime.mjs",
+    "runtime_symbol": "familyCandidates",
+    "runtime_blob_sha": "fd1b6def59711a6e3482ca3de09bab09c004434d",
+    "runtime_excerpt": "    vex: decorated.filter(\n      (entry) => entry.metadata.exclusiveGroup === 'Vex-Personality',\n    ),",
+    "runtime_evidence_id": "runtime-family-candidates",
+    "additional_evidence_ids": [
+      "runtime-exclusive-registry",
+      "runtime-supplemental-exclusions"
+    ],
+    "original_rule": "Midnight Courier заявляет личность Vex и пишет общие Vex-переменные, но не имеет метки Vex-Personality mutual-exclusion.",
+    "actual_portable_behavior": "familyCandidates включает в --vex только entries с exclusiveGroup Vex-Personality; отдельная категория не достаточна. Generic module inventory остаётся отдельным маршрутом.",
+    "proven_loss_or_change": "Несовпадение декларируемой роли и программного реестра выбора; CLI-ошибка и фактическое наложение требуют отдельного запуска.",
+    "manifestation_condition": "Явный выбор Midnight Courier через Vex-family либо одновременное generic-включение с другой личностью.",
+    "safe_model_behavior": "Не подменять запрошенную личность другой и не придумывать ей группу. Обозначить отсутствие family-selector; конкретный альтернативный стек допустим только после явного выбора пользователя и проверки порядка.",
+    "dynamic_test_required": true,
+    "confidence": "HIGH",
+    "explanation": "Изменяется доступность selector и контроль совместной записи переменных, а не литературная окраска.",
+    "dynamic_verification_scope": "Указанный ниже эффект CLI/renderer следует подтвердить отдельным запуском; это не выполненный production-тест.",
+    "source_semantics_modified": false,
+    "review_basis": "Fresh/preserved GitHub evidence passages plus immutable analytical inputs; no new stack selected.",
+    "qualification": "Отсутствие метки установлено при чтении полного тела и согласуется с ledger; один приведённый префикс сам по себе не доказывает отсутствие во всём теле."
+  },
+  {
+    "guard_id": "FG-C003",
+    "registered_discrepancy_id": "C003",
+    "affected_module_identifier": "v11-010-core-assembler",
+    "module_name": "📦 Core Assembler",
+    "affected_modules": [
+      {
+        "index": 78,
+        "identifier": "v11-010-core-assembler",
+        "name": "📦 Core Assembler"
+      },
+      {
+        "index": 330,
+        "identifier": "v11-103-difficulty-heroic",
+        "name": "⚙️ Heroic"
+      }
+    ],
+    "discrepancy_class": "SOURCE_INTERNAL_CONFLICT",
+    "secondary_classes": [],
+    "repository": "producesplatinum-ai/NemoEngine",
+    "ref": "b988a06eedb24b916182d0b5d545eb9a2dbabe02",
+    "source_evidence_path": "Nemo Engine/Connector Readable/11.5.2 General RP/prompts/prompts-074-081.json",
+    "source_json_pointer": "/4/content",
+    "source_blob_sha": "3032aef0c012e32fe0d93b56290d47330d87bc30",
+    "source_excerpt": "Positivity and negativity bias are *strictly* forbidden. No glazing <user> without reason. No softening characters for so-called \"customer satisfaction.\" No manufactured cruelty or grimdark padding either. Deliver everything as the character definitions and scenario specify — nothing added, nothing taken away.",
+    "source_evidence_id": "src-core-bias",
+    "runtime_evidence_path": "scripts/nemo-chatgpt-runtime.mjs",
+    "runtime_symbol": "compileSelectedPrompts",
+    "runtime_blob_sha": "fd1b6def59711a6e3482ca3de09bab09c004434d",
+    "runtime_excerpt": "    const expandedContent = cleanPortableText(\n      expandPortableText(prompt.content, state),\n    );\n    applyPortableStateVariableOverrides(prompt, state);\n    const content = foldExactCrossModuleDuplicate(\n      normalizePortableControlDirectives(expandedContent, prompt, state),\n      prompt,\n      state,\n    );",
+    "runtime_evidence_id": "runtime-selected-pipeline",
+    "additional_evidence_ids": [
+      "src-heroic-bias"
+    ],
+    "original_rule": "Core Assembler запрещает положительный/отрицательный bias как LAW; Heroic задаёт optimistic-heroic Outcome Bias как DIRECTIVE.",
+    "actual_portable_behavior": "Выбранные тексты попадают в общий поток без отдельного разрешения содержательного спора компилятором.",
+    "proven_loss_or_change": "Сосуществуют указания с разными приоритетами; универсальная логическая несовместимость не доказана, поскольку возможны разные области применения.",
+    "manifestation_condition": "Heroic и Core Assembler активны и требуется выбрать исход, для которого bias меняет результат.",
+    "safe_model_behavior": "Сохранить выбранную сложность и её конкретные механики; не отключать модуль. Соблюдать исходную иерархию LAW/DIRECTIVE. Не превращать Heroic в автоматический успех и не заявлять, что сам компилятор разрешил смысловой спор.",
+    "dynamic_test_required": false,
+    "confidence": "MEDIUM",
+    "explanation": "Затрагивается правило выбора исхода, не только тон прозы.",
+    "dynamic_verification_scope": "Разницу текста или грамматики можно установить статически. Это не доказательство будущего следования модели правилам или полного production execution.",
+    "source_semantics_modified": false,
+    "review_basis": "Fresh/preserved GitHub evidence passages plus immutable analytical inputs; no new stack selected.",
+    "qualification": "Это исходное напряжение/вопрос scope, а не автоматически ошибка portable rewrite."
+  },
+  {
+    "guard_id": "FG-C004",
+    "registered_discrepancy_id": "C004",
+    "affected_module_identifier": "nemo_consequence_core",
+    "module_name": "⚰️ Consequence Core",
+    "affected_modules": [
+      {
+        "index": 84,
+        "identifier": "nemo_consequence_core",
+        "name": "⚰️ Consequence Core"
+      },
+      {
+        "index": 85,
+        "identifier": "nemo_consequence_somewhere_else",
+        "name": "⚰️ Somewhere Else"
+      },
+      {
+        "index": 86,
+        "identifier": "nemo_consequence_return_by_death",
+        "name": "⚰️ Return By Death"
+      },
+      {
+        "index": 87,
+        "identifier": "nemo_consequence_roll_another",
+        "name": "⚰️ Roll Another"
+      },
+      {
+        "index": 88,
+        "identifier": "nemo_consequence_epilogue",
+        "name": "⚰️ The Epilogue"
+      },
+      {
+        "index": 90,
+        "identifier": "nemo_consequence_directors_chair",
+        "name": "⚰️ Director's Chair"
+      },
+      {
+        "index": 91,
+        "identifier": "nemo_consequence_still_here",
+        "name": "⚰️ Still Here"
+      }
+    ],
+    "discrepancy_class": "SOURCE_INTERNAL_CONFLICT",
+    "secondary_classes": [],
+    "repository": "producesplatinum-ai/NemoEngine",
+    "ref": "b988a06eedb24b916182d0b5d545eb9a2dbabe02",
+    "source_evidence_path": "Nemo Engine/Connector Readable/11.5.2 General RP/prompts/prompts-082-125.json",
+    "source_json_pointer": "/2/content",
+    "source_blob_sha": "4e6fae82974239c1a1ab2599afcd3d5623579a0b",
+    "source_excerpt": "When the fiction honestly reaches death, permanent capture, irreversible ruin, a career-ending wound, or another state in which the current story cannot continue as it was, let that state land. Do not insert an unseeded rescue, convenient hesitation, lucky shallow wound, sudden interruption, or hidden immunity merely to preserve the run.",
+    "source_evidence_id": "src-terminal-broad",
+    "runtime_evidence_path": "scripts/nemo-chatgpt-runtime.mjs",
+    "runtime_symbol": "compileSelectedPrompts",
+    "runtime_blob_sha": "fd1b6def59711a6e3482ca3de09bab09c004434d",
+    "runtime_excerpt": "    const expandedContent = cleanPortableText(\n      expandPortableText(prompt.content, state),\n    );\n    applyPortableStateVariableOverrides(prompt, state);\n    const content = foldExactCrossModuleDuplicate(\n      normalizePortableControlDirectives(expandedContent, prompt, state),\n      prompt,\n      state,\n    );",
+    "runtime_evidence_id": "runtime-selected-pipeline",
+    "additional_evidence_ids": [
+      "src-epilogue-death"
+    ],
+    "original_rule": "Consequence Core относит к terminal и смерть, и некоторые необратимые несмертельные состояния; Epilogue и ряд вариантов описывают смерть.",
+    "actual_portable_behavior": "Компилятор переносит текст; отдельного универсального перехода для каждого несмертельного terminal-состояния не вводит.",
+    "proven_loss_or_change": "Есть недоопределённость соответствия широкого terminal-триггера узкому условию death в aftermath.",
+    "manifestation_condition": "Достигнуто необратимое несмертельное состояние и выбранный aftermath определён только для смерти.",
+    "safe_model_behavior": "Не выдумывать смерть, воскрешение, reset или спасение. Сохранить установленное последствие; не выполнять недоопределённый переход без конкретного исходного правила или пользовательского решения.",
+    "dynamic_test_required": false,
+    "confidence": "HIGH",
+    "explanation": "Меняется допустимость перехода состояния истории.",
+    "dynamic_verification_scope": "Разницу текста или грамматики можно установить статически. Это не доказательство будущего следования модели правилам или полного production execution.",
+    "source_semantics_modified": false,
+    "review_basis": "Fresh/preserved GitHub evidence passages plus immutable analytical inputs; no new stack selected.",
+    "qualification": "Для обычной смерти эти цитаты не доказывают противоречия. Исполнение не может само дополнить отсутствующее правило."
+  },
+  {
+    "guard_id": "FG-C005",
+    "registered_discrepancy_id": "C005",
+    "affected_module_identifier": "nemo-success-dice",
+    "module_name": "🎲 Success Dice",
+    "affected_modules": [
+      {
+        "index": 1,
+        "identifier": "nemo-success-dice",
+        "name": "🎲 Success Dice"
+      }
+    ],
+    "discrepancy_class": "SOURCE_INTERNAL_CONFLICT",
+    "secondary_classes": [],
+    "repository": "producesplatinum-ai/NemoEngine",
+    "ref": "b988a06eedb24b916182d0b5d545eb9a2dbabe02",
+    "source_evidence_path": "Nemo Engine/Connector Readable/11.5.2 General RP/prompts/prompts-000-010.json",
+    "source_json_pointer": "/1/content",
+    "source_blob_sha": "16e40960ec489c910019c914ccf245639e0eeeba",
+    "source_excerpt": "Effective result = raw roll + modifiers - difficulty.\n\nUse modifiers from preparation, training, equipment, positioning, timing, physical/mental state, allies, environment, and supernatural or technological aid. Normal modifiers sit between -20 and +20. Extreme cases can reach +/-40.\n\nDifficulty pressure:\n- Trivial: 0 to -5\n- Standard: -5 to -10\n- Hard: -15 to -25\n- Very hard: -25 to -35\n- Heroic: -35 to -45",
+    "source_evidence_id": "src-dice-sign",
+    "runtime_evidence_path": "scripts/nemo-chatgpt-runtime.mjs",
+    "runtime_symbol": "compile::PORTABLE_DYNAMIC_FALLBACK",
+    "runtime_blob_sha": "fd1b6def59711a6e3482ca3de09bab09c004434d",
+    "runtime_excerpt": "  if (compiled.macroResolution.counts.dynamicFallbacks > 0) {\n    diagnostics.warnings.push({\n      code: 'PORTABLE_DYNAMIC_FALLBACK',\n      count: compiled.macroResolution.counts.dynamicFallbacks,\n      message:\n        'Dynamic or unknown macros used deterministic placeholders/fallbacks. Bind them explicitly or disable the owning module before production execution.',\n    });\n  }",
+    "runtime_evidence_id": "runtime-dynamic-warning",
+    "additional_evidence_ids": [
+      "src-dice-example",
+      "runtime-selected-pipeline"
+    ],
+    "original_rule": "Формула вычитает difficulty, таблица pressure содержит отрицательные значения, пример вычитает положительное 15.",
+    "actual_portable_behavior": "Runtime разрешает макрос/фиксирует dynamic fallback и переносит текст; знак difficulty за модель не определяет.",
+    "proven_loss_or_change": "При roll=73, modifier=10 два прочтения дают 68 и 98. Это разные tiers; числовой пример не следует выдавать за общее исправление таблицы.",
+    "manifestation_condition": "Success Dice явно выбран и вычисление использует отрицательный элемент pressure без уточнения convention.",
+    "safe_model_behavior": "Не фабриковать roll или context binding. Не исправлять знак молча: показать конкретную неоднозначность до расчёта, а явное значение/правило пользователя использовать ровно в заданном смысле.",
+    "dynamic_test_required": false,
+    "confidence": "HIGH",
+    "explanation": "Арифметика меняет результат проверки, а не стиль.",
+    "dynamic_verification_scope": "Разницу текста или грамматики можно установить статически. Это не доказательство будущего следования модели правилам или полного production execution.",
+    "source_semantics_modified": false,
+    "review_basis": "Fresh/preserved GitHub evidence passages plus immutable analytical inputs; no new stack selected."
+  },
+  {
+    "guard_id": "FG-C006",
+    "registered_discrepancy_id": "C006",
+    "affected_module_identifier": "1770095491838-bxxnfri2",
+    "module_name": "🔀 CYOA",
+    "affected_modules": [
+      {
+        "index": 372,
+        "identifier": "1770095491838-bxxnfri2",
+        "name": "🔀 CYOA"
+      },
+      {
+        "index": 373,
+        "identifier": "nemo_tracker_cyoa_three_paths",
+        "name": "🔀 CYOA: 3 Paths"
+      }
+    ],
+    "discrepancy_class": "RENDERER_GRAMMAR_MISMATCH",
+    "secondary_classes": [
+      "DOCUMENTED_NONPORTABLE_LIMIT"
+    ],
+    "repository": "producesplatinum-ai/NemoEngine",
+    "ref": "b988a06eedb24b916182d0b5d545eb9a2dbabe02",
+    "source_evidence_path": "Nemo Engine/Connector Readable/11.5.2 General RP/prompts/prompts-368-380.json",
+    "source_json_pointer": "/4/content",
+    "source_blob_sha": "8578162f224599ec9522d85155b5d631bc0b45f5",
+    "source_excerpt": "- Regex: use <st-choice n=\"N\" icon=\"🤝\">option text</st-choice> for each option. Use <st-tag t=\"diplomatic\"/> if a separate type label helps in this theme.",
+    "source_evidence_id": "src-cyoa-grammar",
+    "runtime_evidence_path": "scripts/nemo-chatgpt-runtime.mjs",
+    "runtime_symbol": "PORTABLE_TRACKER_REWRITES[\"1770095491838-bxxnfri2\"]",
+    "runtime_blob_sha": "fd1b6def59711a6e3482ca3de09bab09c004434d",
+    "runtime_excerpt": "♢ >> [PROCEDURE] CYOA — PORTABLE\nWhen a choice menu is useful, end the narrative before the focal character commits and offer two to five materially distinct, immediately actionable options. Express each as a numbered Markdown line with a brief intent or consequence cue, then add “✨ Other”. Do not decide, speak, feel, or act for the user.\n\nExample:\n1. Negotiate — trade time for information\n2. Withdraw — preserve cover at a cost\n✨ Other",
+    "runtime_evidence_id": "runtime-rewrite-372",
+    "additional_evidence_ids": [
+      "regex-31",
+      "runtime-renderer-limits"
+    ],
+    "original_rule": "Source CYOA предписывает st-choice с атрибутом icon; исходный regex #31 допускает непосредственно > после n.",
+    "actual_portable_behavior": "Portable CYOA использует нумерованный Markdown, исходные renderer regex не выполняются.",
+    "proven_loss_or_change": "Маркер с icon не совпадает с #31. Это проверяется реальным локальным RegExp-тестом с положительным контролем без icon.",
+    "manifestation_condition": "SillyTavern/совместимый renderer получает указанную source-форму; для обычного Markdown сам regex не участвует.",
+    "safe_model_behavior": "Сохранить 2–5 разных вариантов, смысл выбора и Other; не утверждать, что icon-разметка отрендерилась. В статическом ChatGPT использовать явно обозначенное доступное текстовое представление, не менять исходный regex.",
+    "dynamic_test_required": false,
+    "confidence": "HIGH",
+    "explanation": "Это изменение принимаемой грамматики входа renderer.",
+    "dynamic_verification_scope": "Разницу текста или грамматики можно установить статически. Это не доказательство будущего следования модели правилам или полного production execution.",
+    "source_semantics_modified": false,
+    "review_basis": "Fresh/preserved GitHub evidence passages plus immutable analytical inputs; no new stack selected."
+  },
+  {
+    "guard_id": "FG-C007",
+    "registered_discrepancy_id": "C007",
+    "affected_module_identifier": "1770095491839-c6om818e",
+    "module_name": "🎰 Gacha System",
+    "affected_modules": [
+      {
+        "index": 376,
+        "identifier": "1770095491839-c6om818e",
+        "name": "🎰 Gacha System"
+      }
+    ],
+    "discrepancy_class": "RENDERER_GRAMMAR_MISMATCH",
+    "secondary_classes": [],
+    "repository": "producesplatinum-ai/NemoEngine",
+    "ref": "b988a06eedb24b916182d0b5d545eb9a2dbabe02",
+    "source_evidence_path": "Nemo Engine/Connector Readable/11.5.2 General RP/prompts/prompts-368-380.json",
+    "source_json_pointer": "/8/content",
+    "source_blob_sha": "8578162f224599ec9522d85155b5d631bc0b45f5",
+    "source_excerpt": "- <st-bar k=\"Tickets\" v=\"14\"/>, <st-bar k=\"Crystals\" v=\"1820\"/>, <st-bar k=\"Pity\" v=\"38\" l=\"38/90\"/>.",
+    "source_evidence_id": "src-gacha-bar",
+    "runtime_evidence_path": "scripts/nemo-chatgpt-runtime.mjs",
+    "runtime_symbol": "PORTABLE_TRACKER_REWRITES[\"1770095491839-c6om818e\"]",
+    "runtime_blob_sha": "fd1b6def59711a6e3482ca3de09bab09c004434d",
+    "runtime_excerpt": "♢ >> [PROCEDURE] GACHA STATE — PORTABLE\nPlace a compact Markdown wallet and banner summary after the narrative when a pull, reward, pity threshold, or relevant balance changes. Track only established currencies, pity, streaks, banners, and rewards. A pull requested in the current turn may be resolved as an authored story outcome grounded in the configured rates or supplied rules; do not claim a live random roll. Update time-based rewards only from an explicit time supplied in the request or continuity, never from an assumed clock.\n\nExample:\n### Gacha State\n- Tickets: 14\n- Crystals: 1,820\n- Pity: 38/90\n- Latest pull: Ember Knight — Rare",
+    "runtime_evidence_id": "runtime-rewrite-376",
+    "additional_evidence_ids": [
+      "regex-30",
+      "runtime-renderer-limits"
+    ],
+    "original_rule": "Gacha использует st-bar без l для Tickets/Crystals и четырёхзначное v для Crystals; regex #30 требует l и 1–3 цифры.",
+    "actual_portable_behavior": "Portable показывает текстовые balances, не исполняет source regex и не создаёт процентный renderer.",
+    "proven_loss_or_change": "Два source-маркера не проходят regex #30; контроль Pity с l и v=38 проходит. Грамматика не эквивалентна общей числовой шкале.",
+    "manifestation_condition": "Попытка отобразить wallet через исходный Render Bar.",
+    "safe_model_behavior": "Оставить 1820 реальным балансом; не обрезать до 100 и не сочинять максимум шкалы. Использовать текстовое значение с оговоркой о renderer, не считать несовпадение потерей самой валюты.",
+    "dynamic_test_required": false,
+    "confidence": "HIGH",
+    "explanation": "Меняется допустимость и интерпретация числового поля.",
+    "dynamic_verification_scope": "Разницу текста или грамматики можно установить статически. Это не доказательство будущего следования модели правилам или полного production execution.",
+    "source_semantics_modified": false,
+    "review_basis": "Fresh/preserved GitHub evidence passages plus immutable analytical inputs; no new stack selected."
+  },
+  {
+    "guard_id": "FG-C008",
+    "registered_discrepancy_id": "C008",
+    "affected_module_identifier": "nemo_magpie_character_files",
+    "module_name": "🗂️ Magpie Character Files",
+    "affected_modules": [
+      {
+        "index": 80,
+        "identifier": "nemo_magpie_character_files",
+        "name": "🗂️ Magpie Character Files"
+      }
+    ],
+    "discrepancy_class": "SOURCE_INTERNAL_CONFLICT",
+    "secondary_classes": [],
+    "repository": "producesplatinum-ai/NemoEngine",
+    "ref": "b988a06eedb24b916182d0b5d545eb9a2dbabe02",
+    "source_evidence_path": "Nemo Engine/Connector Readable/11.5.2 General RP/prompts/prompts-074-081.json",
+    "source_json_pointer": "/6/content",
+    "source_blob_sha": "3032aef0c012e32fe0d93b56290d47330d87bc30",
+    "source_excerpt": "[[npc Rasha|side]]\n»» side\n» name · role | Rasha Adeyemi · 34 · dockside fixer\n» look | tall, hard through the shoulders, favours her left knee\n» personality | suspicious · practical · amused by nerve · keeps score\n» disposition | curious about you, not yet friendly\n» voice | answers questions with questions\n» desire | off the docks before winter · tonight, learn who sent you\n» affiliation | nominally the harbour union · loyal in practice to three crews\n» function | local gatekeeper carrying access, rumours, and a future debt\n» held back | she already knows why the manifest was altered\n[[/npc]] sets the glass down. \"You're early.\"",
+    "source_evidence_id": "src-side-example",
+    "runtime_evidence_path": "scripts/nemo-chatgpt-runtime.mjs",
+    "runtime_symbol": "compileSelectedPrompts",
+    "runtime_blob_sha": "fd1b6def59711a6e3482ca3de09bab09c004434d",
+    "runtime_excerpt": "    const expandedContent = cleanPortableText(\n      expandPortableText(prompt.content, state),\n    );\n    applyPortableStateVariableOverrides(prompt, state);\n    const content = foldExactCrossModuleDuplicate(\n      normalizePortableControlDirectives(expandedContent, prompt, state),\n      prompt,\n      state,\n    );",
+    "runtime_evidence_id": "runtime-selected-pipeline",
+    "additional_evidence_ids": [
+      "src-side-schema",
+      "runtime-renderer-limits"
+    ],
+    "original_rule": "Полная SIDE-схема требует history, ties и useful, но вводный Rasha-пример этих строк не содержит.",
+    "actual_portable_behavior": "Обычная нормализация не является валидатором полноты карточки и сама не дополняет три поля.",
+    "proven_loss_or_change": "Пример не равен полному образцу схемы; это не доказательство повреждённого runtime.",
+    "manifestation_condition": "Пример копируется как полноценное SIDE-досье или используется как единственный список полей.",
+    "safe_model_behavior": "Руководствоваться полной явно заданной схемой, а не сокращённым примером. Не переносить вымышленные сведения Rasha на пользователя или реального человека; не обещать hover-интерфейс.",
+    "dynamic_test_required": false,
+    "confidence": "HIGH",
+    "explanation": "Отсутствуют обязательные поля данных.",
+    "dynamic_verification_scope": "Разницу текста или грамматики можно установить статически. Это не доказательство будущего следования модели правилам или полного production execution.",
+    "source_semantics_modified": false,
+    "review_basis": "Fresh/preserved GitHub evidence passages plus immutable analytical inputs; no new stack selected.",
+    "qualification": "Source feature: различать нормативную схему и иллюстрацию. Новые поля не добавляются в репозиторий этим guard."
+  },
+  {
+    "guard_id": "FG-C009",
+    "registered_discrepancy_id": "C009",
+    "affected_module_identifier": "v11-026-default-narrative",
+    "module_name": "📋 Default: Narrative",
+    "affected_modules": [
+      {
+        "index": 38,
+        "identifier": "v11-026-default-narrative",
+        "name": "📋 Default: Narrative"
+      }
+    ],
+    "discrepancy_class": "SOURCE_INTERNAL_CONFLICT",
+    "secondary_classes": [],
+    "repository": "producesplatinum-ai/NemoEngine",
+    "ref": "b988a06eedb24b916182d0b5d545eb9a2dbabe02",
+    "source_evidence_path": "Nemo Engine/Connector Readable/11.5.2 General RP/prompts/prompts-031-044.json",
+    "source_json_pointer": "/7/content",
+    "source_blob_sha": "b90d89cbf043c3c626c7ddb586522a58a3ccf8fc",
+    "source_excerpt": "If you have an idea for something interesting that could happen during the skip—an encounter on the road, a dream that matters—play it out. Otherwise, just cut to the next scene.",
+    "source_evidence_id": "src-transit-earlier",
+    "runtime_evidence_path": "scripts/nemo-chatgpt-runtime.mjs",
+    "runtime_symbol": "compileSelectedPrompts",
+    "runtime_blob_sha": "fd1b6def59711a6e3482ca3de09bab09c004434d",
+    "runtime_excerpt": "    const expandedContent = cleanPortableText(\n      expandPortableText(prompt.content, state),\n    );\n    applyPortableStateVariableOverrides(prompt, state);\n    const content = foldExactCrossModuleDuplicate(\n      normalizePortableControlDirectives(expandedContent, prompt, state),\n      prompt,\n      state,\n    );",
+    "runtime_evidence_id": "runtime-selected-pipeline",
+    "additional_evidence_ids": [
+      "src-transit-law"
+    ],
+    "original_rule": "Ранний DIRECTIVE допускает придуманный encounter во время skip; поздний LAW запрещает новые encounters в коридоре, помеченном пользователем как transit.",
+    "actual_portable_behavior": "CoreNarrative разворачивается в consumer с обоими указаниями; компилятор не выбирает сценическое толкование.",
+    "proven_loss_or_change": "Текстовое напряжение с указанными исходными приоритетами, а не доказанная потеря portable-преобразования.",
+    "manifestation_condition": "Пользователь обозначил чистый транзит, а модель хочет добавить промежуточное приключение.",
+    "safe_model_behavior": "Применить более высокий LAW и его точное условие: сжать обозначенный транзит без нового encounter. Не объявлять любые сцены дороги запрещёнными и не переписывать раннюю инструкцию в источнике.",
+    "dynamic_test_required": false,
+    "confidence": "HIGH",
+    "explanation": "Решается, появляется ли новое событие и задерживается ли заданный переход.",
+    "dynamic_verification_scope": "Разницу текста или грамматики можно установить статически. Это не доказательство будущего следования модели правилам или полного production execution.",
+    "source_semantics_modified": false,
+    "review_basis": "Fresh/preserved GitHub evidence passages plus immutable analytical inputs; no new stack selected.",
+    "qualification": "Разрешение следует уже написанному LAW/DIRECTIVE, а не новой удобной норме."
+  },
+  {
+    "guard_id": "FG-C010",
+    "registered_discrepancy_id": "C010",
+    "affected_module_identifier": "v11-607-vtm-blood-bond",
+    "module_name": "🦇 World: Blood Bond Mechanics",
+    "affected_modules": [
+      {
+        "index": 289,
+        "identifier": "v11-607-vtm-blood-bond",
+        "name": "🦇 World: Blood Bond Mechanics"
+      }
+    ],
+    "discrepancy_class": "RENDERER_GRAMMAR_MISMATCH",
+    "secondary_classes": [],
+    "repository": "producesplatinum-ai/NemoEngine",
+    "ref": "b988a06eedb24b916182d0b5d545eb9a2dbabe02",
+    "source_evidence_path": "Nemo Engine/Connector Readable/11.5.2 General RP/prompts/prompts-289-298.json",
+    "source_json_pointer": "/0/content",
+    "source_blob_sha": "bf7e428f9643a6fdac94f5beb31f24696af49bcf",
+    "source_excerpt": "- Action: In the response this occurs, find the main container div with the class .cathedral-card and add the new class blood-wed-active to it. The CSS will make the hidden \"Blood-Wed\" pane appear automatically.\n- Example: <div class=\"cathedral-card blood-wed-active\">",
+    "source_evidence_id": "src-blood-class",
+    "runtime_evidence_path": "scripts/nemo-chatgpt-runtime.mjs",
+    "runtime_symbol": "PORTABLE_UI_REWRITES[\"v11-607-vtm-blood-bond\"]",
+    "runtime_blob_sha": "fd1b6def59711a6e3482ca3de09bab09c004434d",
+    "runtime_excerpt": "♢ >> [DIRECTIVE] BLOOD BOND MECHANICS — PORTABLE\nTrack the established fictional bond in two phases using a concise Markdown status card. Before the first sip, track Interest, Intrigue, Trust, the prospect's observed regard, and one evidence-based strategic insight. After the first sip, permanently switch to Influence, Devotion, Resistance, bond stage, archetype, regard, and one evidence-based vein-of-longing hint. Change values only after a relevant narrated event, show the cause and delta, and preserve uncertainty where motives are not known. Choose authored hint flavor from current canon without claiming a dice roll. Keep all state visible as ordinary text and omit inactive phase fields.\n\nExample:\n### Blood Bond — Stage 1\n- Influence: 24 (+3 — accepted the private audience)\n- Devotion: 11\n- Resistance: 67 (-2)\n- Regard: Dangerous benefactor\n- Vein of longing: recognition without public humiliation",
+    "runtime_evidence_id": "runtime-rewrite-289",
+    "additional_evidence_ids": [
+      "src-blood-css",
+      "src-blood-inline",
+      "runtime-renderer-limits"
+    ],
+    "original_rule": "Добавление blood-wed-active обещает раскрыть pane; pane одновременно имеет inline display:none.",
+    "actual_portable_behavior": "Native rewrite заменяет HTML текстовой карточкой и не запускает CSS.",
+    "proven_loss_or_change": "Обычное stylesheet display:block не снимает inline display:none; end-to-end отображение в конкретном хосте ещё не проверено.",
+    "manifestation_condition": "Сохраняется исходный HTML без дополнительной внешней переработки/important-правила, затем добавляется только class.",
+    "safe_model_behavior": "Не сообщать о показанной панели без проверки. Сохранить подтверждённый факт взаимной связи в тексте; не чинить CSS или симулировать интерфейс молча.",
+    "dynamic_test_required": true,
+    "confidence": "HIGH",
+    "explanation": "Разница видимости элемента, не эстетики.",
+    "dynamic_verification_scope": "Указанный ниже эффект CLI/renderer следует подтвердить отдельным запуском; это не выполненный production-тест.",
+    "source_semantics_modified": false,
+    "review_basis": "Fresh/preserved GitHub evidence passages plus immutable analytical inputs; no new stack selected."
+  },
+  {
+    "guard_id": "FG-C011",
+    "registered_discrepancy_id": "C011",
+    "affected_module_identifier": "nemo-webtoon-panels-9-3-2",
+    "module_name": "📜 Vertical Webtoon Panels",
+    "affected_modules": [
+      {
+        "index": 389,
+        "identifier": "nemo-webtoon-panels-9-3-2",
+        "name": "📜 Vertical Webtoon Panels"
+      },
+      {
+        "index": 388,
+        "identifier": "nemo-manga-panels-9-3-2",
+        "name": "📖 Manga / Comic Panels"
+      }
+    ],
+    "discrepancy_class": "SOURCE_INTERNAL_CONFLICT",
+    "secondary_classes": [],
+    "repository": "producesplatinum-ai/NemoEngine",
+    "ref": "b988a06eedb24b916182d0b5d545eb9a2dbabe02",
+    "source_evidence_path": "Nemo Engine/Connector Readable/11.5.2 General RP/prompts/prompts-381-396.json",
+    "source_json_pointer": "/8/content",
+    "source_blob_sha": "f7a30b624445a72cc4d635ea0d222433477c4a54",
+    "source_excerpt": "Mutual exclusivity with Manga Panels: only enable one at a time. If both are active, prefer Webtoon for mobile contexts.",
+    "source_evidence_id": "src-panels-exclusion",
+    "runtime_evidence_path": "scripts/nemo-chatgpt-runtime.mjs",
+    "runtime_symbol": "buildExclusiveGroupRegistry",
+    "runtime_blob_sha": "fd1b6def59711a6e3482ca3de09bab09c004434d",
+    "runtime_excerpt": "  for (const candidate of candidates.modules) {\n    if (!candidate.metadata.exclusiveGroup) continue;\n    addMember(ensureGroup(candidate.metadata.exclusiveGroup), candidate);\n  }",
+    "runtime_evidence_id": "runtime-exclusive-registry",
+    "additional_evidence_ids": [
+      "runtime-supplemental-exclusions",
+      "runtime-rewrite-389"
+    ],
+    "original_rule": "Webtoon требует только один из Manga/Webtoon, указывая source-preference для mobile; metadata mutual-exclusive-group у пары отсутствует.",
+    "actual_portable_behavior": "Программный registry строится из metadata и единственной supplemental-пары NSFW, поэтому prose-only исключение не становится этой registry-группой.",
+    "proven_loss_or_change": "Проверяемое различие между текстовым запретом и программным реестром; принятие конкретного CLI-стека ещё не проверено.",
+    "manifestation_condition": "Оба panel-модуля явно выбраны одновременно или требуется атомарная замена через group-one.",
+    "safe_model_behavior": "Не активировать оба по собственной инициативе. Указать prose-only конфликт, не выдумывать group name; source mobile-preference не распространять на другие ситуации и не выдавать за новую пользовательскую настройку.",
+    "dynamic_test_required": true,
+    "confidence": "HIGH",
+    "explanation": "Затрагивается выбор компонентов и совмещение форматов.",
+    "dynamic_verification_scope": "Указанный ниже эффект CLI/renderer следует подтвердить отдельным запуском; это не выполненный production-тест.",
+    "source_semantics_modified": false,
+    "review_basis": "Fresh/preserved GitHub evidence passages plus immutable analytical inputs; no new stack selected.",
+    "qualification": "Возможность компиляции обоих не означает семантическую разрешённость их совместного применения."
+  },
+  {
+    "guard_id": "FG-C012",
+    "registered_discrepancy_id": "C012",
+    "affected_module_identifier": "v11-607-vtm-blood-bond",
+    "module_name": "🦇 World: Blood Bond Mechanics",
+    "affected_modules": [
+      {
+        "index": 289,
+        "identifier": "v11-607-vtm-blood-bond",
+        "name": "🦇 World: Blood Bond Mechanics"
+      }
+    ],
+    "discrepancy_class": "PROVEN_SEMANTIC_LOSS",
+    "secondary_classes": [
+      "INTENTIONAL_PORTABLE_DEGRADATION"
+    ],
+    "repository": "producesplatinum-ai/NemoEngine",
+    "ref": "b988a06eedb24b916182d0b5d545eb9a2dbabe02",
+    "source_evidence_path": "Nemo Engine/Connector Readable/11.5.2 General RP/prompts/prompts-289-298.json",
+    "source_json_pointer": "/0/content",
+    "source_blob_sha": "bf7e428f9643a6fdac94f5beb31f24696af49bcf",
+    "source_excerpt": "RELATIONSHIP STATUS & THRESHOLDS (Based on Trust):\n- 0 or less TR: Nuisance / Obstacle\n- 1-40 TR: Unknown Factor\n- 41-80 TR: Recognized Contact\n- 81-120 TR: Reliable Asset\n- 121-160 TR: Valued Confidant\n- 161-200+ TR: Indispensable Figure",
+    "source_evidence_id": "src-blood-thresholds",
+    "runtime_evidence_path": "scripts/nemo-chatgpt-runtime.mjs",
+    "runtime_symbol": "PORTABLE_UI_REWRITES[\"v11-607-vtm-blood-bond\"]",
+    "runtime_blob_sha": "fd1b6def59711a6e3482ca3de09bab09c004434d",
+    "runtime_excerpt": "♢ >> [DIRECTIVE] BLOOD BOND MECHANICS — PORTABLE\nTrack the established fictional bond in two phases using a concise Markdown status card. Before the first sip, track Interest, Intrigue, Trust, the prospect's observed regard, and one evidence-based strategic insight. After the first sip, permanently switch to Influence, Devotion, Resistance, bond stage, archetype, regard, and one evidence-based vein-of-longing hint. Change values only after a relevant narrated event, show the cause and delta, and preserve uncertainty where motives are not known. Choose authored hint flavor from current canon without claiming a dice roll. Keep all state visible as ordinary text and omit inactive phase fields.\n\nExample:\n### Blood Bond — Stage 1\n- Influence: 24 (+3 — accepted the private audience)\n- Devotion: 11\n- Resistance: 67 (-2)\n- Regard: Dangerous benefactor\n- Vein of longing: recognition without public humiliation",
+    "runtime_evidence_id": "runtime-rewrite-289",
+    "additional_evidence_ids": [
+      "src-blood-sip-a"
+    ],
+    "original_rule": "Blood Bond содержит конкретные Trust-пороги и числовые изменения SIP Protocol A; это часть механики.",
+    "actual_portable_behavior": "Полное replacement сохраняет две фазы и общие поля, но не включённые в доказательства пороги и SIP-диапазоны.",
+    "proven_loss_or_change": "Как минимум Trust-таблица и числовой SIP Protocol A отсутствуют в replacement. Полная эквивалентность всем протоколам не установлена.",
+    "manifestation_condition": "Расчёт уровня/изменения связи по одному portable replacement без source-таблиц.",
+    "safe_model_behavior": "При явно выбранном модуле использовать только точные source-пороги и подходящие протоколы при наличии исходного состояния. Не считать числа из примера стартовым состоянием. Если нужной таблицы или значения нет в доступном материале, остановить именно расчёт, не сочинять.",
+    "dynamic_test_required": false,
+    "confidence": "HIGH",
+    "explanation": "Удалены пороги и параметры перехода; Markdown-смена этого не объясняет.",
+    "dynamic_verification_scope": "Разницу текста или грамматики можно установить статически. Это не доказательство будущего следования модели правилам или полного production execution.",
+    "source_semantics_modified": false,
+    "review_basis": "Fresh/preserved GitHub evidence passages plus immutable analytical inputs; no new stack selected."
+  },
+  {
+    "guard_id": "FG-C013",
+    "registered_discrepancy_id": "C013",
+    "affected_module_identifier": "1770095491839-npsjusbc",
+    "module_name": "💖 Dating Sim Interface",
+    "affected_modules": [
+      {
+        "index": 374,
+        "identifier": "1770095491839-npsjusbc",
+        "name": "💖 Dating Sim Interface"
+      }
+    ],
+    "discrepancy_class": "PROVEN_SEMANTIC_LOSS",
+    "secondary_classes": [
+      "INTENTIONAL_PORTABLE_DEGRADATION"
+    ],
+    "repository": "producesplatinum-ai/NemoEngine",
+    "ref": "b988a06eedb24b916182d0b5d545eb9a2dbabe02",
+    "source_evidence_path": "Nemo Engine/Connector Readable/11.5.2 General RP/prompts/prompts-368-380.json",
+    "source_json_pointer": "/6/content",
+    "source_blob_sha": "8578162f224599ec9522d85155b5d631bc0b45f5",
+    "source_excerpt": "Negative values are allowed for AP in hostile/rival routes; show the raw negative value even if the bar visually bottoms out.\n\n## Relationship tiers\nUse AP as the primary axis; DP and TP modify flavor.\n- < 0: Rival / Unfriendly\n- 1-20: Stranger\n- 21-40: Acquaintance\n- 41-60: Friend\n- 61-80: Close Friend\n- 81-100: Romantic Interest\n- 101-199: High Romantic Interest / Pre-Dating\n- 200+: Dating / Committed",
+    "source_evidence_id": "src-dating-negative",
+    "runtime_evidence_path": "scripts/nemo-chatgpt-runtime.mjs",
+    "runtime_symbol": "PORTABLE_TRACKER_REWRITES[\"1770095491839-npsjusbc\"]",
+    "runtime_blob_sha": "fd1b6def59711a6e3482ca3de09bab09c004434d",
+    "runtime_excerpt": "♢ >> [PROCEDURE] DATING-SIM RELATIONSHIP STATE — PORTABLE\nWhen active, place a concise Markdown relationship card after the narrative. Track the story-relevant pairing with Affection, Desire, and Trust values from 0–200; include tier, current status, evidence-backed learned preferences or boundaries, a rival note only when established, and one short in-character feeling line only when it meaningfully changes. Explain learned facts inline with their scene evidence and confidence. Hold every value steady unless an explicit interaction or supplied continuity justifies movement; never invent knowledge to fill the card.\n\nExample:\n### Relationship State — Mira → Rowan\n- Affection: 124/200 — Close friend (+5: shared confidence)\n- Trust: 110/200 — Guard lowering\n- Learned: Quiet cafés — rainy-window scene, strong confidence",
+    "runtime_evidence_id": "runtime-rewrite-374",
+    "additional_evidence_ids": [],
+    "original_rule": "Отрицательный AP допустим; Close Friend =61–80, High Romantic Interest/Pre-Dating =101–199; сюжет может явно менять stage.",
+    "actual_portable_behavior": "Replacement ограничивает все три values диапазоном 0–200 и иллюстрирует AP124 как Close friend.",
+    "proven_loss_or_change": "Утрачено исключение для отрицательного AP; пример не соответствует исходной tier-таблице.",
+    "manifestation_condition": "Отрицательный AP или вывод tier по AP124/другому source-диапазону без отдельного story override.",
+    "safe_model_behavior": "Не clamp raw AP. Сохранить исходную таблицу; AP124 без явно установленного story override не именовать Close Friend. Не придумывать правило для непокрытого таблицей AP0.",
+    "dynamic_test_required": false,
+    "confidence": "HIGH",
+    "explanation": "Меняются домен значения и отображение числа в состояние.",
+    "dynamic_verification_scope": "Разницу текста или грамматики можно установить статически. Это не доказательство будущего следования модели правилам или полного production execution.",
+    "source_semantics_modified": false,
+    "review_basis": "Fresh/preserved GitHub evidence passages plus immutable analytical inputs; no new stack selected."
+  },
+  {
+    "guard_id": "FG-C014",
+    "registered_discrepancy_id": "C014",
+    "affected_module_identifier": "nemo_tracker_cyoa_three_paths",
+    "module_name": "🔀 CYOA: 3 Paths",
+    "affected_modules": [
+      {
+        "index": 373,
+        "identifier": "nemo_tracker_cyoa_three_paths",
+        "name": "🔀 CYOA: 3 Paths"
+      }
+    ],
+    "discrepancy_class": "PROVEN_SEMANTIC_LOSS",
+    "secondary_classes": [],
+    "repository": "producesplatinum-ai/NemoEngine",
+    "ref": "b988a06eedb24b916182d0b5d545eb9a2dbabe02",
+    "source_evidence_path": "Nemo Engine/Connector Readable/11.5.2 General RP/prompts/prompts-368-380.json",
+    "source_json_pointer": "/5/content",
+    "source_blob_sha": "8578162f224599ec9522d85155b5d631bc0b45f5",
+    "source_excerpt": "Each path contains:\n- `PATH 1`, `PATH 2`, or `PATH 3`.\n- A short scene-native title such as `THE DIRECT PATH`, `FOLLOW SARAH`, or `BURN THE BRIDGE`.\n- One concise sentence for the immediate choice/direction.\n- One concise sentence for the route it opens: likely pressure, opportunity, risk, relationship shift, information advantage, scene focus, or future complication. Describe possibility and trajectory, not guaranteed outcomes.\n\nDo **not** assign fixed morality or risk semantics to the numbers. Path 1 is not always safe, Path 2 clever, or Path 3 reckless. Reorder freely according to the scene.",
+    "source_evidence_id": "src-three-paths",
+    "runtime_evidence_path": "scripts/nemo-chatgpt-runtime.mjs",
+    "runtime_symbol": "PORTABLE_TRACKER_REWRITES[\"nemo_tracker_cyoa_three_paths\"]",
+    "runtime_blob_sha": "fd1b6def59711a6e3482ca3de09bab09c004434d",
+    "runtime_excerpt": "♢ >> [PROCEDURE] CYOA: THREE PATHS — PORTABLE\nWhen a route menu is useful, stop before the focal character commits and present exactly three materially different Markdown route blocks: PATH 1 · THE DIRECT PATH, PATH 2 · THE QUIET PATH, and PATH 3 · THE SIDEWAYS PATH. For each, state the immediate move and the kind of future it opens without promising an outcome. Finish with “✨ Other”. Do not choose or act for the user.\n\nExample:\n1. PATH 1 · THE DIRECT PATH — confront the envoy; opens public conflict\n2. PATH 2 · THE QUIET PATH — follow the courier; opens covert evidence\n3. PATH 3 · THE SIDEWAYS PATH — bargain with the rival; opens an unstable alliance\n✨ Other",
+    "runtime_evidence_id": "runtime-rewrite-373",
+    "additional_evidence_ids": [],
+    "original_rule": "Три materially different routes имеют scene-native названия; числа не закрепляют тип риска/морали. Фиксированные названия в render-примере иллюстративны.",
+    "actual_portable_behavior": "Replacement предписывает DIRECT, QUIET и SIDEWAYS в трёх именованных блоках.",
+    "proven_loss_or_change": "Разрешённый набор сценических названий сужен до конкретного шаблона.",
+    "manifestation_condition": "Три нужных сюжету направления не соответствуют direct/quiet/sideways или нужны scene-native имена.",
+    "safe_model_behavior": "Сохранить ровно три различных направления и unnumbered Other; названия брать из текущего сюжета, не привязывать риск к номеру. Сохранить активный User-Role-Mode, не сочинять выполненный выбор.",
+    "dynamic_test_required": false,
+    "confidence": "HIGH",
+    "explanation": "Меняется множество допустимых направлений/названий и семантика выбора, не только словарь.",
+    "dynamic_verification_scope": "Разницу текста или грамматики можно установить статически. Это не доказательство будущего следования модели правилам или полного production execution.",
+    "source_semantics_modified": false,
+    "review_basis": "Fresh/preserved GitHub evidence passages plus immutable analytical inputs; no new stack selected."
+  },
+  {
+    "guard_id": "FG-C015",
+    "registered_discrepancy_id": "C015",
+    "affected_module_identifier": "1770095491839-c6om818e",
+    "module_name": "🎰 Gacha System",
+    "affected_modules": [
+      {
+        "index": 376,
+        "identifier": "1770095491839-c6om818e",
+        "name": "🎰 Gacha System"
+      }
+    ],
+    "discrepancy_class": "PROVEN_SEMANTIC_LOSS",
+    "secondary_classes": [
+      "INTENTIONAL_PORTABLE_DEGRADATION",
+      "SOURCE_INTERNAL_CONFLICT"
+    ],
+    "repository": "producesplatinum-ai/NemoEngine",
+    "ref": "b988a06eedb24b916182d0b5d545eb9a2dbabe02",
+    "source_evidence_path": "Nemo Engine/Connector Readable/11.5.2 General RP/prompts/prompts-368-380.json",
+    "source_json_pointer": "/8/content",
+    "source_blob_sha": "8578162f224599ec9522d85155b5d631bc0b45f5",
+    "source_excerpt": "Pull mechanics:\n- Single pull: 1 Ticket OR 160 Crystals.\n- Ten-pull: 10 Tickets OR 1600 Crystals. Guarantees at least 1 rare or higher.\n- Rarity ladder: R, SR, SSR, UR (or setting equivalent: 3-star / 4-star / 5-star / Mythic).\n- Base rates approx: R 80%, SR 15%, SSR 4.5%, UR 0.5%. Adjust per banner.\n- Pity rule: at 90 pulls without an SSR, the next pull is a guaranteed SSR. Reset Pity_Counter on hit.",
+    "source_evidence_id": "src-gacha-economy",
+    "runtime_evidence_path": "scripts/nemo-chatgpt-runtime.mjs",
+    "runtime_symbol": "PORTABLE_TRACKER_REWRITES[\"1770095491839-c6om818e\"]",
+    "runtime_blob_sha": "fd1b6def59711a6e3482ca3de09bab09c004434d",
+    "runtime_excerpt": "♢ >> [PROCEDURE] GACHA STATE — PORTABLE\nPlace a compact Markdown wallet and banner summary after the narrative when a pull, reward, pity threshold, or relevant balance changes. Track only established currencies, pity, streaks, banners, and rewards. A pull requested in the current turn may be resolved as an authored story outcome grounded in the configured rates or supplied rules; do not claim a live random roll. Update time-based rewards only from an explicit time supplied in the request or continuity, never from an assumed clock.\n\nExample:\n### Gacha State\n- Tickets: 14\n- Crystals: 1,820\n- Pity: 38/90\n- Latest pull: Ember Knight — Rare",
+    "runtime_evidence_id": "runtime-rewrite-376",
+    "additional_evidence_ids": [
+      "src-gacha-other-reset",
+      "src-gacha-time",
+      "runtime-renderer-limits"
+    ],
+    "original_rule": "Источник задаёт цену pull, base rates, гарантию ten-pull, условие pity и real-time refresh.",
+    "actual_portable_behavior": "Replacement содержит общий wallet/banner summary, authored outcome и только явно предоставленное время; параметры из доказательства не повторены.",
+    "proven_loss_or_change": "Экономические параметры не перенесены; live clock намеренно не эмулируется. Дополнительно в самом source расходятся reset на SR/SSR и описание only-SSR pity.",
+    "manifestation_condition": "Pull/reward или вывод wallet рассчитывается только из replacement; значение SR-reset становится значимым.",
+    "safe_model_behavior": "Сохранить известные цены/ставки/гарантии без переименования смысла. Не фабриковать RNG и истёкшее время. До спорного reset отдельно обозначить исходную SR/SSR неоднозначность. Не менять «после 90 следующий» на неуказанное правило 90-го pull.",
+    "dynamic_test_required": false,
+    "confidence": "HIGH",
+    "explanation": "Меняются стоимости, вероятности, условия переходов и начислений.",
+    "dynamic_verification_scope": "Разницу текста или грамматики можно установить статически. Это не доказательство будущего следования модели правилам или полного production execution.",
+    "source_semantics_modified": false,
+    "review_basis": "Fresh/preserved GitHub evidence passages plus immutable analytical inputs; no new stack selected."
+  },
+  {
+    "guard_id": "FG-C016",
+    "registered_discrepancy_id": "C016",
+    "affected_module_identifier": "v11-626-fetish-forced-fem-classic",
+    "module_name": "🎀 Forced Fem (Classic)",
+    "affected_modules": [
+      {
+        "index": 431,
+        "identifier": "v11-626-fetish-forced-fem-classic",
+        "name": "🎀 Forced Fem (Classic)"
+      }
+    ],
+    "discrepancy_class": "PROVEN_SEMANTIC_LOSS",
+    "secondary_classes": [],
+    "repository": "producesplatinum-ai/NemoEngine",
+    "ref": "b988a06eedb24b916182d0b5d545eb9a2dbabe02",
+    "source_evidence_path": "Nemo Engine/Connector Readable/11.5.2 General RP/prompts/prompts-429-455.json",
+    "source_json_pointer": "/2/content",
+    "source_blob_sha": "dc9f4c3c0a70b86a3d7005b75a9a06870a23ec47",
+    "source_excerpt": "Point Decay: Neglecting the subject's conditioning allows resistance to reform. -1 to -3 points per day of in-story neglect.",
+    "source_evidence_id": "src-ff-decay",
+    "runtime_evidence_path": "scripts/nemo-chatgpt-runtime.mjs",
+    "runtime_symbol": "PORTABLE_UI_REWRITES[\"v11-626-fetish-forced-fem-classic\"]",
+    "runtime_blob_sha": "fd1b6def59711a6e3482ca3de09bab09c004434d",
+    "runtime_excerpt": "♢ >> [DIRECTIVE] FEMINIZATION STATE — PORTABLE\nFor an established adult fictional scenario, track the character's arc in a concise Markdown card using the module's core physical, behavioral, and identity-facing meters. Record likes, dislikes, boundaries, and shifts only when supported by narrated behavior or supplied continuity; include the triggering evidence inline. Do not infer acceptance from compliance, do not overwrite explicit limits, and do not invent state to fill the card.\n\nExample:\n### Feminization State\n- Presentation: 42/100 (+4 — chose the outfit for the public scene)\n- Boundary: public naming remains off-limits\n- Shifting preference: heeled boots — self-selected once, tentative",
+    "runtime_evidence_id": "runtime-rewrite-431",
+    "additional_evidence_ids": [
+      "src-ff-meter"
+    ],
+    "original_rule": "Исходная fictional-механика задаёт FP-stage пороги и decay −1..−3 за день in-story neglect; FP отличается от внутреннего принятия.",
+    "actual_portable_behavior": "Replacement оставляет общую evidence-based карточку без decay и FP-tier таблицы.",
+    "proven_loss_or_change": "Подтверждённо опущены decay и FP-пороги; прежняя формулировка о потере ресурсных «затрат» этим источником не доказывается.",
+    "manifestation_condition": "Используется именно этот явно выбранный fictional-модуль и вычисляются stage/изменения во времени.",
+    "safe_model_behavior": "Не заменять числовую систему произвольной шкалой Presentation. Сохранять владельца параметров {{char}}, не приписывать их пользователю; не считать подчинение принятием и не вводить новый сексуальный сценарий вследствие анализа. Неизвестное время/состояние не выдумывать; правила хоста выше source.",
+    "dynamic_test_required": false,
+    "confidence": "HIGH",
+    "explanation": "Удалены числовой decay и таблица переходов, а не только HTML.",
+    "dynamic_verification_scope": "Разницу текста или грамматики можно установить статически. Это не доказательство будущего следования модели правилам или полного production execution.",
+    "source_semantics_modified": false,
+    "review_basis": "Fresh/preserved GitHub evidence passages plus immutable analytical inputs; no new stack selected.",
+    "qualification": "Guard — технический анализ вымышленной системы; он не разрешает воздействие на реального человека."
+  },
+  {
+    "guard_id": "FG-C017",
+    "registered_discrepancy_id": "C017",
+    "affected_module_identifier": "v11-250-utility-parallel-storylines",
+    "module_name": "🛠️ Parallel Storylines",
+    "affected_modules": [
+      {
+        "index": 248,
+        "identifier": "v11-250-utility-parallel-storylines",
+        "name": "🛠️ Parallel Storylines"
+      }
+    ],
+    "discrepancy_class": "PROVEN_SEMANTIC_LOSS",
+    "secondary_classes": [
+      "INTENTIONAL_PORTABLE_DEGRADATION"
+    ],
+    "repository": "producesplatinum-ai/NemoEngine",
+    "ref": "b988a06eedb24b916182d0b5d545eb9a2dbabe02",
+    "source_evidence_path": "Nemo Engine/Connector Readable/11.5.2 General RP/prompts/prompts-235-257.json",
+    "source_json_pointer": "/13/content",
+    "source_blob_sha": "48795256b0ec80a3387386c32b5a6c29f2628f7b",
+    "source_excerpt": "Every response ends with a cutaway. No activation conditional exists here; if this rule is visible, it is active. The cutaway is part of the response structure, as expected as the main scene itself.",
+    "source_evidence_id": "src-cutaway-mandatory",
+    "runtime_evidence_path": "scripts/nemo-chatgpt-runtime.mjs",
+    "runtime_symbol": "PORTABLE_UI_REWRITES[\"v11-250-utility-parallel-storylines\"]",
+    "runtime_blob_sha": "fd1b6def59711a6e3482ca3de09bab09c004434d",
+    "runtime_excerpt": "♢ >> [DIRECTIVE] PARALLEL STORYLINES — PORTABLE\nUse brief cutaways to advance a consequential B-plot, setting pressure, antagonist activity, or aftermath without transferring that knowledge to the main-scene cast. End the main scene cleanly, then place the cutaway under a visible Markdown heading such as “### Elsewhere”. Keep its location, time, viewpoint, and knowledge boundary clear; vary angle and only revisit a thread when it changes. Do not use hidden or collapsible presentation.\n\nExample:\n### Elsewhere — North Gate, same night\nThe courier finds the lock already broken.",
+    "runtime_evidence_id": "runtime-rewrite-248",
+    "additional_evidence_ids": [
+      "src-cutaway-scale"
+    ],
+    "original_rule": "Явно активный Parallel Storylines требует cutaway в конце каждого ответа, меняя масштаб, но не наличие.",
+    "actual_portable_behavior": "Replacement предписывает brief cutaways и их форму, но не повторяет обязательность every response.",
+    "proven_loss_or_change": "Удалён универсальный триггер выдачи; невозможность collapsible UI сама по себе не требует удаления частоты.",
+    "manifestation_condition": "Модуль выбран для художественного результата, и portable-адаптация пропускает cutaway на тихом ходе.",
+    "safe_model_behavior": "Сохранить один уместно масштабированный cutaway на каждом художественном ходе выбранного модуля, точную хронологию и knowledge firewall. Не включать его в текущий аудит только из-за чтения source; не обещать dropdown.",
+    "dynamic_test_required": false,
+    "confidence": "HIGH",
+    "explanation": "Меняется обязательная структура выдачи.",
+    "dynamic_verification_scope": "Разницу текста или грамматики можно установить статически. Это не доказательство будущего следования модели правилам или полного production execution.",
+    "source_semantics_modified": false,
+    "review_basis": "Fresh/preserved GitHub evidence passages plus immutable analytical inputs; no new stack selected."
+  },
+  {
+    "guard_id": "FG-C018",
+    "registered_discrepancy_id": "C018",
+    "affected_module_identifier": "nemo-status-board-9-3-2",
+    "module_name": "📊 Status Board",
+    "affected_modules": [
+      {
+        "index": 383,
+        "identifier": "nemo-status-board-9-3-2",
+        "name": "📊 Status Board"
+      },
+      {
+        "index": 386,
+        "identifier": "nemo-char-knowledge-log-9-3-2",
+        "name": "🧠 Char's Knowledge Log"
+      },
+      {
+        "index": 387,
+        "identifier": "nemo-vex-planning-9-3-2",
+        "name": "📖 Vex Planning Quarters"
+      }
+    ],
+    "discrepancy_class": "INTENTIONAL_PORTABLE_DEGRADATION",
+    "secondary_classes": [
+      "PROVEN_SEMANTIC_LOSS",
+      "DOCUMENTED_NONPORTABLE_LIMIT"
+    ],
+    "repository": "producesplatinum-ai/NemoEngine",
+    "ref": "b988a06eedb24b916182d0b5d545eb9a2dbabe02",
+    "source_evidence_path": "Nemo Engine/Connector Readable/11.5.2 General RP/prompts/prompts-381-396.json",
+    "source_json_pointer": "/2/content",
+    "source_blob_sha": "f7a30b624445a72cc4d635ea0d222433477c4a54",
+    "source_excerpt": "When to output: every response. Only update fields whose state has actually changed - do not repeat stale values mechanically.",
+    "source_evidence_id": "src-status-frequency",
+    "runtime_evidence_path": "scripts/nemo-chatgpt-runtime.mjs",
+    "runtime_symbol": "PORTABLE_TRACKER_REWRITES[\"nemo-status-board-9-3-2\"]",
+    "runtime_blob_sha": "fd1b6def59711a6e3482ca3de09bab09c004434d",
+    "runtime_excerpt": "♢ >> [PROCEDURE] STATUS BOARD — PORTABLE\nWhen current condition matters, show a short Markdown status board containing only established health, energy, conditions, equipment state, immediate pressures, and other requested meters. Use key-value lines, explain meaningful changes, omit unavailable values, and never fabricate exact numbers from vague prose.\n\nExample:\n### Status\n- Health: Wounded, stable\n- Fatigue: High\n- Immediate pressure: guards arriving from the east",
+    "runtime_evidence_id": "runtime-rewrite-383",
+    "additional_evidence_ids": [
+      "src-knowledge-frequency",
+      "src-planning-frequency",
+      "runtime-rewrite-386",
+      "runtime-rewrite-387",
+      "runtime-renderer-limits"
+    ],
+    "original_rule": "Status выдаётся каждый ответ, Knowledge каждые2–3 хода либо после события, Planning Quarters каждый ответ.",
+    "actual_portable_behavior": "Rewrites заменяют эти триггеры на relevance и, для Planning, явный запрос публичных planning options; закрытые рассуждения не раскрываются.",
+    "proven_loss_or_change": "Частота всех трёх изменена. Для Status/Knowledge это семантическая потеря; для Planning также документированная граница приватного reasoning, которую нельзя «восстановить».",
+    "manifestation_condition": "Соответствующий tracker явно выбран и наступает исходный срок/событие, хотя новый условный триггер не сработал.",
+    "safe_model_behavior": "Сохранять исходные сроки для допустимых публичных state-полей и факты видимой истории. Не выводить hidden chain-of-thought, не обещать persistent scratchpad. Planning ограничить отдельно запрошенным публичным планом; это ограничение, не полная parity.",
+    "dynamic_test_required": false,
+    "confidence": "HIGH",
+    "explanation": "Меняются событие и частота выдачи, а также граница публичного содержимого.",
+    "dynamic_verification_scope": "Разницу текста или грамматики можно установить статически. Это не доказательство будущего следования модели правилам или полного production execution.",
+    "source_semantics_modified": false,
+    "review_basis": "Fresh/preserved GitHub evidence passages plus immutable analytical inputs; no new stack selected."
+  }
+]

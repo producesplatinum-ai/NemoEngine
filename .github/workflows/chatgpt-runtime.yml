@@ -11,7 +11,7 @@ permissions:
 jobs:
   validate:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
 
     steps:
       - name: Check out repository
@@ -22,11 +22,61 @@ jobs:
         with:
           node-version: 22
 
-      - name: Test ChatGPT runtime adapter
-        run: node --test scripts/test-nemo-chatgpt-runtime.mjs
+      - name: Initialize evidence artifact
+        run: |
+          mkdir -p "$RUNNER_TEMP/nemo-evidence/logs"
+          cp -R audit/nemo-static-evidence "$RUNNER_TEMP/nemo-evidence/audit"
+          git rev-parse HEAD > "$RUNNER_TEMP/nemo-evidence/commit.txt"
+          node --version > "$RUNNER_TEMP/nemo-evidence/node-version.txt"
 
-      - name: Test verified ChatGPT executor
-        run: node --test scripts/test-nemo-chatgpt-executor.mjs
+      - name: Reassemble canonical preset
+        run: |
+          set -o pipefail
+          node 'Nemo Engine/Connector Readable/11.5.2 General RP/reassemble.mjs' \
+            2>&1 | tee "$RUNNER_TEMP/nemo-evidence/logs/reassembly.log"
 
       - name: Verify connector-readable mirror
-        run: node 'Nemo Engine/tools/build-connector-readable-11.5.2.mjs' --check
+        if: ${{ always() }}
+        run: |
+          set -o pipefail
+          node 'Nemo Engine/tools/build-connector-readable-11.5.2.mjs' --check \
+            2>&1 | tee "$RUNNER_TEMP/nemo-evidence/logs/connector-mirror.log"
+
+      - name: Verify fidelity evidence
+        if: ${{ always() }}
+        run: |
+          set -o pipefail
+          node scripts/verify-nemo-fidelity.mjs \
+            --out "$RUNNER_TEMP/nemo-evidence/verification.json" \
+            2>&1 | tee "$RUNNER_TEMP/nemo-evidence/logs/fidelity.log"
+
+      - name: Test ChatGPT runtime adapter
+        if: ${{ always() }}
+        run: |
+          set -o pipefail
+          node --test scripts/test-nemo-chatgpt-runtime.mjs \
+            2>&1 | tee "$RUNNER_TEMP/nemo-evidence/logs/runtime.tap"
+
+      - name: Test verified ChatGPT executor
+        if: ${{ always() }}
+        run: |
+          set -o pipefail
+          node --test scripts/test-nemo-chatgpt-executor.mjs \
+            2>&1 | tee "$RUNNER_TEMP/nemo-evidence/logs/executor.tap"
+
+      - name: Write artifact checksums
+        if: ${{ always() }}
+        run: |
+          cd "$RUNNER_TEMP/nemo-evidence"
+          find . -type f ! -name SHA256SUMS -print0 \
+            | LC_ALL=C sort -z \
+            | xargs -0 sha256sum > SHA256SUMS
+
+      - name: Upload evidence artifact
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: nemo-evidence-${{ github.sha }}
+          path: ${{ runner.temp }}/nemo-evidence/
+          if-no-files-found: error
+          retention-days: 90
