@@ -25,5 +25,8 @@ jobs:
       - name: Test ChatGPT runtime adapter
         run: node --test scripts/test-nemo-chatgpt-runtime.mjs
 
+      - name: Test verified ChatGPT executor
+        run: node --test scripts/test-nemo-chatgpt-executor.mjs
+
       - name: Verify connector-readable mirror
         run: node 'Nemo Engine/tools/build-connector-readable-11.5.2.mjs' --check
