@@ -47,6 +47,7 @@ jobs:
           cp --parents -R \
             'Nemo Engine/Connector Readable/11.5.2 General RP' \
             'Nemo Engine/Nemo Engine 11.5.2 - General RP.json' \
+            'Nemo Engine/Ready/Nemo Engine 11.5.2 - Ready RU Psychology Humiliation JOI RP.json' \
             'Nemo Engine/tools/build-connector-readable-11.5.2.mjs' \
             scripts/nemo-chatgpt-runtime.mjs \
             scripts/test-nemo-chatgpt-runtime.mjs \
@@ -56,6 +57,29 @@ jobs:
           git rev-parse HEAD > "$RUNNER_TEMP/nemo-evidence/commit.txt"
           git rev-parse 'HEAD^{tree}' > "$RUNNER_TEMP/nemo-evidence/tree.txt"
           node --version > "$RUNNER_TEMP/nemo-evidence/node-version.txt"
+          git bundle create \
+            "$RUNNER_TEMP/nemo-evidence/reproduction/repository.bundle" \
+            HEAD b988a06eedb24b916182d0b5d545eb9a2dbabe02
+          node --input-type=module > "$RUNNER_TEMP/nemo-evidence/runner-environment.json" <<'NODE'
+          import { readFileSync } from 'node:fs';
+          import os from 'node:os';
+
+          const environment = {
+            schemaVersion: 'nemo-runner-environment/v1',
+            imageOS: process.env.ImageOS ?? null,
+            imageVersion: process.env.ImageVersion ?? null,
+            runnerOS: process.env.RUNNER_OS ?? null,
+            runnerArch: process.env.RUNNER_ARCH ?? null,
+            nodeVersion: process.version,
+            platform: process.platform,
+            architecture: process.arch,
+            kernelRelease: os.release(),
+            kernelVersion: os.version(),
+            osRelease: readFileSync('/etc/os-release', 'utf8'),
+            runnerImageImmutable: false,
+          };
+          process.stdout.write(`${JSON.stringify(environment, null, 2)}\n`);
+          NODE
 
       - name: Reassemble canonical preset
         run: |
@@ -115,6 +139,34 @@ jobs:
           codes=("${PIPESTATUS[@]}")
           printf '%s\n' "${codes[0]}" > "$RUNNER_TEMP/nemo-evidence/status/negative.exit"
           printf '%s\n' "${codes[1]}" > "$RUNNER_TEMP/nemo-evidence/status/negative.logger.exit"
+          if [ "${codes[0]}" -ne 0 ]; then exit "${codes[0]}"; fi
+          exit "${codes[1]}"
+
+      - name: Verify offline replay bundle
+        if: ${{ always() }}
+        run: |
+          set +e
+          (
+            set -euo pipefail
+            bundle="$RUNNER_TEMP/nemo-evidence/reproduction/repository.bundle"
+            replay="$RUNNER_TEMP/nemo-evidence-replay"
+            git bundle verify "$bundle"
+            git clone --quiet "$bundle" "$replay"
+            expected=$(tr -d '\n' < "$RUNNER_TEMP/nemo-evidence/commit.txt")
+            actual=$(git -C "$replay" rev-parse HEAD)
+            test "$actual" = "$expected"
+            git -C "$replay" cat-file -e \
+              'b988a06eedb24b916182d0b5d545eb9a2dbabe02^{commit}'
+            printf 'Audited ref %s present.\n' \
+              'b988a06eedb24b916182d0b5d545eb9a2dbabe02'
+            node "$replay/scripts/verify-nemo-fidelity.mjs" \
+              --out "$RUNNER_TEMP/nemo-replay-structural.json"
+            test -z "$(git -C "$replay" status --porcelain=v1)"
+            printf 'Replay bundle verified at %s.\n' "$actual"
+          ) 2>&1 | tee "$RUNNER_TEMP/nemo-evidence/logs/replay-bundle.log"
+          codes=("${PIPESTATUS[@]}")
+          printf '%s\n' "${codes[0]}" > "$RUNNER_TEMP/nemo-evidence/status/replay-bundle.exit"
+          printf '%s\n' "${codes[1]}" > "$RUNNER_TEMP/nemo-evidence/status/replay-bundle.logger.exit"
           if [ "${codes[0]}" -ne 0 ]; then exit "${codes[0]}"; fi
           exit "${codes[1]}"
 

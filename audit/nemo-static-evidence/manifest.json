@@ -8,7 +8,7 @@
     "schemaVersion": "nemo-fidelity-guard-array/v1",
     "guards": 17,
     "sha256": "0aacebe614400b2c844f0fa2c344523b8aded4af1f727d1e59732885dddd697c",
-    "registrySha256": "f6e00dcbc89c081b4e450c5102b3ee83789324c00f495443b9c0f3ee5d1cb037"
+    "registrySha256": "da13979a31a4d537fad77045cb9dbef8939625588d6e6c059372be91438db396"
   },
   "provenanceDocument": {
     "path": "provenance/excerpts.json",

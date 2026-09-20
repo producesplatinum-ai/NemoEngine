@@ -15,8 +15,14 @@ const REPOSITORY = 'producesplatinum-ai/NemoEngine';
 const AUDITED_REF = 'b988a06eedb24b916182d0b5d545eb9a2dbabe02';
 const CANONICAL_SHA256 =
   'c5e13e951340d17addef0e16e7a7152a8256c41f2c046a52e81d86e1feef31d4';
+const EVIDENCE_MANIFEST_SHA256 =
+  '2de8a662d9f04e27b8d0da83121b125e005349429ce55c85c2b4a55e50ef7573';
+const GUARD_DOCUMENT_SHA256 =
+  '0aacebe614400b2c844f0fa2c344523b8aded4af1f727d1e59732885dddd697c';
+const PROVENANCE_DOCUMENT_SHA256 =
+  '16f8678e23d2b2e62e2672f10aa52c7ad5a665670a53664cb7efbaad21bb5b72';
 const GUARD_REGISTRY_SHA256 =
-  'f6e00dcbc89c081b4e450c5102b3ee83789324c00f495443b9c0f3ee5d1cb037';
+  'da13979a31a4d537fad77045cb9dbef8939625588d6e6c059372be91438db396';
 const ALLOWED_CLASSES = new Set([
   'SOURCE_INTERNAL_CONFLICT',
   'RENDERER_GRAMMAR_MISMATCH',
@@ -198,6 +204,8 @@ function guardRegistryProjection(guards) {
   return guards.map(
     ({
       guard_id,
+      affected_module_identifier,
+      module_name,
       affected_modules,
       discrepancy_class,
       secondary_classes,
@@ -210,6 +218,8 @@ function guardRegistryProjection(guards) {
       runtime_symbol,
     }) => ({
       guard_id,
+      affected_module_identifier,
+      module_name,
       affected_modules,
       discrepancy_class,
       secondary_classes,
@@ -227,11 +237,15 @@ function guardRegistryProjection(guards) {
 async function main() {
   const options = parseArguments(process.argv.slice(2));
   requestedOutput = options.out;
-  const evidenceManifest = await readJson(path.join(AUDIT_ROOT, 'manifest.json'));
+  const evidenceManifestPath = path.join(AUDIT_ROOT, 'manifest.json');
   const guardDocumentPath = path.join(AUDIT_ROOT, 'fidelity-guard.json');
   const provenanceDocumentPath = path.join(AUDIT_ROOT, 'provenance', 'excerpts.json');
+  const evidenceManifestBytes = await readFile(evidenceManifestPath);
   const guardDocumentBytes = await readFile(guardDocumentPath);
   const provenanceDocumentBytes = await readFile(provenanceDocumentPath);
+  const evidenceManifest = JSON.parse(
+    new TextDecoder('utf-8', { fatal: true }).decode(evidenceManifestBytes),
+  );
   const guards = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(guardDocumentBytes));
   const evidenceDocument = JSON.parse(
     new TextDecoder('utf-8', { fatal: true }).decode(provenanceDocumentBytes),
@@ -251,6 +265,18 @@ async function main() {
   check(Array.isArray(guards), 'guards.array');
   check(guards.length === 17, 'guards.count17');
   check(
+    sha256(evidenceManifestBytes) === EVIDENCE_MANIFEST_SHA256,
+    'documents.manifest_sha256',
+  );
+  check(
+    sha256(guardDocumentBytes) === GUARD_DOCUMENT_SHA256,
+    'documents.guard_sha256',
+  );
+  check(
+    sha256(provenanceDocumentBytes) === PROVENANCE_DOCUMENT_SHA256,
+    'documents.provenance_sha256',
+  );
+  check(
     evidenceManifest.schemaVersion === 'nemo-fidelity-evidence-manifest/v1',
     'manifest.schema',
   );
@@ -260,10 +286,22 @@ async function main() {
   );
   check(evidenceManifest.repository === REPOSITORY, 'manifest.repository');
   check(evidenceManifest.auditedRef === AUDITED_REF, 'manifest.ref');
+  check(
+    evidenceManifest.guardDocument?.path === 'fidelity-guard.json',
+    'manifest.guard_document_path',
+  );
   check(evidenceManifest.guardDocument?.guards === 17, 'manifest.guards17');
+  check(
+    evidenceManifest.guardDocument?.sha256 === GUARD_DOCUMENT_SHA256,
+    'manifest.guard_document_anchor',
+  );
   check(
     evidenceManifest.guardDocument?.sha256 === sha256(guardDocumentBytes),
     'manifest.guard_document_sha256',
+  );
+  check(
+    evidenceManifest.provenanceDocument?.path === 'provenance/excerpts.json',
+    'manifest.provenance_document_path',
   );
   check(
     evidenceManifest.provenanceDocument?.excerpts === 52,
@@ -272,6 +310,10 @@ async function main() {
   check(
     evidenceManifest.provenanceDocument?.sourceFiles === 12,
     'manifest.source_files12',
+  );
+  check(
+    evidenceManifest.provenanceDocument?.sha256 === PROVENANCE_DOCUMENT_SHA256,
+    'manifest.provenance_document_anchor',
   );
   check(
     evidenceManifest.provenanceDocument?.sha256 === sha256(provenanceDocumentBytes),
@@ -425,6 +467,10 @@ async function main() {
           sha256(Buffer.from(haystack, 'utf8')) === evidence.template_value_sha256,
           `excerpt.${evidence.evidence_id}.template_value_sha256`,
         );
+        check(
+          haystack === evidence.excerpt,
+          `excerpt.${evidence.evidence_id}.template_exact_match`,
+        );
       }
       check(
         typeof haystack === 'string' && haystack.includes(evidence.excerpt),
@@ -554,6 +600,14 @@ async function main() {
         guard.affected_modules.some((affected) => affected.name === guard.module_name),
         `${id}.primary_name`,
       );
+      check(
+        guard.affected_modules.some(
+          (affected) =>
+            affected.identifier === guard.affected_module_identifier &&
+            affected.name === guard.module_name,
+        ),
+        `${id}.primary_pair`,
+      );
     }
 
     const sourceEvidence = evidenceById.get(guard.source_evidence_id);
@@ -680,6 +734,11 @@ async function main() {
       manifestSchemaVersion: evidenceManifest.schemaVersion,
       reviewedAt: evidenceManifest.reviewedAt,
       guardRegistrySha256,
+      documentSha256: {
+        manifest: sha256(evidenceManifestBytes),
+        guards: sha256(guardDocumentBytes),
+        provenance: sha256(provenanceDocumentBytes),
+      },
       excerpts: excerpts.length,
       sourceFiles: fileCache.size,
       executableGuardControls: ['FG-C006', 'FG-C007'],

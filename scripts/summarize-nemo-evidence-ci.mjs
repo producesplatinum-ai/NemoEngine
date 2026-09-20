@@ -16,6 +16,7 @@ const COMMANDS = [
   'structural',
   'dynamic',
   'negative',
+  'replay-bundle',
   'runtime',
   'executor',
 ];
@@ -78,6 +79,7 @@ async function expectedArtifactFiles() {
     'commit.txt',
     'tree.txt',
     'node-version.txt',
+    'runner-environment.json',
     'dynamic-verification.json',
     'structural-verification.json',
     'inputs/audit/README.md',
@@ -94,11 +96,14 @@ async function expectedArtifactFiles() {
     'logs/executor.tap',
     'logs/negative.tap',
     'logs/reassembly.log',
+    'logs/replay-bundle.log',
     'logs/runtime.tap',
     'logs/structural.log',
     'logs/summary.log',
     'reproduction/Nemo Engine/Nemo Engine 11.5.2 - General RP.json',
+    'reproduction/Nemo Engine/Ready/Nemo Engine 11.5.2 - Ready RU Psychology Humiliation JOI RP.json',
     'reproduction/Nemo Engine/tools/build-connector-readable-11.5.2.mjs',
+    'reproduction/repository.bundle',
     'reproduction/scripts/nemo-chatgpt-executor.mjs',
     'reproduction/scripts/nemo-chatgpt-runtime.mjs',
     'reproduction/scripts/test-nemo-chatgpt-executor.mjs',
@@ -171,6 +176,16 @@ async function main() {
     path.join(evidenceDir, 'logs', 'connector-mirror.log'),
     'utf8',
   );
+  const replayBundleLog = await readFile(
+    path.join(evidenceDir, 'logs', 'replay-bundle.log'),
+    'utf8',
+  );
+  const runnerEnvironment = JSON.parse(
+    await readFile(path.join(evidenceDir, 'runner-environment.json'), 'utf8'),
+  );
+  const nodeVersion = (
+    await readFile(path.join(evidenceDir, 'node-version.txt'), 'utf8')
+  ).trim();
   const runtime = tapSummary(
     await readFile(path.join(evidenceDir, 'logs', 'runtime.tap'), 'utf8'),
   );
@@ -207,6 +222,29 @@ async function main() {
     'reassembly.canonical_sha256',
   );
   check(mirrorLog.includes('Verified 46 connector-readable files'), 'mirror.files46');
+  check(
+    replayBundleLog.includes('Replay bundle verified at ') &&
+      replayBundleLog.includes('"status": "STRUCTURAL_PROVENANCE_PASS"'),
+    'replay_bundle.complete',
+  );
+  check(
+    runnerEnvironment.schemaVersion === 'nemo-runner-environment/v1' &&
+      typeof runnerEnvironment.imageOS === 'string' &&
+      runnerEnvironment.imageOS.length > 0 &&
+      typeof runnerEnvironment.imageVersion === 'string' &&
+      runnerEnvironment.imageVersion.length > 0 &&
+      runnerEnvironment.runnerOS === 'Linux' &&
+      typeof runnerEnvironment.runnerArch === 'string' &&
+      runnerEnvironment.runnerArch.length > 0 &&
+      typeof runnerEnvironment.osRelease === 'string' &&
+      runnerEnvironment.osRelease.includes('ID=ubuntu') &&
+      runnerEnvironment.runnerImageImmutable === false,
+    'runner_environment.complete',
+  );
+  check(
+    nodeVersion === 'v22.23.2' && runnerEnvironment.nodeVersion === nodeVersion,
+    'runner_environment.node_version',
+  );
   check(
     negative.tests !== null &&
       negative.tests >= 1 &&
@@ -271,12 +309,30 @@ async function main() {
     },
     verifierNegativeTests: negative,
     productionTests: { runtime, executor },
+    replayBundle: {
+      verified: replayBundleLog.includes('Replay bundle verified at '),
+      includesAuditedGitHistory: replayBundleLog.includes(
+        'b988a06eedb24b916182d0b5d545eb9a2dbabe02',
+      ),
+    },
+    runnerEnvironment: {
+      imageOS: runnerEnvironment.imageOS,
+      imageVersion: runnerEnvironment.imageVersion,
+      runnerOS: runnerEnvironment.runnerOS,
+      runnerArch: runnerEnvironment.runnerArch,
+      nodeVersion,
+      platform: runnerEnvironment.platform,
+      architecture: runnerEnvironment.architecture,
+      kernelRelease: runnerEnvironment.kernelRelease,
+      runnerImageImmutable: false,
+    },
     boundaries: {
       semanticClaimsMachineProven: false,
       browserRendererParity: false,
       modelTraining: false,
       modelCognition: false,
       fullPriorConversationBundleRevalidated: false,
+      runnerImageImmutable: false,
     },
     failures,
   };
