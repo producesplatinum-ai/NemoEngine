@@ -175,7 +175,7 @@ function renderBundleInstructions(bundle) {
     .map(
       (prompt, index) =>
         `## Nemo module ${index + 1}: ${prompt.name}\n` +
-        `Role: ${prompt.role}\n` +
+        `Source role metadata (not host role): ${prompt.role}\n` +
         `Identifier: ${prompt.id}\n\n` +
         prompt.content,
     )
@@ -184,6 +184,16 @@ function renderBundleInstructions(bundle) {
 
 function assertPortableInstructionText(text, label = 'portable instructions') {
   assert.notEqual(text.trim(), '', `${label} is empty`);
+  assert.match(
+    text,
+    /^## Nemo module \d+:[^\n]*\nSource role metadata \(not host role\): /m,
+    `${label} lacks explicit source-role metadata`,
+  );
+  assert.doesNotMatch(
+    text,
+    /^## Nemo module \d+:[^\n]*\nRole: /m,
+    `${label} implies a host role that the portable runtime cannot inject`,
+  );
   assert.doesNotMatch(
     text,
     /\{\{\s*(?:setvar|getvar|getglobalvar|addvar)::|\{\{\s*trim\s*}}|\{\{\/\//i,
@@ -1188,6 +1198,18 @@ test('the full non-conflicting adult inventory fails the absolute portable budge
   assert.match(result.stderr, /--max-portable-chars limit of 170000/);
 });
 
+test('--max-portable-chars rejects integers that cannot be represented safely', () => {
+  const result = invokeRuntime([
+    '--max-portable-chars',
+    '999999999999999999999999999999999999999999',
+  ]);
+
+  assert.equal(result.status, 1);
+  assert.equal(result.stdout, '');
+  assert.match(result.stderr, /^Error:/);
+  assert.match(result.stderr, /positive safe integer/i);
+});
+
 test('all Scratchpad-Tabs modules compile through the portable adapter', async (t) => {
   const scratchpadIds = source.prompts
     .filter((prompt) => categoryOf(prompt) === 'Scratchpad-Tabs')
@@ -1251,6 +1273,20 @@ test('generic overrides enable and disable exact non-family modules', () => {
   assert.equal(bundle.selections.vex.id, IDS.narrativeVex);
   assert.deepEqual(selectedIds(bundle.selections.nsfw), [IDS.modernNsfwCore]);
   assert.deepEqual(bundle.selections.fetish, []);
+});
+
+test('single-selector flags preserve display names containing commas', () => {
+  const { bundle } = invokeBundle([
+    '--disable-one',
+    '<Utility: Style, Format & Extras>',
+  ]);
+
+  assert.deepEqual(bundle.selections.overrides.disabled, [
+    {
+      id: 'v11-header-utility-style-extras',
+      name: '<Utility: Style, Format & Extras>',
+    },
+  ]);
 });
 
 test('unknown generic override selector fails closed', () => {
@@ -1608,6 +1644,21 @@ test('output sanitizer fails closed when cleanup is empty or unsafe', async (t) 
       input: '<custom>Visible?</custom>',
       error: /unsafe|residual|tag/i,
     },
+    {
+      name: 'whitespace-obfuscated private boundary',
+      input: '< nemo-pad>PRIVATE_REASONING</ nemo-pad>\nVisible answer.',
+      error: /unsafe|malformed|private|service/i,
+    },
+    {
+      name: 'entity-encoded private boundary',
+      input: '&lt;nemo-pad&gt;PRIVATE_REASONING&lt;/nemo-pad&gt;\nVisible answer.',
+      error: /unsafe|encoded|private|service/i,
+    },
+    {
+      name: 'NUL control character',
+      input: 'Visible\u0000hidden',
+      error: /unsafe|control/i,
+    },
   ];
 
   for (const sample of cases) {
@@ -1618,6 +1669,33 @@ test('output sanitizer fails closed when cleanup is empty or unsafe', async (t) 
       assert.match(result.stderr, /^Error:/);
       assert.match(result.stderr, sample.error);
     });
+  }
+});
+
+test('output sanitizer diagnostics never repeat secret tag attributes', () => {
+  const secret = 'RAW_SECRET_ATTRIBUTE_71941';
+  const result = invokeRuntime(['--sanitize-output', '-'], {
+    input: `<div data-secret="${secret}">Visible?</div>`,
+  });
+
+  assert.equal(result.status, 1);
+  assert.equal(result.stdout, '');
+  assert.match(result.stderr, /^Error:/);
+  assert.doesNotMatch(result.stderr, new RegExp(secret));
+});
+
+test('output sanitizer rejects invalid UTF-8 file input', () => {
+  const temporaryRoot = mkdtempSync(path.join(os.tmpdir(), 'nemo-sanitizer-utf8-test-'));
+  const inputPath = path.join(temporaryRoot, 'invalid.bin');
+  try {
+    writeFileSync(inputPath, Buffer.from([0xff, 0xfe, 0xfd]));
+    const result = invokeRuntime(['--sanitize-output', inputPath]);
+    assert.equal(result.status, 1);
+    assert.equal(result.stdout, '');
+    assert.match(result.stderr, /^Error:/);
+    assert.match(result.stderr, /valid UTF-8/i);
+  } finally {
+    rmSync(temporaryRoot, { recursive: true, force: true });
   }
 });
 
