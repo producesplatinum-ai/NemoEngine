@@ -16,6 +16,8 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -24,50 +26,113 @@ jobs:
 
       - name: Initialize evidence artifact
         run: |
-          mkdir -p "$RUNNER_TEMP/nemo-evidence/logs"
-          cp -R audit/nemo-static-evidence "$RUNNER_TEMP/nemo-evidence/audit"
+          if find audit/nemo-static-evidence -mindepth 1 ! -type f ! -type d -print -quit | grep -q .; then
+            echo 'Evidence input contains a symlink or non-regular entry.' >&2
+            exit 1
+          fi
+          mkdir -p \
+            "$RUNNER_TEMP/nemo-evidence/inputs" \
+            "$RUNNER_TEMP/nemo-evidence/implementation" \
+            "$RUNNER_TEMP/nemo-evidence/logs" \
+            "$RUNNER_TEMP/nemo-evidence/status"
+          cp -R audit/nemo-static-evidence "$RUNNER_TEMP/nemo-evidence/inputs/audit"
+          cp scripts/verify-nemo-fidelity.mjs \
+            scripts/verify-nemo-fidelity-dynamic.mjs \
+            scripts/test-nemo-fidelity-verifier.mjs \
+            scripts/summarize-nemo-evidence-ci.mjs \
+            "$RUNNER_TEMP/nemo-evidence/implementation/"
+          cp .github/workflows/chatgpt-runtime.yml \
+            "$RUNNER_TEMP/nemo-evidence/implementation/"
           git rev-parse HEAD > "$RUNNER_TEMP/nemo-evidence/commit.txt"
+          git rev-parse 'HEAD^{tree}' > "$RUNNER_TEMP/nemo-evidence/tree.txt"
           node --version > "$RUNNER_TEMP/nemo-evidence/node-version.txt"
 
       - name: Reassemble canonical preset
         run: |
-          set -o pipefail
+          set +e
           node 'Nemo Engine/Connector Readable/11.5.2 General RP/reassemble.mjs' \
             2>&1 | tee "$RUNNER_TEMP/nemo-evidence/logs/reassembly.log"
+          code=${PIPESTATUS[0]}
+          printf '%s\n' "$code" > "$RUNNER_TEMP/nemo-evidence/status/reassembly.exit"
+          exit "$code"
 
       - name: Verify connector-readable mirror
         if: ${{ always() }}
         run: |
-          set -o pipefail
+          set +e
           node 'Nemo Engine/tools/build-connector-readable-11.5.2.mjs' --check \
             2>&1 | tee "$RUNNER_TEMP/nemo-evidence/logs/connector-mirror.log"
+          code=${PIPESTATUS[0]}
+          printf '%s\n' "$code" > "$RUNNER_TEMP/nemo-evidence/status/connector-mirror.exit"
+          exit "$code"
 
-      - name: Verify fidelity evidence
+      - name: Verify structural fidelity evidence
         if: ${{ always() }}
         run: |
-          set -o pipefail
+          set +e
           node scripts/verify-nemo-fidelity.mjs \
-            --out "$RUNNER_TEMP/nemo-evidence/verification.json" \
-            2>&1 | tee "$RUNNER_TEMP/nemo-evidence/logs/fidelity.log"
+            --out "$RUNNER_TEMP/nemo-evidence/structural-verification.json" \
+            2>&1 | tee "$RUNNER_TEMP/nemo-evidence/logs/structural.log"
+          code=${PIPESTATUS[0]}
+          printf '%s\n' "$code" > "$RUNNER_TEMP/nemo-evidence/status/structural.exit"
+          exit "$code"
+
+      - name: Verify executable fidelity cases
+        if: ${{ always() }}
+        run: |
+          set +e
+          node scripts/verify-nemo-fidelity-dynamic.mjs \
+            --out "$RUNNER_TEMP/nemo-evidence/dynamic-verification.json" \
+            2>&1 | tee "$RUNNER_TEMP/nemo-evidence/logs/dynamic.log"
+          code=${PIPESTATUS[0]}
+          printf '%s\n' "$code" > "$RUNNER_TEMP/nemo-evidence/status/dynamic.exit"
+          exit "$code"
+
+      - name: Negative-test fidelity verifier
+        if: ${{ always() }}
+        run: |
+          set +e
+          node --test scripts/test-nemo-fidelity-verifier.mjs \
+            2>&1 | tee "$RUNNER_TEMP/nemo-evidence/logs/negative.tap"
+          code=${PIPESTATUS[0]}
+          printf '%s\n' "$code" > "$RUNNER_TEMP/nemo-evidence/status/negative.exit"
+          exit "$code"
 
       - name: Test ChatGPT runtime adapter
         if: ${{ always() }}
         run: |
-          set -o pipefail
+          set +e
           node --test scripts/test-nemo-chatgpt-runtime.mjs \
             2>&1 | tee "$RUNNER_TEMP/nemo-evidence/logs/runtime.tap"
+          code=${PIPESTATUS[0]}
+          printf '%s\n' "$code" > "$RUNNER_TEMP/nemo-evidence/status/runtime.exit"
+          exit "$code"
 
       - name: Test verified ChatGPT executor
         if: ${{ always() }}
         run: |
-          set -o pipefail
+          set +e
           node --test scripts/test-nemo-chatgpt-executor.mjs \
             2>&1 | tee "$RUNNER_TEMP/nemo-evidence/logs/executor.tap"
+          code=${PIPESTATUS[0]}
+          printf '%s\n' "$code" > "$RUNNER_TEMP/nemo-evidence/status/executor.exit"
+          exit "$code"
+
+      - name: Summarize complete evidence run
+        if: ${{ always() }}
+        run: |
+          node scripts/summarize-nemo-evidence-ci.mjs \
+            --evidence-dir "$RUNNER_TEMP/nemo-evidence" \
+            2>&1 | tee "$RUNNER_TEMP/nemo-evidence/logs/summary.log"
 
       - name: Write artifact checksums
         if: ${{ always() }}
         run: |
           cd "$RUNNER_TEMP/nemo-evidence"
+          if find . -mindepth 1 ! -type f ! -type d -print -quit | grep -q .; then
+            echo 'Evidence artifact contains a symlink or non-regular entry.' >&2
+            exit 1
+          fi
           find . -type f ! -name SHA256SUMS -print0 \
             | LC_ALL=C sort -z \
             | xargs -0 sha256sum > SHA256SUMS
@@ -76,7 +141,7 @@ jobs:
         if: ${{ always() }}
         uses: actions/upload-artifact@v4
         with:
-          name: nemo-evidence-${{ github.sha }}
+          name: nemo-fidelity-evidence-${{ github.sha }}
           path: ${{ runner.temp }}/nemo-evidence/
           if-no-files-found: error
           retention-days: 90
