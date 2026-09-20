@@ -1,0 +1,1077 @@
+{
+  "schemaVersion": "nemo-fidelity-provenance/v1",
+  "reviewedAt": "2026-09-20T18:00:00Z",
+  "repository": "producesplatinum-ai/NemoEngine",
+  "ref": "b988a06eedb24b916182d0b5d545eb9a2dbabe02",
+  "evidence_scope": "Selected continuous excerpts reviewed through GitHub Connector. These are transcriptions, not full raw file snapshots. Local checks authenticate the saved text and its route, not remote content by themselves.",
+  "global_evidence_ids": [
+    "runtime-profile-activation",
+    "runtime-profile-order"
+  ],
+  "excerpts": [
+    {
+      "evidence_id": "runtime-selected-pipeline",
+      "kind": "runtime",
+      "repository": "producesplatinum-ai/NemoEngine",
+      "ref": "b988a06eedb24b916182d0b5d545eb9a2dbabe02",
+      "path": "scripts/nemo-chatgpt-runtime.mjs",
+      "blob_sha": "fd1b6def59711a6e3482ca3de09bab09c004434d",
+      "symbol": "compileSelectedPrompts",
+      "excerpt": "    const expandedContent = cleanPortableText(\n      expandPortableText(prompt.content, state),\n    );\n    applyPortableStateVariableOverrides(prompt, state);\n    const content = foldExactCrossModuleDuplicate(\n      normalizePortableControlDirectives(expandedContent, prompt, state),\n      prompt,\n      state,\n    );",
+      "excerpt_sha256": "d88d5980cf1e60b6a178a6dbf42fe2beda0b06f836563d64dc9ac4b4ba08a68a",
+      "representation": "literal JavaScript source substring",
+      "retrieval": {
+        "tool": "GitHub.fetch_file",
+        "response_reference": "/response/turn65",
+        "review": "Reviewed exact code or template value, not an executed production result."
+      },
+      "integrity_scope": "Local excerpt hash, not a recomputed hash of the entire runtime."
+    },
+    {
+      "evidence_id": "runtime-family-candidates",
+      "kind": "runtime",
+      "repository": "producesplatinum-ai/NemoEngine",
+      "ref": "b988a06eedb24b916182d0b5d545eb9a2dbabe02",
+      "path": "scripts/nemo-chatgpt-runtime.mjs",
+      "blob_sha": "fd1b6def59711a6e3482ca3de09bab09c004434d",
+      "symbol": "familyCandidates",
+      "excerpt": "    vex: decorated.filter(\n      (entry) => entry.metadata.exclusiveGroup === 'Vex-Personality',\n    ),",
+      "excerpt_sha256": "88de2ff0e454c801cc846f55e282bc450e4a3015e63f0ec570732cefe1ca69b2",
+      "representation": "literal JavaScript source substring",
+      "retrieval": {
+        "tool": "GitHub.fetch_file",
+        "response_reference": "/response/turn52",
+        "review": "Reviewed exact code or template value, not an executed production result."
+      },
+      "integrity_scope": "Local excerpt hash, not a recomputed hash of the entire runtime."
+    },
+    {
+      "evidence_id": "runtime-exclusive-registry",
+      "kind": "runtime",
+      "repository": "producesplatinum-ai/NemoEngine",
+      "ref": "b988a06eedb24b916182d0b5d545eb9a2dbabe02",
+      "path": "scripts/nemo-chatgpt-runtime.mjs",
+      "blob_sha": "fd1b6def59711a6e3482ca3de09bab09c004434d",
+      "symbol": "buildExclusiveGroupRegistry",
+      "excerpt": "  for (const candidate of candidates.modules) {\n    if (!candidate.metadata.exclusiveGroup) continue;\n    addMember(ensureGroup(candidate.metadata.exclusiveGroup), candidate);\n  }",
+      "excerpt_sha256": "cc1b1922cf2092d2255d1e9618460f55dc479e252d13e54c1326957c369c2cee",
+      "representation": "literal JavaScript source substring",
+      "retrieval": {
+        "tool": "GitHub.fetch_file",
+        "response_reference": "/response/turn52",
+        "review": "Reviewed exact code or template value, not an executed production result."
+      },
+      "integrity_scope": "Local excerpt hash, not a recomputed hash of the entire runtime."
+    },
+    {
+      "evidence_id": "runtime-supplemental-exclusions",
+      "kind": "runtime",
+      "repository": "producesplatinum-ai/NemoEngine",
+      "ref": "b988a06eedb24b916182d0b5d545eb9a2dbabe02",
+      "path": "scripts/nemo-chatgpt-runtime.mjs",
+      "blob_sha": "fd1b6def59711a6e3482ca3de09bab09c004434d",
+      "symbol": "SUPPLEMENTAL_EXCLUSIVE_GROUPS",
+      "excerpt": "const SUPPLEMENTAL_EXCLUSIVE_GROUPS = Object.freeze([\n  {\n    name: 'NSFW-Core',\n    ids: ['v11-180-nsfw-nsfw-core', 'v11-537-classic-nsfw-core'],\n  },\n]);",
+      "excerpt_sha256": "2df928eb3310bb6711cde6a6b0e1ff2d38a8263fcb408ae8a8eb630974be1771",
+      "representation": "literal JavaScript source substring",
+      "retrieval": {
+        "tool": "GitHub.fetch_file",
+        "response_reference": "/response/turn50",
+        "review": "Reviewed exact code or template value, not an executed production result."
+      },
+      "integrity_scope": "Local excerpt hash, not a recomputed hash of the entire runtime."
+    },
+    {
+      "evidence_id": "runtime-profile-activation",
+      "kind": "runtime",
+      "repository": "producesplatinum-ai/NemoEngine",
+      "ref": "b988a06eedb24b916182d0b5d545eb9a2dbabe02",
+      "path": "scripts/nemo-chatgpt-runtime.mjs",
+      "blob_sha": "fd1b6def59711a6e3482ca3de09bab09c004434d",
+      "symbol": "compile",
+      "excerpt": "  const profileActivation = new Map(\n    profile.order.map((reference) => [reference.identifier, reference.enabled]),\n  );\n  const activation = new Map(profileActivation);",
+      "excerpt_sha256": "f8494c2aefc76e063ad44a9add65c242a2a59e856f1d1a7c5a77fd7e25d590b0",
+      "representation": "literal JavaScript source substring",
+      "retrieval": {
+        "tool": "GitHub.fetch_file",
+        "response_reference": "/response/turn66",
+        "review": "Reviewed exact code or template value, not an executed production result."
+      },
+      "integrity_scope": "Local excerpt hash, not a recomputed hash of the entire runtime."
+    },
+    {
+      "evidence_id": "runtime-profile-order",
+      "kind": "runtime",
+      "repository": "producesplatinum-ai/NemoEngine",
+      "ref": "b988a06eedb24b916182d0b5d545eb9a2dbabe02",
+      "path": "scripts/nemo-chatgpt-runtime.mjs",
+      "blob_sha": "fd1b6def59711a6e3482ca3de09bab09c004434d",
+      "symbol": "compile",
+      "excerpt": "  const activeReferences = profile.order.filter((reference) => activation.get(reference.identifier));",
+      "excerpt_sha256": "2ed63eab0fe8ebc14de1a946dedfdf35db3553bd96c8d07f6197e1450604966b",
+      "representation": "literal JavaScript source substring",
+      "retrieval": {
+        "tool": "GitHub.fetch_file",
+        "response_reference": "/response/turn66",
+        "review": "Reviewed exact code or template value, not an executed production result."
+      },
+      "integrity_scope": "Local excerpt hash, not a recomputed hash of the entire runtime."
+    },
+    {
+      "evidence_id": "runtime-renderer-limits",
+      "kind": "runtime",
+      "repository": "producesplatinum-ai/NemoEngine",
+      "ref": "b988a06eedb24b916182d0b5d545eb9a2dbabe02",
+      "path": "scripts/nemo-chatgpt-runtime.mjs",
+      "blob_sha": "fd1b6def59711a6e3482ca3de09bab09c004434d",
+      "symbol": "compile::bundle.compatibility.limitations",
+      "excerpt": "              'SillyTavern injection position/depth/order are preserved in modules metadata, not executed.',\n              'Regex scripts, lorebook retrieval, tracker UI, and HTML rendering are not executed.',\n              'Hidden Scratchpad state is not persisted across turns; Scratchpad cores and tabs that require it are omitted and reported.',\n              'Provider context, sampling, reasoning, prefill, tool, web, and image settings are not applied.',",
+      "excerpt_sha256": "d7b23bb6f0c7aae1975c2cbe47cce3164db40cfba814717f6b03a6634b35b9ad",
+      "representation": "literal JavaScript source substring",
+      "retrieval": {
+        "tool": "GitHub.fetch_file",
+        "response_reference": "/response/turn61",
+        "review": "Reviewed exact code or template value, not an executed production result."
+      },
+      "integrity_scope": "Local excerpt hash, not a recomputed hash of the entire runtime."
+    },
+    {
+      "evidence_id": "runtime-dynamic-warning",
+      "kind": "runtime",
+      "repository": "producesplatinum-ai/NemoEngine",
+      "ref": "b988a06eedb24b916182d0b5d545eb9a2dbabe02",
+      "path": "scripts/nemo-chatgpt-runtime.mjs",
+      "blob_sha": "fd1b6def59711a6e3482ca3de09bab09c004434d",
+      "symbol": "compile::PORTABLE_DYNAMIC_FALLBACK",
+      "excerpt": "  if (compiled.macroResolution.counts.dynamicFallbacks > 0) {\n    diagnostics.warnings.push({\n      code: 'PORTABLE_DYNAMIC_FALLBACK',\n      count: compiled.macroResolution.counts.dynamicFallbacks,\n      message:\n        'Dynamic or unknown macros used deterministic placeholders/fallbacks. Bind them explicitly or disable the owning module before production execution.',\n    });\n  }",
+      "excerpt_sha256": "e1542dfb40c032fc2544fc8e6c5a14b662b62b4ca79556aa4fcd562478288ff9",
+      "representation": "literal JavaScript source substring",
+      "retrieval": {
+        "tool": "GitHub.fetch_file",
+        "response_reference": "/response/turn66",
+        "review": "Reviewed exact code or template value, not an executed production result."
+      },
+      "integrity_scope": "Local excerpt hash, not a recomputed hash of the entire runtime."
+    },
+    {
+      "evidence_id": "src-courier",
+      "kind": "source-prompt",
+      "repository": "producesplatinum-ai/NemoEngine",
+      "ref": "b988a06eedb24b916182d0b5d545eb9a2dbabe02",
+      "path": "Nemo Engine/Connector Readable/11.5.2 General RP/prompts/prompts-074-081.json",
+      "blob_sha": "3032aef0c012e32fe0d93b56290d47330d87bc30",
+      "json_pointer": "/1/content",
+      "module_identifier": "v11-514-classicvex-midnight-courier",
+      "module_name": "♠️ Midnight Courier Vex",
+      "excerpt": "{{// @category Vex-Personality }}\n{{// @tooltip Midnight Courier Vex: old interview preserved, wrapped in v11 Vex variables.  }}\n{{// @color #B8860B }}\n{{// @icon ♠️ }}\n{{// @badge VEX }}\n\n{{setvar::ClassicVexName::{{getvar::ClassicVexName}} + Midnight Courier Vex}}\n{{setvar::VexPersona::♢ @ [LENS] Midnight Courier Vex\nMidnight Courier Vex is an active Vex narrator personality, not decorative flavor.",
+      "excerpt_sha256": "9869fda41712844766dbd412b2b4f5e997fb987781a6d812486f74ae62e9035a",
+      "section": "metadata and VexPersona",
+      "representation": "decoded JSON content string; continuous literal substring",
+      "retrieval": {
+        "tool": "GitHub.fetch_file/fetch_blob",
+        "response_reference": "/response/turn49",
+        "review": "Exact passage reviewed in a connector response at the pinned ref or the blob mapped to that ref."
+      },
+      "integrity_scope": "Excerpt transcription is hashed locally. Full source shard is not bundled or independently rehashed here."
+    },
+    {
+      "evidence_id": "src-core-bias",
+      "kind": "source-prompt",
+      "repository": "producesplatinum-ai/NemoEngine",
+      "ref": "b988a06eedb24b916182d0b5d545eb9a2dbabe02",
+      "path": "Nemo Engine/Connector Readable/11.5.2 General RP/prompts/prompts-074-081.json",
+      "blob_sha": "3032aef0c012e32fe0d93b56290d47330d87bc30",
+      "json_pointer": "/4/content",
+      "module_identifier": "v11-010-core-assembler",
+      "module_name": "📦 Core Assembler",
+      "excerpt": "Positivity and negativity bias are *strictly* forbidden. No glazing <user> without reason. No softening characters for so-called \"customer satisfaction.\" No manufactured cruelty or grimdark padding either. Deliver everything as the character definitions and scenario specify — nothing added, nothing taken away.",
+      "excerpt_sha256": "e8b6b6690968be29c9f6e6f277811e049e3eb30a7857707792cd46c77e3b44ae",
+      "section": "[LAW] Model Orientation [PROHIBITION]",
+      "representation": "decoded JSON content string; continuous literal substring",
+      "retrieval": {
+        "tool": "GitHub.fetch_file/fetch_blob",
+        "response_reference": "/response/turn49",
+        "review": "Exact passage reviewed in a connector response at the pinned ref or the blob mapped to that ref."
+      },
+      "integrity_scope": "Excerpt transcription is hashed locally. Full source shard is not bundled or independently rehashed here."
+    },
+    {
+      "evidence_id": "src-heroic-bias",
+      "kind": "source-prompt",
+      "repository": "producesplatinum-ai/NemoEngine",
+      "ref": "b988a06eedb24b916182d0b5d545eb9a2dbabe02",
+      "path": "Nemo Engine/Connector Readable/11.5.2 General RP/prompts/prompts-318-336.json",
+      "blob_sha": "c2aeb1816f9ac387a21ffee0ee93482122d575f3",
+      "json_pointer": "/12/content",
+      "module_identifier": "v11-103-difficulty-heroic",
+      "module_name": "⚙️ Heroic",
+      "excerpt": "Outcome Bias: optimistic-heroic. Pressure is real, but the story bends toward victory earned through courage, cleverness, sacrifice, loyalty, training, or stubborn resolve. Setbacks set up comebacks.",
+      "excerpt_sha256": "20ad71080c32ae1eeb79fb60cff74a115c7b66084e894963b8539c3cecfcc1db",
+      "section": "[DIRECTIVE] Difficulty",
+      "representation": "decoded JSON content string; continuous literal substring",
+      "retrieval": {
+        "tool": "GitHub.fetch_file/fetch_blob",
+        "response_reference": "/response/turn58",
+        "review": "Exact passage reviewed in a connector response at the pinned ref or the blob mapped to that ref."
+      },
+      "integrity_scope": "Excerpt transcription is hashed locally. Full source shard is not bundled or independently rehashed here."
+    },
+    {
+      "evidence_id": "src-terminal-broad",
+      "kind": "source-prompt",
+      "repository": "producesplatinum-ai/NemoEngine",
+      "ref": "b988a06eedb24b916182d0b5d545eb9a2dbabe02",
+      "path": "Nemo Engine/Connector Readable/11.5.2 General RP/prompts/prompts-082-125.json",
+      "blob_sha": "4e6fae82974239c1a1ab2599afcd3d5623579a0b",
+      "json_pointer": "/2/content",
+      "module_identifier": "nemo_consequence_core",
+      "module_name": "⚰️ Consequence Core",
+      "excerpt": "When the fiction honestly reaches death, permanent capture, irreversible ruin, a career-ending wound, or another state in which the current story cannot continue as it was, let that state land. Do not insert an unseeded rescue, convenient hesitation, lucky shallow wound, sudden interruption, or hidden immunity merely to preserve the run.",
+      "excerpt_sha256": "fb219414861ecef98b3ab59e152b0db4e9e39659b85103296db50b9f601a1a68",
+      "section": "[LAW] I Don’t Steer Around It",
+      "representation": "decoded JSON content string; continuous literal substring",
+      "retrieval": {
+        "tool": "GitHub.fetch_file/fetch_blob",
+        "response_reference": "/response/turn53",
+        "review": "Exact passage reviewed in a connector response at the pinned ref or the blob mapped to that ref."
+      },
+      "integrity_scope": "Excerpt transcription is hashed locally. Full source shard is not bundled or independently rehashed here."
+    },
+    {
+      "evidence_id": "src-epilogue-death",
+      "kind": "source-prompt",
+      "repository": "producesplatinum-ai/NemoEngine",
+      "ref": "b988a06eedb24b916182d0b5d545eb9a2dbabe02",
+      "path": "Nemo Engine/Connector Readable/11.5.2 General RP/prompts/prompts-082-125.json",
+      "blob_sha": "4e6fae82974239c1a1ab2599afcd3d5623579a0b",
+      "json_pointer": "/6/content",
+      "module_identifier": "nemo_consequence_epilogue",
+      "module_name": "⚰️ The Epilogue",
+      "excerpt": "When <user>'s character dies, the story ends and receives a full epilogue.",
+      "excerpt_sha256": "bc0ff28bcfd13d3a41068a814931650841773b53b4b61f887f3569e7f99c8954",
+      "section": "[DIRECTIVE] Consequence — The Epilogue",
+      "representation": "decoded JSON content string; continuous literal substring",
+      "retrieval": {
+        "tool": "GitHub.fetch_file/fetch_blob",
+        "response_reference": "/response/turn53",
+        "review": "Exact passage reviewed in a connector response at the pinned ref or the blob mapped to that ref."
+      },
+      "integrity_scope": "Excerpt transcription is hashed locally. Full source shard is not bundled or independently rehashed here."
+    },
+    {
+      "evidence_id": "src-dice-sign",
+      "kind": "source-prompt",
+      "repository": "producesplatinum-ai/NemoEngine",
+      "ref": "b988a06eedb24b916182d0b5d545eb9a2dbabe02",
+      "path": "Nemo Engine/Connector Readable/11.5.2 General RP/prompts/prompts-000-010.json",
+      "blob_sha": "16e40960ec489c910019c914ccf245639e0eeeba",
+      "json_pointer": "/1/content",
+      "module_identifier": "nemo-success-dice",
+      "module_name": "🎲 Success Dice",
+      "excerpt": "Effective result = raw roll + modifiers - difficulty.\n\nUse modifiers from preparation, training, equipment, positioning, timing, physical/mental state, allies, environment, and supernatural or technological aid. Normal modifiers sit between -20 and +20. Extreme cases can reach +/-40.\n\nDifficulty pressure:\n- Trivial: 0 to -5\n- Standard: -5 to -10\n- Hard: -15 to -25\n- Very hard: -25 to -35\n- Heroic: -35 to -45",
+      "excerpt_sha256": "39a2697b0cfe41e2630467ed819b346be3df5640ad3b9c6418f08ec4230d58c1",
+      "section": "Modifiers",
+      "representation": "decoded JSON content string; continuous literal substring",
+      "retrieval": {
+        "tool": "GitHub.fetch_file/fetch_blob",
+        "response_reference": "/response/turn249",
+        "review": "Exact passage reviewed in a connector response at the pinned ref or the blob mapped to that ref."
+      },
+      "integrity_scope": "Excerpt transcription is hashed locally. Full source shard is not bundled or independently rehashed here."
+    },
+    {
+      "evidence_id": "src-dice-example",
+      "kind": "source-prompt",
+      "repository": "producesplatinum-ai/NemoEngine",
+      "ref": "b988a06eedb24b916182d0b5d545eb9a2dbabe02",
+      "path": "Nemo Engine/Connector Readable/11.5.2 General RP/prompts/prompts-000-010.json",
+      "blob_sha": "16e40960ec489c910019c914ccf245639e0eeeba",
+      "json_pointer": "/1/content",
+      "module_identifier": "nemo-success-dice",
+      "module_name": "🎲 Success Dice",
+      "excerpt": "(OOC: roll 73 + 10 prep - 15 hard = 68, Success).",
+      "excerpt_sha256": "99f5c71c7e4d79df48e9d152746b89c96a0b25c0b153054fbe12d7d5a297c684",
+      "section": "Output: arithmetic example",
+      "representation": "decoded JSON content string; continuous literal substring",
+      "retrieval": {
+        "tool": "GitHub.fetch_file/fetch_blob",
+        "response_reference": "/response/turn249",
+        "review": "Exact passage reviewed in a connector response at the pinned ref or the blob mapped to that ref."
+      },
+      "integrity_scope": "Excerpt transcription is hashed locally. Full source shard is not bundled or independently rehashed here."
+    },
+    {
+      "evidence_id": "src-cyoa-grammar",
+      "kind": "source-prompt",
+      "repository": "producesplatinum-ai/NemoEngine",
+      "ref": "b988a06eedb24b916182d0b5d545eb9a2dbabe02",
+      "path": "Nemo Engine/Connector Readable/11.5.2 General RP/prompts/prompts-368-380.json",
+      "blob_sha": "8578162f224599ec9522d85155b5d631bc0b45f5",
+      "json_pointer": "/4/content",
+      "module_identifier": "1770095491838-bxxnfri2",
+      "module_name": "🔀 CYOA",
+      "excerpt": "- Regex: use <st-choice n=\"N\" icon=\"🤝\">option text</st-choice> for each option. Use <st-tag t=\"diplomatic\"/> if a separate type label helps in this theme.",
+      "excerpt_sha256": "7853d50c5f97398ca297e5fd7c6d8bf0aa4cb44282d943bc0c515eecaaf2a0f7",
+      "section": "Render contract",
+      "representation": "decoded JSON content string; continuous literal substring",
+      "retrieval": {
+        "tool": "GitHub.fetch_file/fetch_blob",
+        "response_reference": "/response/turn54",
+        "review": "Exact passage reviewed in a connector response at the pinned ref or the blob mapped to that ref."
+      },
+      "integrity_scope": "Excerpt transcription is hashed locally. Full source shard is not bundled or independently rehashed here."
+    },
+    {
+      "evidence_id": "src-gacha-bar",
+      "kind": "source-prompt",
+      "repository": "producesplatinum-ai/NemoEngine",
+      "ref": "b988a06eedb24b916182d0b5d545eb9a2dbabe02",
+      "path": "Nemo Engine/Connector Readable/11.5.2 General RP/prompts/prompts-368-380.json",
+      "blob_sha": "8578162f224599ec9522d85155b5d631bc0b45f5",
+      "json_pointer": "/8/content",
+      "module_identifier": "1770095491839-c6om818e",
+      "module_name": "🎰 Gacha System",
+      "excerpt": "- <st-bar k=\"Tickets\" v=\"14\"/>, <st-bar k=\"Crystals\" v=\"1820\"/>, <st-bar k=\"Pity\" v=\"38\" l=\"38/90\"/>.",
+      "excerpt_sha256": "8143203ca1f195e046b7e20628b3a6f4e4c0a9598a653d19d091390714b08d48",
+      "section": "Regex tags",
+      "representation": "decoded JSON content string; continuous literal substring",
+      "retrieval": {
+        "tool": "GitHub.fetch_file/fetch_blob",
+        "response_reference": "/response/turn62",
+        "review": "Exact passage reviewed in a connector response at the pinned ref or the blob mapped to that ref."
+      },
+      "integrity_scope": "Excerpt transcription is hashed locally. Full source shard is not bundled or independently rehashed here."
+    },
+    {
+      "evidence_id": "src-side-example",
+      "kind": "source-prompt",
+      "repository": "producesplatinum-ai/NemoEngine",
+      "ref": "b988a06eedb24b916182d0b5d545eb9a2dbabe02",
+      "path": "Nemo Engine/Connector Readable/11.5.2 General RP/prompts/prompts-074-081.json",
+      "blob_sha": "3032aef0c012e32fe0d93b56290d47330d87bc30",
+      "json_pointer": "/6/content",
+      "module_identifier": "nemo_magpie_character_files",
+      "module_name": "🗂️ Magpie Character Files",
+      "excerpt": "[[npc Rasha|side]]\n»» side\n» name · role | Rasha Adeyemi · 34 · dockside fixer\n» look | tall, hard through the shoulders, favours her left knee\n» personality | suspicious · practical · amused by nerve · keeps score\n» disposition | curious about you, not yet friendly\n» voice | answers questions with questions\n» desire | off the docks before winter · tonight, learn who sent you\n» affiliation | nominally the harbour union · loyal in practice to three crews\n» function | local gatekeeper carrying access, rumours, and a future debt\n» held back | she already knows why the manifest was altered\n[[/npc]] sets the glass down. \"You're early.\"",
+      "excerpt_sha256": "2f56e1d3feb8c91168ad6e6df0ffc91b85f15194b0a87b0cd5391adcbf9936ee",
+      "section": "Inline format example",
+      "representation": "decoded JSON content string; continuous literal substring",
+      "retrieval": {
+        "tool": "GitHub.fetch_file/fetch_blob",
+        "response_reference": "/response/turn60",
+        "review": "Exact passage reviewed in a connector response at the pinned ref or the blob mapped to that ref."
+      },
+      "integrity_scope": "Excerpt transcription is hashed locally. Full source shard is not bundled or independently rehashed here."
+    },
+    {
+      "evidence_id": "src-side-schema",
+      "kind": "source-prompt",
+      "repository": "producesplatinum-ai/NemoEngine",
+      "ref": "b988a06eedb24b916182d0b5d545eb9a2dbabe02",
+      "path": "Nemo Engine/Connector Readable/11.5.2 General RP/prompts/prompts-074-081.json",
+      "blob_sha": "3032aef0c012e32fe0d93b56290d47330d87bc30",
+      "json_pointer": "/6/content",
+      "module_identifier": "nemo_magpie_character_files",
+      "module_name": "🗂️ Magpie Character Files",
+      "excerpt": "»» side\n» name · role | full name · age · occupation and standing\n» look | one concrete visual anchor\n» personality | three to five specific traits, including friction or contradiction\n» disposition | toward the user character, current cast, and present situation\n» voice | cadence, vocabulary, or one owned mechanical tell\n» desire | immediate objective · longer pressure underneath it\n» affiliation | formal group · actual loyalty · strength of attachment\n» history | one specific past fact still operating now\n» ties | the people who matter and the present state of those ties\n» useful | skill, access, resource, or knowledge they possess\n» function | pressure, information, opportunity, obstacle, or thread they currently carry\n» held back | secret, wrong belief, pressure point, or complication",
+      "excerpt_sha256": "69f12f7f2b074c67d067bef9d9060bc9847c9b5174a8fe8f46843cbd0eb4cc58",
+      "section": "[LAW] Right-Sized Files / SIDE",
+      "representation": "decoded JSON content string; continuous literal substring",
+      "retrieval": {
+        "tool": "GitHub.fetch_file/fetch_blob",
+        "response_reference": "/response/turn60",
+        "review": "Exact passage reviewed in a connector response at the pinned ref or the blob mapped to that ref."
+      },
+      "integrity_scope": "Excerpt transcription is hashed locally. Full source shard is not bundled or independently rehashed here."
+    },
+    {
+      "evidence_id": "src-transit-earlier",
+      "kind": "source-prompt",
+      "repository": "producesplatinum-ai/NemoEngine",
+      "ref": "b988a06eedb24b916182d0b5d545eb9a2dbabe02",
+      "path": "Nemo Engine/Connector Readable/11.5.2 General RP/prompts/prompts-031-044.json",
+      "blob_sha": "b90d89cbf043c3c626c7ddb586522a58a3ccf8fc",
+      "json_pointer": "/7/content",
+      "module_identifier": "v11-026-default-narrative",
+      "module_name": "📋 Default: Narrative",
+      "excerpt": "If you have an idea for something interesting that could happen during the skip—an encounter on the road, a dream that matters—play it out. Otherwise, just cut to the next scene.",
+      "excerpt_sha256": "b18f56a8ab46421f1705e41fff547ae04a22bde9d73c8b14f1744d803034ea7a",
+      "section": "[DIRECTIVE] Narrative Principles",
+      "representation": "decoded JSON content string; continuous literal substring",
+      "retrieval": {
+        "tool": "GitHub.fetch_file/fetch_blob",
+        "response_reference": "prior GitHub.fetch_blob /response/turn257",
+        "review": "Exact passage reviewed in a connector response at the pinned ref or the blob mapped to that ref."
+      },
+      "integrity_scope": "Excerpt transcription is hashed locally. Full source shard is not bundled or independently rehashed here."
+    },
+    {
+      "evidence_id": "src-transit-law",
+      "kind": "source-prompt",
+      "repository": "producesplatinum-ai/NemoEngine",
+      "ref": "b988a06eedb24b916182d0b5d545eb9a2dbabe02",
+      "path": "Nemo Engine/Connector Readable/11.5.2 General RP/prompts/prompts-031-044.json",
+      "blob_sha": "b90d89cbf043c3c626c7ddb586522a58a3ccf8fc",
+      "json_pointer": "/7/content",
+      "module_identifier": "v11-026-default-narrative",
+      "module_name": "📋 Default: Narrative",
+      "excerpt": "Time skips may follow user-signaled transit or closure (\"I head to the tavern,\" \"I go to bed\") and compress hard when taken — no scenery tour, no invented encounters, no new plot acquired in a corridor the user marked as travel.",
+      "excerpt_sha256": "8b61f0819a2f8076ed725b0401fea38a6cafb0b6bb9d7aabca61e2a151f48abf",
+      "section": "[LAW] Beat Logic",
+      "representation": "decoded JSON content string; continuous literal substring",
+      "retrieval": {
+        "tool": "GitHub.fetch_file/fetch_blob",
+        "response_reference": "prior GitHub.fetch_blob /response/turn257",
+        "review": "Exact passage reviewed in a connector response at the pinned ref or the blob mapped to that ref."
+      },
+      "integrity_scope": "Excerpt transcription is hashed locally. Full source shard is not bundled or independently rehashed here."
+    },
+    {
+      "evidence_id": "src-blood-class",
+      "kind": "source-prompt",
+      "repository": "producesplatinum-ai/NemoEngine",
+      "ref": "b988a06eedb24b916182d0b5d545eb9a2dbabe02",
+      "path": "Nemo Engine/Connector Readable/11.5.2 General RP/prompts/prompts-289-298.json",
+      "blob_sha": "bf7e428f9643a6fdac94f5beb31f24696af49bcf",
+      "json_pointer": "/0/content",
+      "module_identifier": "v11-607-vtm-blood-bond",
+      "module_name": "🦇 World: Blood Bond Mechanics",
+      "excerpt": "- Action: In the response this occurs, find the main container div with the class .cathedral-card and add the new class blood-wed-active to it. The CSS will make the hidden \"Blood-Wed\" pane appear automatically.\n- Example: <div class=\"cathedral-card blood-wed-active\">",
+      "excerpt_sha256": "5b929be390d17401099542cdd436a218d10499fc55ff3bb15feabb97da9df855",
+      "section": "Blood Marriage Protocol",
+      "representation": "decoded JSON content string; continuous literal substring",
+      "retrieval": {
+        "tool": "GitHub.fetch_file/fetch_blob",
+        "response_reference": "GitHub.fetch_blob bf7e428f9643a6fdac94f5beb31f24696af49bcf (current pass)",
+        "review": "Exact passage reviewed in a connector response at the pinned ref or the blob mapped to that ref."
+      },
+      "integrity_scope": "Excerpt transcription is hashed locally. Full source shard is not bundled or independently rehashed here."
+    },
+    {
+      "evidence_id": "src-blood-css",
+      "kind": "source-prompt",
+      "repository": "producesplatinum-ai/NemoEngine",
+      "ref": "b988a06eedb24b916182d0b5d545eb9a2dbabe02",
+      "path": "Nemo Engine/Connector Readable/11.5.2 General RP/prompts/prompts-289-298.json",
+      "blob_sha": "bf7e428f9643a6fdac94f5beb31f24696af49bcf",
+      "json_pointer": "/0/content",
+      "module_identifier": "v11-607-vtm-blood-bond",
+      "module_name": "🦇 World: Blood Bond Mechanics",
+      "excerpt": ".blood-wed-active .blood-wed-pane { display: block; }",
+      "excerpt_sha256": "a4dc0e80d8dffce674706f66ab518de291d0b377803c009dd98db20a9d1f87b7",
+      "section": "style / Blood Marriage",
+      "representation": "decoded JSON content string; continuous literal substring",
+      "retrieval": {
+        "tool": "GitHub.fetch_file/fetch_blob",
+        "response_reference": "GitHub.fetch_blob bf7e428f9643a6fdac94f5beb31f24696af49bcf (current pass)",
+        "review": "Exact passage reviewed in a connector response at the pinned ref or the blob mapped to that ref."
+      },
+      "integrity_scope": "Excerpt transcription is hashed locally. Full source shard is not bundled or independently rehashed here."
+    },
+    {
+      "evidence_id": "src-blood-inline",
+      "kind": "source-prompt",
+      "repository": "producesplatinum-ai/NemoEngine",
+      "ref": "b988a06eedb24b916182d0b5d545eb9a2dbabe02",
+      "path": "Nemo Engine/Connector Readable/11.5.2 General RP/prompts/prompts-289-298.json",
+      "blob_sha": "bf7e428f9643a6fdac94f5beb31f24696af49bcf",
+      "json_pointer": "/0/content",
+      "module_identifier": "v11-607-vtm-blood-bond",
+      "module_name": "🦇 World: Blood Bond Mechanics",
+      "excerpt": "<div class=\"blood-wed-pane\" style=\"display: none;\">",
+      "excerpt_sha256": "ad68144f12f172f64fc7b084f2d875b1c9adfea41a2bb8a8d014b95ccd21d29e",
+      "section": "Blood Marriage Pane",
+      "representation": "decoded JSON content string; continuous literal substring",
+      "retrieval": {
+        "tool": "GitHub.fetch_file/fetch_blob",
+        "response_reference": "GitHub.fetch_blob bf7e428f9643a6fdac94f5beb31f24696af49bcf (current pass)",
+        "review": "Exact passage reviewed in a connector response at the pinned ref or the blob mapped to that ref."
+      },
+      "integrity_scope": "Excerpt transcription is hashed locally. Full source shard is not bundled or independently rehashed here."
+    },
+    {
+      "evidence_id": "src-panels-exclusion",
+      "kind": "source-prompt",
+      "repository": "producesplatinum-ai/NemoEngine",
+      "ref": "b988a06eedb24b916182d0b5d545eb9a2dbabe02",
+      "path": "Nemo Engine/Connector Readable/11.5.2 General RP/prompts/prompts-381-396.json",
+      "blob_sha": "f7a30b624445a72cc4d635ea0d222433477c4a54",
+      "json_pointer": "/8/content",
+      "module_identifier": "nemo-webtoon-panels-9-3-2",
+      "module_name": "📜 Vertical Webtoon Panels",
+      "excerpt": "Mutual exclusivity with Manga Panels: only enable one at a time. If both are active, prefer Webtoon for mobile contexts.",
+      "excerpt_sha256": "2883f570a8bfcd548660318a0eb9bbe675163c5fd7eada0278df7797acb3cd46",
+      "section": "Mutual exclusivity",
+      "representation": "decoded JSON content string; continuous literal substring",
+      "retrieval": {
+        "tool": "GitHub.fetch_file/fetch_blob",
+        "response_reference": "/response/turn64",
+        "review": "Exact passage reviewed in a connector response at the pinned ref or the blob mapped to that ref."
+      },
+      "integrity_scope": "Excerpt transcription is hashed locally. Full source shard is not bundled or independently rehashed here."
+    },
+    {
+      "evidence_id": "src-blood-thresholds",
+      "kind": "source-prompt",
+      "repository": "producesplatinum-ai/NemoEngine",
+      "ref": "b988a06eedb24b916182d0b5d545eb9a2dbabe02",
+      "path": "Nemo Engine/Connector Readable/11.5.2 General RP/prompts/prompts-289-298.json",
+      "blob_sha": "bf7e428f9643a6fdac94f5beb31f24696af49bcf",
+      "json_pointer": "/0/content",
+      "module_identifier": "v11-607-vtm-blood-bond",
+      "module_name": "🦇 World: Blood Bond Mechanics",
+      "excerpt": "RELATIONSHIP STATUS & THRESHOLDS (Based on Trust):\n- 0 or less TR: Nuisance / Obstacle\n- 1-40 TR: Unknown Factor\n- 41-80 TR: Recognized Contact\n- 81-120 TR: Reliable Asset\n- 121-160 TR: Valued Confidant\n- 161-200+ TR: Indispensable Figure",
+      "excerpt_sha256": "a079e7f8303ba093f857a8fae7568916649232b9462f71e240eafb751140e00d",
+      "section": "Prospect thresholds",
+      "representation": "decoded JSON content string; continuous literal substring",
+      "retrieval": {
+        "tool": "GitHub.fetch_file/fetch_blob",
+        "response_reference": "GitHub.fetch_blob bf7e428f9643a6fdac94f5beb31f24696af49bcf (current pass)",
+        "review": "Exact passage reviewed in a connector response at the pinned ref or the blob mapped to that ref."
+      },
+      "integrity_scope": "Excerpt transcription is hashed locally. Full source shard is not bundled or independently rehashed here."
+    },
+    {
+      "evidence_id": "src-blood-sip-a",
+      "kind": "source-prompt",
+      "repository": "producesplatinum-ai/NemoEngine",
+      "ref": "b988a06eedb24b916182d0b5d545eb9a2dbabe02",
+      "path": "Nemo Engine/Connector Readable/11.5.2 General RP/prompts/prompts-289-298.json",
+      "blob_sha": "bf7e428f9643a6fdac94f5beb31f24696af49bcf",
+      "json_pointer": "/0/content",
+      "module_identifier": "v11-607-vtm-blood-bond",
+      "module_name": "🦇 World: Blood Bond Mechanics",
+      "excerpt": "PROTOCOL A: THE WILLING GIFT (DEFAULT):\n1. TRIGGER: The standard scenario. {{char}} willingly offers vitae and {{user}} accepts OR {{user}} asks permission to drink {{char}}'s vitae.\n2. MECHANICAL IMPACT:\n - Influence (IP) & Devotion (DP): A significant, balanced increase (`+20 to +40` depending on the stage).\n - Resistance (RP): A significant decrease (`-10 to -20`).\n3. FEEDBACK EXAMPLE: `[+30 DP (Willingly accepted the vitae)]`",
+      "excerpt_sha256": "5a0c81284ce536632ac2fcec96dfb6fb5623fd25951d4ead43c351f9c95883d4",
+      "section": "SIP PROTOCOLS A",
+      "representation": "decoded JSON content string; continuous literal substring",
+      "retrieval": {
+        "tool": "GitHub.fetch_file/fetch_blob",
+        "response_reference": "GitHub.fetch_blob bf7e428f9643a6fdac94f5beb31f24696af49bcf (current pass)",
+        "review": "Exact passage reviewed in a connector response at the pinned ref or the blob mapped to that ref."
+      },
+      "integrity_scope": "Excerpt transcription is hashed locally. Full source shard is not bundled or independently rehashed here."
+    },
+    {
+      "evidence_id": "src-dating-negative",
+      "kind": "source-prompt",
+      "repository": "producesplatinum-ai/NemoEngine",
+      "ref": "b988a06eedb24b916182d0b5d545eb9a2dbabe02",
+      "path": "Nemo Engine/Connector Readable/11.5.2 General RP/prompts/prompts-368-380.json",
+      "blob_sha": "8578162f224599ec9522d85155b5d631bc0b45f5",
+      "json_pointer": "/6/content",
+      "module_identifier": "1770095491839-npsjusbc",
+      "module_name": "💖 Dating Sim Interface",
+      "excerpt": "Negative values are allowed for AP in hostile/rival routes; show the raw negative value even if the bar visually bottoms out.\n\n## Relationship tiers\nUse AP as the primary axis; DP and TP modify flavor.\n- < 0: Rival / Unfriendly\n- 1-20: Stranger\n- 21-40: Acquaintance\n- 41-60: Friend\n- 61-80: Close Friend\n- 81-100: Romantic Interest\n- 101-199: High Romantic Interest / Pre-Dating\n- 200+: Dating / Committed",
+      "excerpt_sha256": "281ac09b7459886fdb9ee28e4f19bc0c093876640099ac4a6132dfa6988e8e47",
+      "section": "Core meters and Relationship tiers",
+      "representation": "decoded JSON content string; continuous literal substring",
+      "retrieval": {
+        "tool": "GitHub.fetch_file/fetch_blob",
+        "response_reference": "/response/turn54",
+        "review": "Exact passage reviewed in a connector response at the pinned ref or the blob mapped to that ref."
+      },
+      "integrity_scope": "Excerpt transcription is hashed locally. Full source shard is not bundled or independently rehashed here."
+    },
+    {
+      "evidence_id": "src-three-paths",
+      "kind": "source-prompt",
+      "repository": "producesplatinum-ai/NemoEngine",
+      "ref": "b988a06eedb24b916182d0b5d545eb9a2dbabe02",
+      "path": "Nemo Engine/Connector Readable/11.5.2 General RP/prompts/prompts-368-380.json",
+      "blob_sha": "8578162f224599ec9522d85155b5d631bc0b45f5",
+      "json_pointer": "/5/content",
+      "module_identifier": "nemo_tracker_cyoa_three_paths",
+      "module_name": "🔀 CYOA: 3 Paths",
+      "excerpt": "Each path contains:\n- `PATH 1`, `PATH 2`, or `PATH 3`.\n- A short scene-native title such as `THE DIRECT PATH`, `FOLLOW SARAH`, or `BURN THE BRIDGE`.\n- One concise sentence for the immediate choice/direction.\n- One concise sentence for the route it opens: likely pressure, opportunity, risk, relationship shift, information advantage, scene focus, or future complication. Describe possibility and trajectory, not guaranteed outcomes.\n\nDo **not** assign fixed morality or risk semantics to the numbers. Path 1 is not always safe, Path 2 clever, or Path 3 reckless. Reorder freely according to the scene.",
+      "excerpt_sha256": "32e25d1ac60a38ef30be583979aad638b74a3023e3dda3317077da1b10bd24a5",
+      "section": "Each path contains / freedom of numbering",
+      "representation": "decoded JSON content string; continuous literal substring",
+      "retrieval": {
+        "tool": "GitHub.fetch_file/fetch_blob",
+        "response_reference": "/response/turn54",
+        "review": "Exact passage reviewed in a connector response at the pinned ref or the blob mapped to that ref."
+      },
+      "integrity_scope": "Excerpt transcription is hashed locally. Full source shard is not bundled or independently rehashed here."
+    },
+    {
+      "evidence_id": "src-gacha-economy",
+      "kind": "source-prompt",
+      "repository": "producesplatinum-ai/NemoEngine",
+      "ref": "b988a06eedb24b916182d0b5d545eb9a2dbabe02",
+      "path": "Nemo Engine/Connector Readable/11.5.2 General RP/prompts/prompts-368-380.json",
+      "blob_sha": "8578162f224599ec9522d85155b5d631bc0b45f5",
+      "json_pointer": "/8/content",
+      "module_identifier": "1770095491839-c6om818e",
+      "module_name": "🎰 Gacha System",
+      "excerpt": "Pull mechanics:\n- Single pull: 1 Ticket OR 160 Crystals.\n- Ten-pull: 10 Tickets OR 1600 Crystals. Guarantees at least 1 rare or higher.\n- Rarity ladder: R, SR, SSR, UR (or setting equivalent: 3-star / 4-star / 5-star / Mythic).\n- Base rates approx: R 80%, SR 15%, SSR 4.5%, UR 0.5%. Adjust per banner.\n- Pity rule: at 90 pulls without an SSR, the next pull is a guaranteed SSR. Reset Pity_Counter on hit.",
+      "excerpt_sha256": "81273c861575be847ad3dfcc66d7f03a541b0828adc0b6b2fc0bc80d29b37aea",
+      "section": "Pull mechanics",
+      "representation": "decoded JSON content string; continuous literal substring",
+      "retrieval": {
+        "tool": "GitHub.fetch_file/fetch_blob",
+        "response_reference": "/response/turn62",
+        "review": "Exact passage reviewed in a connector response at the pinned ref or the blob mapped to that ref."
+      },
+      "integrity_scope": "Excerpt transcription is hashed locally. Full source shard is not bundled or independently rehashed here."
+    },
+    {
+      "evidence_id": "src-gacha-other-reset",
+      "kind": "source-prompt",
+      "repository": "producesplatinum-ai/NemoEngine",
+      "ref": "b988a06eedb24b916182d0b5d545eb9a2dbabe02",
+      "path": "Nemo Engine/Connector Readable/11.5.2 General RP/prompts/prompts-368-380.json",
+      "blob_sha": "8578162f224599ec9522d85155b5d631bc0b45f5",
+      "json_pointer": "/8/content",
+      "module_identifier": "1770095491839-c6om818e",
+      "module_name": "🎰 Gacha System",
+      "excerpt": "- ⭐ Pity Counter - pulls since the last SSR or SR. Resets on a high-rarity hit.",
+      "excerpt_sha256": "003b1d02614e2454957b9b8608698064f72581751849d416fbb7d96f967f9810",
+      "section": "Wallet / currencies",
+      "representation": "decoded JSON content string; continuous literal substring",
+      "retrieval": {
+        "tool": "GitHub.fetch_file/fetch_blob",
+        "response_reference": "/response/turn62",
+        "review": "Exact passage reviewed in a connector response at the pinned ref or the blob mapped to that ref."
+      },
+      "integrity_scope": "Excerpt transcription is hashed locally. Full source shard is not bundled or independently rehashed here."
+    },
+    {
+      "evidence_id": "src-gacha-time",
+      "kind": "source-prompt",
+      "repository": "producesplatinum-ai/NemoEngine",
+      "ref": "b988a06eedb24b916182d0b5d545eb9a2dbabe02",
+      "path": "Nemo Engine/Connector Readable/11.5.2 General RP/prompts/prompts-368-380.json",
+      "blob_sha": "8578162f224599ec9522d85155b5d631bc0b45f5",
+      "json_pointer": "/8/content",
+      "module_identifier": "1770095491839-c6om818e",
+      "module_name": "🎰 Gacha System",
+      "excerpt": "When to output: end of every response. Refresh time-based rewards using {{datetimeformat DD.MM.YYYY HH:mm}}.",
+      "excerpt_sha256": "37df6f1aefacd1109deed608b30a338b3ae093f02118ef260b05bca8731abbad",
+      "section": "When to output",
+      "representation": "decoded JSON content string; continuous literal substring",
+      "retrieval": {
+        "tool": "GitHub.fetch_file/fetch_blob",
+        "response_reference": "/response/turn62",
+        "review": "Exact passage reviewed in a connector response at the pinned ref or the blob mapped to that ref."
+      },
+      "integrity_scope": "Excerpt transcription is hashed locally. Full source shard is not bundled or independently rehashed here."
+    },
+    {
+      "evidence_id": "src-ff-decay",
+      "kind": "source-prompt",
+      "repository": "producesplatinum-ai/NemoEngine",
+      "ref": "b988a06eedb24b916182d0b5d545eb9a2dbabe02",
+      "path": "Nemo Engine/Connector Readable/11.5.2 General RP/prompts/prompts-429-455.json",
+      "blob_sha": "dc9f4c3c0a70b86a3d7005b75a9a06870a23ec47",
+      "json_pointer": "/2/content",
+      "module_identifier": "v11-626-fetish-forced-fem-classic",
+      "module_name": "🎀 Forced Fem (Classic)",
+      "excerpt": "Point Decay: Neglecting the subject's conditioning allows resistance to reform. -1 to -3 points per day of in-story neglect.",
+      "excerpt_sha256": "6876e50316d03f779462590b7c2707da6e0a412414e8fb4ca669fc6283cf8400",
+      "section": "Point Decay",
+      "representation": "decoded JSON content string; continuous literal substring",
+      "retrieval": {
+        "tool": "GitHub.fetch_file/fetch_blob",
+        "response_reference": "/response/turn56",
+        "review": "Exact passage reviewed in a connector response at the pinned ref or the blob mapped to that ref."
+      },
+      "integrity_scope": "Excerpt transcription is hashed locally. Full source shard is not bundled or independently rehashed here."
+    },
+    {
+      "evidence_id": "src-ff-meter",
+      "kind": "source-prompt",
+      "repository": "producesplatinum-ai/NemoEngine",
+      "ref": "b988a06eedb24b916182d0b5d545eb9a2dbabe02",
+      "path": "Nemo Engine/Connector Readable/11.5.2 General RP/prompts/prompts-429-455.json",
+      "blob_sha": "dc9f4c3c0a70b86a3d7005b75a9a06870a23ec47",
+      "json_pointer": "/2/content",
+      "module_identifier": "v11-626-fetish-forced-fem-classic",
+      "module_name": "🎀 Forced Fem (Classic)",
+      "excerpt": "1.  **Femininity (FP):** The measure of **{{char}}'s** external adoption of feminine traits, appearance, and mannerisms, regardless of internal acceptance. Levels: <0 Resistant, 1-20 Masculine/Defiant, 21-40 Forced Compliance, 41-60 Conditioned/Experimenting, 61-80 Embracing/Feminine, 81-100 Willingly Femme, 101-199 Deeply Feminized/Pretty Girl, 200+ Mentally Remade/Perfect Sissy.",
+      "excerpt_sha256": "6b1f9b056395a698f4a89d4622f0c8155449cb9dbdb730d9a07db47efcec94e4",
+      "section": "Core Meters",
+      "representation": "decoded JSON content string; continuous literal substring",
+      "retrieval": {
+        "tool": "GitHub.fetch_file/fetch_blob",
+        "response_reference": "/response/turn56",
+        "review": "Exact passage reviewed in a connector response at the pinned ref or the blob mapped to that ref."
+      },
+      "integrity_scope": "Excerpt transcription is hashed locally. Full source shard is not bundled or independently rehashed here."
+    },
+    {
+      "evidence_id": "src-cutaway-mandatory",
+      "kind": "source-prompt",
+      "repository": "producesplatinum-ai/NemoEngine",
+      "ref": "b988a06eedb24b916182d0b5d545eb9a2dbabe02",
+      "path": "Nemo Engine/Connector Readable/11.5.2 General RP/prompts/prompts-235-257.json",
+      "blob_sha": "48795256b0ec80a3387386c32b5a6c29f2628f7b",
+      "json_pointer": "/13/content",
+      "module_identifier": "v11-250-utility-parallel-storylines",
+      "module_name": "🛠️ Parallel Storylines",
+      "excerpt": "Every response ends with a cutaway. No activation conditional exists here; if this rule is visible, it is active. The cutaway is part of the response structure, as expected as the main scene itself.",
+      "excerpt_sha256": "bd6b2a2d879ac6def6d8108e0dbe6b116860afd01afedbafb2cf4263eb1ff621",
+      "section": "[PROCEDURE] Parallel Storylines",
+      "representation": "decoded JSON content string; continuous literal substring",
+      "retrieval": {
+        "tool": "GitHub.fetch_file/fetch_blob",
+        "response_reference": "/response/turn63",
+        "review": "Exact passage reviewed in a connector response at the pinned ref or the blob mapped to that ref."
+      },
+      "integrity_scope": "Excerpt transcription is hashed locally. Full source shard is not bundled or independently rehashed here."
+    },
+    {
+      "evidence_id": "src-cutaway-scale",
+      "kind": "source-prompt",
+      "repository": "producesplatinum-ai/NemoEngine",
+      "ref": "b988a06eedb24b916182d0b5d545eb9a2dbabe02",
+      "path": "Nemo Engine/Connector Readable/11.5.2 General RP/prompts/prompts-235-257.json",
+      "blob_sha": "48795256b0ec80a3387386c32b5a6c29f2628f7b",
+      "json_pointer": "/13/content",
+      "module_identifier": "v11-250-utility-parallel-storylines",
+      "module_name": "🛠️ Parallel Storylines",
+      "excerpt": "Every response gets a cutaway, but the cutaway's scale varies. A major chapter turn can carry a full miniature scene. A quiet conversational beat may get a short glimpse: one paragraph, one exchanged line, one image of pressure elsewhere.",
+      "excerpt_sha256": "5dc93681f2b2798908ca15a48da24fbebd0b2814367662f47e4a165134cd8ffb",
+      "section": "Rhythm",
+      "representation": "decoded JSON content string; continuous literal substring",
+      "retrieval": {
+        "tool": "GitHub.fetch_file/fetch_blob",
+        "response_reference": "/response/turn63",
+        "review": "Exact passage reviewed in a connector response at the pinned ref or the blob mapped to that ref."
+      },
+      "integrity_scope": "Excerpt transcription is hashed locally. Full source shard is not bundled or independently rehashed here."
+    },
+    {
+      "evidence_id": "src-status-frequency",
+      "kind": "source-prompt",
+      "repository": "producesplatinum-ai/NemoEngine",
+      "ref": "b988a06eedb24b916182d0b5d545eb9a2dbabe02",
+      "path": "Nemo Engine/Connector Readable/11.5.2 General RP/prompts/prompts-381-396.json",
+      "blob_sha": "f7a30b624445a72cc4d635ea0d222433477c4a54",
+      "json_pointer": "/2/content",
+      "module_identifier": "nemo-status-board-9-3-2",
+      "module_name": "📊 Status Board",
+      "excerpt": "When to output: every response. Only update fields whose state has actually changed - do not repeat stale values mechanically.",
+      "excerpt_sha256": "ef3730a5580a3f5ca15974238afe268a5ce3c0a67986f87fd85f24c49066a709",
+      "section": "When to output",
+      "representation": "decoded JSON content string; continuous literal substring",
+      "retrieval": {
+        "tool": "GitHub.fetch_file/fetch_blob",
+        "response_reference": "/response/turn57",
+        "review": "Exact passage reviewed in a connector response at the pinned ref or the blob mapped to that ref."
+      },
+      "integrity_scope": "Excerpt transcription is hashed locally. Full source shard is not bundled or independently rehashed here."
+    },
+    {
+      "evidence_id": "src-knowledge-frequency",
+      "kind": "source-prompt",
+      "repository": "producesplatinum-ai/NemoEngine",
+      "ref": "b988a06eedb24b916182d0b5d545eb9a2dbabe02",
+      "path": "Nemo Engine/Connector Readable/11.5.2 General RP/prompts/prompts-381-396.json",
+      "blob_sha": "f7a30b624445a72cc4d635ea0d222433477c4a54",
+      "json_pointer": "/5/content",
+      "module_identifier": "nemo-char-knowledge-log-9-3-2",
+      "module_name": "🧠 Char's Knowledge Log",
+      "excerpt": "When to output: every 2 to 3 turns, or after a significant memory-forming event - reveal, betrayal, intimacy, shock, vow, accusation, etc.",
+      "excerpt_sha256": "6a128b8c50a8c17fc7f0e515d8febb390b63bcc2a339f1cf374ff261df801042",
+      "section": "When to output",
+      "representation": "decoded JSON content string; continuous literal substring",
+      "retrieval": {
+        "tool": "GitHub.fetch_file/fetch_blob",
+        "response_reference": "/response/turn57",
+        "review": "Exact passage reviewed in a connector response at the pinned ref or the blob mapped to that ref."
+      },
+      "integrity_scope": "Excerpt transcription is hashed locally. Full source shard is not bundled or independently rehashed here."
+    },
+    {
+      "evidence_id": "src-planning-frequency",
+      "kind": "source-prompt",
+      "repository": "producesplatinum-ai/NemoEngine",
+      "ref": "b988a06eedb24b916182d0b5d545eb9a2dbabe02",
+      "path": "Nemo Engine/Connector Readable/11.5.2 General RP/prompts/prompts-381-396.json",
+      "blob_sha": "f7a30b624445a72cc4d635ea0d222433477c4a54",
+      "json_pointer": "/6/content",
+      "module_identifier": "nemo-vex-planning-9-3-2",
+      "module_name": "📖 Vex Planning Quarters",
+      "excerpt": "When to output: bottom of every response. This is Vex's transparent storyteller notebook - they show <user> what they are aiming at without spoiling the surprise. The plans are guiding intentions, not commitments. <user>'s choices override them.",
+      "excerpt_sha256": "e370f796c8181b696375d5de618b4bdf957d3e257b293af50630d9962082b0b4",
+      "section": "When to output",
+      "representation": "decoded JSON content string; continuous literal substring",
+      "retrieval": {
+        "tool": "GitHub.fetch_file/fetch_blob",
+        "response_reference": "/response/turn57",
+        "review": "Exact passage reviewed in a connector response at the pinned ref or the blob mapped to that ref."
+      },
+      "integrity_scope": "Excerpt transcription is hashed locally. Full source shard is not bundled or independently rehashed here."
+    },
+    {
+      "evidence_id": "regex-30",
+      "kind": "source-regex",
+      "repository": "producesplatinum-ai/NemoEngine",
+      "ref": "b988a06eedb24b916182d0b5d545eb9a2dbabe02",
+      "path": "Nemo Engine/Connector Readable/11.5.2 General RP/regex-scripts/regex-000-058.json",
+      "blob_sha": "32050603e73424372a41c0b2e3462c12e74c6927",
+      "json_pointer": "/30/findRegex",
+      "regex_index": 30,
+      "excerpt": "/<st-bar k=\"([^\"]*)\" v=\"([0-9]{1,3})\" l=\"([^\"]*)\"\\/>/g",
+      "excerpt_sha256": "f016b5b7c9dc87a63874811c60062316bfece796586b9b3135db1bd41202f3bd",
+      "representation": "decoded JSON findRegex string; complete field",
+      "retrieval": {
+        "tool": "GitHub.fetch_file",
+        "response_reference": "/response/turn69",
+        "review": "findRegex was reread at the pinned ref."
+      },
+      "integrity_scope": "Full regex shard not rehashed here."
+    },
+    {
+      "evidence_id": "regex-31",
+      "kind": "source-regex",
+      "repository": "producesplatinum-ai/NemoEngine",
+      "ref": "b988a06eedb24b916182d0b5d545eb9a2dbabe02",
+      "path": "Nemo Engine/Connector Readable/11.5.2 General RP/regex-scripts/regex-000-058.json",
+      "blob_sha": "32050603e73424372a41c0b2e3462c12e74c6927",
+      "json_pointer": "/31/findRegex",
+      "regex_index": 31,
+      "excerpt": "/<st-choice n=\"([^\"]*)\">([\\s\\S]*?)<\\/st-choice>/g",
+      "excerpt_sha256": "8fd5ecea0a65364cd7a640aa776bd81c6c3c899fd7c1441dc15801b0d329b988",
+      "representation": "decoded JSON findRegex string; complete field",
+      "retrieval": {
+        "tool": "GitHub.fetch_file",
+        "response_reference": "/response/turn69",
+        "review": "findRegex was reread at the pinned ref."
+      },
+      "integrity_scope": "Full regex shard not rehashed here."
+    },
+    {
+      "evidence_id": "runtime-rewrite-372",
+      "kind": "runtime",
+      "repository": "producesplatinum-ai/NemoEngine",
+      "ref": "b988a06eedb24b916182d0b5d545eb9a2dbabe02",
+      "path": "scripts/nemo-chatgpt-runtime.mjs",
+      "blob_sha": "fd1b6def59711a6e3482ca3de09bab09c004434d",
+      "symbol": "PORTABLE_TRACKER_REWRITES[\"1770095491838-bxxnfri2\"]",
+      "excerpt": "♢ >> [PROCEDURE] CYOA — PORTABLE\nWhen a choice menu is useful, end the narrative before the focal character commits and offer two to five materially distinct, immediately actionable options. Express each as a numbered Markdown line with a brief intent or consequence cue, then add “✨ Other”. Do not decide, speak, feel, or act for the user.\n\nExample:\n1. Negotiate — trade time for information\n2. Withdraw — preserve cover at a cost\n✨ Other",
+      "excerpt_sha256": "3a5afd4e43aae6fabc68027ee93072c178b3b5eca7d646072027850439f7016c",
+      "representation": "decoded template literal value",
+      "retrieval": {
+        "tool": "GitHub.fetch_file",
+        "response_reference": "/response/turn50",
+        "review": "Reviewed exact code or template value, not an executed production result."
+      },
+      "integrity_scope": "Local excerpt hash, not a recomputed hash of the entire runtime.",
+      "table": "PORTABLE_TRACKER_REWRITES",
+      "module_identifier": "1770095491838-bxxnfri2",
+      "template_value_sha256": "3a5afd4e43aae6fabc68027ee93072c178b3b5eca7d646072027850439f7016c"
+    },
+    {
+      "evidence_id": "runtime-rewrite-373",
+      "kind": "runtime",
+      "repository": "producesplatinum-ai/NemoEngine",
+      "ref": "b988a06eedb24b916182d0b5d545eb9a2dbabe02",
+      "path": "scripts/nemo-chatgpt-runtime.mjs",
+      "blob_sha": "fd1b6def59711a6e3482ca3de09bab09c004434d",
+      "symbol": "PORTABLE_TRACKER_REWRITES[\"nemo_tracker_cyoa_three_paths\"]",
+      "excerpt": "♢ >> [PROCEDURE] CYOA: THREE PATHS — PORTABLE\nWhen a route menu is useful, stop before the focal character commits and present exactly three materially different Markdown route blocks: PATH 1 · THE DIRECT PATH, PATH 2 · THE QUIET PATH, and PATH 3 · THE SIDEWAYS PATH. For each, state the immediate move and the kind of future it opens without promising an outcome. Finish with “✨ Other”. Do not choose or act for the user.\n\nExample:\n1. PATH 1 · THE DIRECT PATH — confront the envoy; opens public conflict\n2. PATH 2 · THE QUIET PATH — follow the courier; opens covert evidence\n3. PATH 3 · THE SIDEWAYS PATH — bargain with the rival; opens an unstable alliance\n✨ Other",
+      "excerpt_sha256": "d41e11112d4e365e6d1be94a5ae90816a5f34620112102ac88e2f46e447ea156",
+      "representation": "decoded template literal value",
+      "retrieval": {
+        "tool": "GitHub.fetch_file",
+        "response_reference": "/response/turn50",
+        "review": "Reviewed exact code or template value, not an executed production result."
+      },
+      "integrity_scope": "Local excerpt hash, not a recomputed hash of the entire runtime.",
+      "table": "PORTABLE_TRACKER_REWRITES",
+      "module_identifier": "nemo_tracker_cyoa_three_paths",
+      "template_value_sha256": "d41e11112d4e365e6d1be94a5ae90816a5f34620112102ac88e2f46e447ea156"
+    },
+    {
+      "evidence_id": "runtime-rewrite-374",
+      "kind": "runtime",
+      "repository": "producesplatinum-ai/NemoEngine",
+      "ref": "b988a06eedb24b916182d0b5d545eb9a2dbabe02",
+      "path": "scripts/nemo-chatgpt-runtime.mjs",
+      "blob_sha": "fd1b6def59711a6e3482ca3de09bab09c004434d",
+      "symbol": "PORTABLE_TRACKER_REWRITES[\"1770095491839-npsjusbc\"]",
+      "excerpt": "♢ >> [PROCEDURE] DATING-SIM RELATIONSHIP STATE — PORTABLE\nWhen active, place a concise Markdown relationship card after the narrative. Track the story-relevant pairing with Affection, Desire, and Trust values from 0–200; include tier, current status, evidence-backed learned preferences or boundaries, a rival note only when established, and one short in-character feeling line only when it meaningfully changes. Explain learned facts inline with their scene evidence and confidence. Hold every value steady unless an explicit interaction or supplied continuity justifies movement; never invent knowledge to fill the card.\n\nExample:\n### Relationship State — Mira → Rowan\n- Affection: 124/200 — Close friend (+5: shared confidence)\n- Trust: 110/200 — Guard lowering\n- Learned: Quiet cafés — rainy-window scene, strong confidence",
+      "excerpt_sha256": "caeb3d01fd1cb259740454bc1bf5bf612a043a66c6d4a3b01887393ae0d32dc5",
+      "representation": "decoded template literal value",
+      "retrieval": {
+        "tool": "GitHub.fetch_file",
+        "response_reference": "/response/turn50",
+        "review": "Reviewed exact code or template value, not an executed production result."
+      },
+      "integrity_scope": "Local excerpt hash, not a recomputed hash of the entire runtime.",
+      "table": "PORTABLE_TRACKER_REWRITES",
+      "module_identifier": "1770095491839-npsjusbc",
+      "template_value_sha256": "caeb3d01fd1cb259740454bc1bf5bf612a043a66c6d4a3b01887393ae0d32dc5"
+    },
+    {
+      "evidence_id": "runtime-rewrite-376",
+      "kind": "runtime",
+      "repository": "producesplatinum-ai/NemoEngine",
+      "ref": "b988a06eedb24b916182d0b5d545eb9a2dbabe02",
+      "path": "scripts/nemo-chatgpt-runtime.mjs",
+      "blob_sha": "fd1b6def59711a6e3482ca3de09bab09c004434d",
+      "symbol": "PORTABLE_TRACKER_REWRITES[\"1770095491839-c6om818e\"]",
+      "excerpt": "♢ >> [PROCEDURE] GACHA STATE — PORTABLE\nPlace a compact Markdown wallet and banner summary after the narrative when a pull, reward, pity threshold, or relevant balance changes. Track only established currencies, pity, streaks, banners, and rewards. A pull requested in the current turn may be resolved as an authored story outcome grounded in the configured rates or supplied rules; do not claim a live random roll. Update time-based rewards only from an explicit time supplied in the request or continuity, never from an assumed clock.\n\nExample:\n### Gacha State\n- Tickets: 14\n- Crystals: 1,820\n- Pity: 38/90\n- Latest pull: Ember Knight — Rare",
+      "excerpt_sha256": "f4e4c35d9a7eecf13376f6b286fa9886014c805c126b9bbe67871efe331af355",
+      "representation": "decoded template literal value",
+      "retrieval": {
+        "tool": "GitHub.fetch_file",
+        "response_reference": "/response/turn50",
+        "review": "Reviewed exact code or template value, not an executed production result."
+      },
+      "integrity_scope": "Local excerpt hash, not a recomputed hash of the entire runtime.",
+      "table": "PORTABLE_TRACKER_REWRITES",
+      "module_identifier": "1770095491839-c6om818e",
+      "template_value_sha256": "f4e4c35d9a7eecf13376f6b286fa9886014c805c126b9bbe67871efe331af355"
+    },
+    {
+      "evidence_id": "runtime-rewrite-289",
+      "kind": "runtime",
+      "repository": "producesplatinum-ai/NemoEngine",
+      "ref": "b988a06eedb24b916182d0b5d545eb9a2dbabe02",
+      "path": "scripts/nemo-chatgpt-runtime.mjs",
+      "blob_sha": "fd1b6def59711a6e3482ca3de09bab09c004434d",
+      "symbol": "PORTABLE_UI_REWRITES[\"v11-607-vtm-blood-bond\"]",
+      "excerpt": "♢ >> [DIRECTIVE] BLOOD BOND MECHANICS — PORTABLE\nTrack the established fictional bond in two phases using a concise Markdown status card. Before the first sip, track Interest, Intrigue, Trust, the prospect's observed regard, and one evidence-based strategic insight. After the first sip, permanently switch to Influence, Devotion, Resistance, bond stage, archetype, regard, and one evidence-based vein-of-longing hint. Change values only after a relevant narrated event, show the cause and delta, and preserve uncertainty where motives are not known. Choose authored hint flavor from current canon without claiming a dice roll. Keep all state visible as ordinary text and omit inactive phase fields.\n\nExample:\n### Blood Bond — Stage 1\n- Influence: 24 (+3 — accepted the private audience)\n- Devotion: 11\n- Resistance: 67 (-2)\n- Regard: Dangerous benefactor\n- Vein of longing: recognition without public humiliation",
+      "excerpt_sha256": "7c757ba804e833129387cc6307afd12518a0257ef26fb36821d2ab6ed51138af",
+      "representation": "decoded template literal value",
+      "retrieval": {
+        "tool": "GitHub.fetch_file",
+        "response_reference": "/response/turn51",
+        "review": "Reviewed exact code or template value, not an executed production result."
+      },
+      "integrity_scope": "Local excerpt hash, not a recomputed hash of the entire runtime.",
+      "table": "PORTABLE_UI_REWRITES",
+      "module_identifier": "v11-607-vtm-blood-bond",
+      "template_value_sha256": "7c757ba804e833129387cc6307afd12518a0257ef26fb36821d2ab6ed51138af"
+    },
+    {
+      "evidence_id": "runtime-rewrite-431",
+      "kind": "runtime",
+      "repository": "producesplatinum-ai/NemoEngine",
+      "ref": "b988a06eedb24b916182d0b5d545eb9a2dbabe02",
+      "path": "scripts/nemo-chatgpt-runtime.mjs",
+      "blob_sha": "fd1b6def59711a6e3482ca3de09bab09c004434d",
+      "symbol": "PORTABLE_UI_REWRITES[\"v11-626-fetish-forced-fem-classic\"]",
+      "excerpt": "♢ >> [DIRECTIVE] FEMINIZATION STATE — PORTABLE\nFor an established adult fictional scenario, track the character's arc in a concise Markdown card using the module's core physical, behavioral, and identity-facing meters. Record likes, dislikes, boundaries, and shifts only when supported by narrated behavior or supplied continuity; include the triggering evidence inline. Do not infer acceptance from compliance, do not overwrite explicit limits, and do not invent state to fill the card.\n\nExample:\n### Feminization State\n- Presentation: 42/100 (+4 — chose the outfit for the public scene)\n- Boundary: public naming remains off-limits\n- Shifting preference: heeled boots — self-selected once, tentative",
+      "excerpt_sha256": "511578385bb0b6419198fe7e97d1d9ecc7271f9b02f37f7c40148c48f3cfd7a2",
+      "representation": "decoded template literal value",
+      "retrieval": {
+        "tool": "GitHub.fetch_file",
+        "response_reference": "/response/turn51",
+        "review": "Reviewed exact code or template value, not an executed production result."
+      },
+      "integrity_scope": "Local excerpt hash, not a recomputed hash of the entire runtime.",
+      "table": "PORTABLE_UI_REWRITES",
+      "module_identifier": "v11-626-fetish-forced-fem-classic",
+      "template_value_sha256": "511578385bb0b6419198fe7e97d1d9ecc7271f9b02f37f7c40148c48f3cfd7a2"
+    },
+    {
+      "evidence_id": "runtime-rewrite-248",
+      "kind": "runtime",
+      "repository": "producesplatinum-ai/NemoEngine",
+      "ref": "b988a06eedb24b916182d0b5d545eb9a2dbabe02",
+      "path": "scripts/nemo-chatgpt-runtime.mjs",
+      "blob_sha": "fd1b6def59711a6e3482ca3de09bab09c004434d",
+      "symbol": "PORTABLE_UI_REWRITES[\"v11-250-utility-parallel-storylines\"]",
+      "excerpt": "♢ >> [DIRECTIVE] PARALLEL STORYLINES — PORTABLE\nUse brief cutaways to advance a consequential B-plot, setting pressure, antagonist activity, or aftermath without transferring that knowledge to the main-scene cast. End the main scene cleanly, then place the cutaway under a visible Markdown heading such as “### Elsewhere”. Keep its location, time, viewpoint, and knowledge boundary clear; vary angle and only revisit a thread when it changes. Do not use hidden or collapsible presentation.\n\nExample:\n### Elsewhere — North Gate, same night\nThe courier finds the lock already broken.",
+      "excerpt_sha256": "d1dc0761c28a2c1c925029606fb825926fac0c8ad338e5f73e07d016366a98de",
+      "representation": "decoded template literal value",
+      "retrieval": {
+        "tool": "GitHub.fetch_file",
+        "response_reference": "/response/turn51",
+        "review": "Reviewed exact code or template value, not an executed production result."
+      },
+      "integrity_scope": "Local excerpt hash, not a recomputed hash of the entire runtime.",
+      "table": "PORTABLE_UI_REWRITES",
+      "module_identifier": "v11-250-utility-parallel-storylines",
+      "template_value_sha256": "d1dc0761c28a2c1c925029606fb825926fac0c8ad338e5f73e07d016366a98de"
+    },
+    {
+      "evidence_id": "runtime-rewrite-383",
+      "kind": "runtime",
+      "repository": "producesplatinum-ai/NemoEngine",
+      "ref": "b988a06eedb24b916182d0b5d545eb9a2dbabe02",
+      "path": "scripts/nemo-chatgpt-runtime.mjs",
+      "blob_sha": "fd1b6def59711a6e3482ca3de09bab09c004434d",
+      "symbol": "PORTABLE_TRACKER_REWRITES[\"nemo-status-board-9-3-2\"]",
+      "excerpt": "♢ >> [PROCEDURE] STATUS BOARD — PORTABLE\nWhen current condition matters, show a short Markdown status board containing only established health, energy, conditions, equipment state, immediate pressures, and other requested meters. Use key-value lines, explain meaningful changes, omit unavailable values, and never fabricate exact numbers from vague prose.\n\nExample:\n### Status\n- Health: Wounded, stable\n- Fatigue: High\n- Immediate pressure: guards arriving from the east",
+      "excerpt_sha256": "69ee8971d91b614958182bfd564123f722c5c5c67ca0917d2ca185d6f6ff7632",
+      "representation": "decoded template literal value",
+      "retrieval": {
+        "tool": "GitHub.fetch_file",
+        "response_reference": "/response/turn51",
+        "review": "Reviewed exact code or template value, not an executed production result."
+      },
+      "integrity_scope": "Local excerpt hash, not a recomputed hash of the entire runtime.",
+      "table": "PORTABLE_TRACKER_REWRITES",
+      "module_identifier": "nemo-status-board-9-3-2",
+      "template_value_sha256": "69ee8971d91b614958182bfd564123f722c5c5c67ca0917d2ca185d6f6ff7632"
+    },
+    {
+      "evidence_id": "runtime-rewrite-386",
+      "kind": "runtime",
+      "repository": "producesplatinum-ai/NemoEngine",
+      "ref": "b988a06eedb24b916182d0b5d545eb9a2dbabe02",
+      "path": "scripts/nemo-chatgpt-runtime.mjs",
+      "blob_sha": "fd1b6def59711a6e3482ca3de09bab09c004434d",
+      "symbol": "PORTABLE_TRACKER_REWRITES[\"nemo-char-knowledge-log-9-3-2\"]",
+      "excerpt": "♢ >> [PROCEDURE] CHARACTER KNOWLEDGE LOG — PORTABLE\nWhen knowledge boundaries matter, show a compact Markdown log for the relevant character. Separate confirmed knowledge, beliefs or suspicions, unknowns, and the evidence or source for each. Update only from information the character actually perceived or received; reader knowledge and private facts do not transfer automatically.\n\nExample:\n### Knowledge — Mira\n- Knows: the east gate closes at dusk — heard from the captain\n- Suspects: Bell altered the ledger — ink mismatch\n- Does not know: who hired the courier",
+      "excerpt_sha256": "666aaea58ccdd6df8f4720b0cb4f0acc5eed1bbd52cada71895e2d111c57c813",
+      "representation": "decoded template literal value",
+      "retrieval": {
+        "tool": "GitHub.fetch_file",
+        "response_reference": "/response/turn51",
+        "review": "Reviewed exact code or template value, not an executed production result."
+      },
+      "integrity_scope": "Local excerpt hash, not a recomputed hash of the entire runtime.",
+      "table": "PORTABLE_TRACKER_REWRITES",
+      "module_identifier": "nemo-char-knowledge-log-9-3-2",
+      "template_value_sha256": "666aaea58ccdd6df8f4720b0cb4f0acc5eed1bbd52cada71895e2d111c57c813"
+    },
+    {
+      "evidence_id": "runtime-rewrite-387",
+      "kind": "runtime",
+      "repository": "producesplatinum-ai/NemoEngine",
+      "ref": "b988a06eedb24b916182d0b5d545eb9a2dbabe02",
+      "path": "scripts/nemo-chatgpt-runtime.mjs",
+      "blob_sha": "fd1b6def59711a6e3482ca3de09bab09c004434d",
+      "symbol": "PORTABLE_TRACKER_REWRITES[\"nemo-vex-planning-9-3-2\"]",
+      "excerpt": "♢ >> [PROCEDURE] VEX PLANNING QUARTERS — PORTABLE\nWhen the user explicitly asks for planning options, provide a visible Markdown planning brief rather than private reasoning. Summarize the objective, established constraints, unresolved questions, two or three viable directions with tradeoffs, and the next decision. Do not reveal hidden chain-of-thought or pretend that private notes persist between runs.\n\nExample:\n### Planning Brief\n- Objective: enter the archive before dawn\n- Constraint: the west stair is watched\n- Option A: forged transfer order — fast, exposure risk\n- Option B: flooded conduit — slow, equipment risk",
+      "excerpt_sha256": "d5f4b091a007b9f8d5e5f1ff70185b63e03446e9e6396a6cab3640cb9bf3982a",
+      "representation": "decoded template literal value",
+      "retrieval": {
+        "tool": "GitHub.fetch_file",
+        "response_reference": "/response/turn51",
+        "review": "Reviewed exact code or template value, not an executed production result."
+      },
+      "integrity_scope": "Local excerpt hash, not a recomputed hash of the entire runtime.",
+      "table": "PORTABLE_TRACKER_REWRITES",
+      "module_identifier": "nemo-vex-planning-9-3-2",
+      "template_value_sha256": "d5f4b091a007b9f8d5e5f1ff70185b63e03446e9e6396a6cab3640cb9bf3982a"
+    },
+    {
+      "evidence_id": "runtime-rewrite-389",
+      "kind": "runtime",
+      "repository": "producesplatinum-ai/NemoEngine",
+      "ref": "b988a06eedb24b916182d0b5d545eb9a2dbabe02",
+      "path": "scripts/nemo-chatgpt-runtime.mjs",
+      "blob_sha": "fd1b6def59711a6e3482ca3de09bab09c004434d",
+      "symbol": "PORTABLE_TRACKER_REWRITES[\"nemo-webtoon-panels-9-3-2\"]",
+      "excerpt": "♢ >> [PROCEDURE] VERTICAL WEBTOON PANELS — PORTABLE\nWhen vertical paneling is requested or clearly useful, format the scene as a top-to-bottom sequence of numbered Markdown beats. Use spacing, shot cues, dialogue, captions, and sound effects to control scroll rhythm; reserve an isolated beat for a reveal or pause. Keep all essential content readable without a visual renderer.\n\nExample:\n1. **Long panel:** The elevator cable disappears into darkness.\n2. *SFX: TINK.*\n3. **Isolated close-up:** One severed strand curls loose.",
+      "excerpt_sha256": "ddca3987cb04deb9cb67844e48c8d95fb77a6842a19f28dce792887b46479f9b",
+      "representation": "decoded template literal value",
+      "retrieval": {
+        "tool": "GitHub.fetch_file",
+        "response_reference": "/response/turn51",
+        "review": "Reviewed exact code or template value, not an executed production result."
+      },
+      "integrity_scope": "Local excerpt hash, not a recomputed hash of the entire runtime.",
+      "table": "PORTABLE_TRACKER_REWRITES",
+      "module_identifier": "nemo-webtoon-panels-9-3-2",
+      "template_value_sha256": "ddca3987cb04deb9cb67844e48c8d95fb77a6842a19f28dce792887b46479f9b"
+    }
+  ]
+}
