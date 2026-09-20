@@ -5,29 +5,37 @@ import { spawnSync } from 'node:child_process';
 import { constants as fsConstants } from 'node:fs';
 import {
   chmod,
+  link,
   lstat,
   mkdir,
   open,
   readFile,
+  readlink,
   readdir,
   realpath,
   rename,
   unlink,
   writeFile,
 } from 'node:fs/promises';
+import os from 'node:os';
 import path from 'node:path';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 import { TextDecoder } from 'node:util';
 
-const SPEC_SCHEMA = 'nemo-chatgpt-run-spec/v1';
-const STATE_SCHEMA = 'nemo-chatgpt-execution/v1';
+const SPEC_SCHEMA = 'nemo-chatgpt-run-spec/v2';
+const STATE_SCHEMA = 'nemo-chatgpt-execution/v2';
 const BUNDLE_SCHEMA = 'nemo-chatgpt-runtime/v1';
 const MANIFEST_SCHEMA = 'nemo-chatgpt-runtime-emission/v1';
 const DEFAULT_PROFILE = '100001';
 const DEFAULT_MAX_PORTABLE_CHARS = 170_000;
-const DELIVERY_UNIT_CHARS = 12_000;
+const DEFAULT_DELIVERY_UNIT_CHARS = 12_000;
+const MIN_DELIVERY_UNIT_CHARS = 2_000;
+const MAX_DELIVERY_UNIT_BYTES = 16_000;
+const MAX_DELIVERY_UNITS = 128;
+const DELIVERY_ALGORITHM = 'semantic-grapheme-v1';
 const MAX_SANITIZER_ATTEMPTS = 2;
+const MAX_DRAFT_BYTES = 4 * 1024 * 1024;
 const CANONICAL_PRESET_SHA256 =
   'c5e13e951340d17addef0e16e7a7152a8256c41f2c046a52e81d86e1feef31d4';
 const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url));
@@ -41,19 +49,26 @@ const DEFAULT_PRESET = path.join(
 const STATE_FILE = 'execution-state.json';
 const STATE_KEY_FILE = '.execution-state.key';
 const LOCK_FILE = '.execution.lock';
+const RECOVERY_LOCK_FILE = '.execution.lock.recovery';
+const LOCK_SCHEMA = 'nemo-chatgpt-lock/v1';
+const LOCK_OWNER_TOKEN_PATTERN = /^[a-f0-9]{32}$/;
+const LOCK_LIVENESS_DOMAIN_PATTERN = /^[a-f0-9]{64}$/;
+const LOCK_CANDIDATE_PATTERN =
+  /^\.execution\.lock(?:\.recovery(?:\.[a-f0-9]{24})?)?\.candidate-[1-9]\d*-[a-f0-9]{24}$/;
 
 const HELP = `NemoEngine verified ChatGPT executor
 
 Usage:
   node scripts/nemo-chatgpt-executor.mjs prepare --spec FILE --run-dir DIR
   node scripts/nemo-chatgpt-executor.mjs next --run-dir DIR
-  node scripts/nemo-chatgpt-executor.mjs ack --run-dir DIR --unit N --sha256 HEX
+  node scripts/nemo-chatgpt-executor.mjs advance --run-dir DIR --unit N --sha256 HEX --receipt HEX
+  node scripts/nemo-chatgpt-executor.mjs ack --run-dir DIR --unit N --sha256 HEX --receipt HEX
   node scripts/nemo-chatgpt-executor.mjs status --run-dir DIR
   node scripts/nemo-chatgpt-executor.mjs finish --run-dir DIR --draft FILE
   node scripts/nemo-chatgpt-executor.mjs show-output --run-dir DIR
 
 Lifecycle:
-  prepare -> (next -> ack) x N -> active ChatGPT writes draft -> finish -> show-output
+  prepare -> next -> advance x N -> active ChatGPT writes draft -> finish -> show-output
 
 The active ChatGPT turn is the generation callback between ready_to_draft and
 finish. The executor verifies compilation and delivery; it does not claim that
@@ -73,6 +88,21 @@ function codePoints(text) {
   return Array.from(text);
 }
 
+function assertWellFormedUnicode(text, label) {
+  for (let index = 0; index < text.length; index += 1) {
+    const unit = text.charCodeAt(index);
+    if (unit >= 0xd800 && unit <= 0xdbff) {
+      const next = text.charCodeAt(index + 1);
+      if (!(next >= 0xdc00 && next <= 0xdfff)) {
+        fail(`${label} contains an unpaired UTF-16 surrogate.`);
+      }
+      index += 1;
+    } else if (unit >= 0xdc00 && unit <= 0xdfff) {
+      fail(`${label} contains an unpaired UTF-16 surrogate.`);
+    }
+  }
+}
+
 function decodeUtf8(bytes, label) {
   try {
     return new TextDecoder('utf-8', { fatal: true }).decode(bytes);
@@ -85,6 +115,51 @@ function assertNoForbiddenControls(text, label) {
   if (/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f-\u009f]/.test(text)) {
     fail(`${label} contains forbidden control characters.`);
   }
+}
+
+const HTML_ENTITY_TOKEN =
+  /&(?:(?:#[xX][0-9A-Fa-f]+|#[0-9]+);?|[A-Za-z][A-Za-z0-9]+;|(?:amp|lt|gt|quot|nbsp)(?![A-Za-z0-9]))/i;
+const MARKDOWN_INLINE_LINK =
+  /!?\[([^\]\n]*)\]\((?:[^()\n]|\([^()\n]*\))*\)/g;
+const MARKDOWN_REFERENCE_LINK = /!?\[([^\]\n]*)\]\[[^\]\n]*\]/g;
+const MARKDOWN_ESCAPED_PUNCTUATION =
+  /\\([\u0021-\u002f\u003a-\u0040\u005b-\u0060\u007b-\u007e])/g;
+const SAFETY_SEPARATOR = '[\\s\\p{P}\\p{S}]*';
+const RESERVED_NEMO_PHRASE = new RegExp(
+  `\\bNemo${SAFETY_SEPARATOR}(?:task${SAFETY_SEPARATOR}anchor|portable${SAFETY_SEPARATOR}runtime${SAFETY_SEPARATOR}context|module${SAFETY_SEPARATOR}\\d+)\\b`,
+  'iu',
+);
+
+function canonicalizeForSafety(value) {
+  let canonical = String(value)
+    .normalize('NFKC')
+    .replace(/\p{Default_Ignorable_Code_Point}/gu, '')
+    .replace(MARKDOWN_ESCAPED_PUNCTUATION, '$1');
+  for (let pass = 0; pass < 4; pass += 1) {
+    const next = canonical
+      .replace(MARKDOWN_INLINE_LINK, '$1')
+      .replace(MARKDOWN_REFERENCE_LINK, '$1');
+    if (next === canonical) break;
+    canonical = next;
+  }
+  return canonical
+    .replace(/[*_~`]/g, '')
+    .normalize('NFKC')
+    .replace(/\p{Default_Ignorable_Code_Point}/gu, '');
+}
+
+function containsReservedNemoFraming(value) {
+  const shadow = canonicalizeForSafety(value);
+  return (
+    RESERVED_NEMO_PHRASE.test(shadow) ||
+    /<<<(?:END)?NEMODELIVERY\b/i.test(shadow)
+  );
+}
+
+function containsCanonicalInternalBoundary(value) {
+  return /<\s*\/?\s*(?:think(?:ing)?|plan(?:ning)?|analysis|scratchpad|nemo\s*[-_]?\s*(?:pad|final)|service|runtime_settings_reminder|language_runtime(?:_resolver)?)\b/i.test(
+    canonicalizeForSafety(value),
+  );
 }
 
 function isPlainObject(value) {
@@ -126,20 +201,40 @@ function requireJsonEqual(left, right, label) {
 
 function isWithin(candidate, parent) {
   const relative = path.relative(parent, candidate);
-  return relative === '' || (!relative.startsWith(`..${path.sep}`) && relative !== '..');
+  return (
+    relative === '' ||
+    (!path.isAbsolute(relative) && !relative.startsWith(`..${path.sep}`) && relative !== '..')
+  );
 }
 
 function parseCli(argv) {
   if (argv.length === 0 || argv.includes('--help')) return { command: 'help' };
   const command = argv[0];
-  const knownCommands = new Set(['prepare', 'next', 'ack', 'status', 'finish', 'show-output']);
+  const knownCommands = new Set([
+    'prepare',
+    'next',
+    'advance',
+    'ack',
+    'status',
+    'finish',
+    'show-output',
+  ]);
   if (!knownCommands.has(command)) fail(`Unknown command: ${command}`);
 
-  const options = { command, spec: null, runDir: null, unit: null, sha256: null, draft: null };
+  const options = {
+    command,
+    spec: null,
+    runDir: null,
+    unit: null,
+    sha256: null,
+    receipt: null,
+    draft: null,
+  };
   const allowed = {
     prepare: new Set(['--spec', '--run-dir']),
     next: new Set(['--run-dir']),
-    ack: new Set(['--run-dir', '--unit', '--sha256']),
+    advance: new Set(['--run-dir', '--unit', '--sha256', '--receipt']),
+    ack: new Set(['--run-dir', '--unit', '--sha256', '--receipt']),
     status: new Set(['--run-dir']),
     finish: new Set(['--run-dir', '--draft']),
     'show-output': new Set(['--run-dir']),
@@ -149,6 +244,7 @@ function parseCli(argv) {
     '--run-dir': 'runDir',
     '--unit': 'unit',
     '--sha256': 'sha256',
+    '--receipt': 'receipt',
     '--draft': 'draft',
   };
 
@@ -187,16 +283,23 @@ function parseCli(argv) {
       fail('--sha256 must be exactly 64 hexadecimal characters.');
     }
   }
+  if (options.receipt !== null) {
+    options.receipt = options.receipt.toLowerCase();
+    if (!/^[a-f0-9]{64}$/.test(options.receipt)) {
+      fail('--receipt must be exactly 64 hexadecimal characters.');
+    }
+  }
   return options;
 }
 
 async function readJson(filePath, label) {
-  let text;
+  let bytes;
   try {
-    text = await readFile(filePath, 'utf8');
+    bytes = await readFile(filePath);
   } catch (error) {
     fail(`Cannot read ${label}: ${error.message}`);
   }
+  const text = decodeUtf8(bytes, label);
   try {
     return JSON.parse(text);
   } catch (error) {
@@ -215,6 +318,26 @@ async function requireRegularFile(filePath, label) {
     fail(`${label} must be a regular file and not a symbolic link.`);
   }
   return status;
+}
+
+function requireBigIntFileIdentity(status, label) {
+  if (typeof status.dev !== 'bigint' || typeof status.ino !== 'bigint') {
+    fail(`${label} file identity is not lossless.`);
+  }
+  return status;
+}
+
+async function requireRegularFileIdentity(filePath, label) {
+  let status;
+  try {
+    status = await lstat(filePath, { bigint: true });
+  } catch (error) {
+    fail(`Cannot inspect ${label}: ${error.message}`);
+  }
+  if (status.isSymbolicLink() || !status.isFile()) {
+    fail(`${label} must be a regular file and not a symbolic link.`);
+  }
+  return requireBigIntFileIdentity(status, label);
 }
 
 async function resolveExistingRunDir(rawPath) {
@@ -275,7 +398,17 @@ async function createFreshRunDir(rawPath) {
       ancestor = parent;
     }
   }
-  if (!existing) await mkdir(directory, { recursive: true });
+  if (!existing) {
+    await mkdir(path.dirname(directory), { recursive: true });
+    try {
+      await mkdir(directory);
+    } catch (error) {
+      if (error.code === 'EEXIST') {
+        fail('Run directory was created concurrently; retry with a new directory.');
+      }
+      throw error;
+    }
+  }
   await chmod(directory, 0o700);
   return resolveExistingRunDir(directory);
 }
@@ -290,46 +423,233 @@ async function writeJsonAtomic(filePath, value) {
   await rename(temporary, filePath);
 }
 
-async function withLock(runDir, callback) {
-  const lockPath = path.join(runDir, LOCK_FILE);
-  const openLock = async () => {
-    const candidate = await open(lockPath, 'wx', 0o600);
-    try {
-      await candidate.writeFile(
-        `${JSON.stringify({ pid: process.pid, startedAt: new Date().toISOString() })}\n`,
-        'utf8',
-      );
-      return candidate;
-    } catch (error) {
-      await candidate.close();
-      try {
-        await unlink(lockPath);
-      } catch (unlinkError) {
-        if (unlinkError.code !== 'ENOENT') throw unlinkError;
-      }
-      throw error;
-    }
-  };
+async function writeJsonCreate(filePath, value) {
+  await writeFile(filePath, `${JSON.stringify(value, null, 2)}\n`, {
+    encoding: 'utf8',
+    mode: 0o600,
+    flag: 'wx',
+  });
+}
 
-  let handle;
+function isLockCandidateName(name) {
+  return LOCK_CANDIDATE_PATTERN.test(name);
+}
+
+function sameFileIdentity(left, right) {
+  return left.dev === right.dev && left.ino === right.ino;
+}
+
+let lockLivenessDomainPromise = null;
+
+async function localLockLivenessDomain() {
+  if (lockLivenessDomainPromise === null) {
+    lockLivenessDomainPromise = (async () => {
+      if (process.platform !== 'linux') return { strong: false, id: null };
+      try {
+        const [bootIdRaw, pidNamespace] = await Promise.all([
+          readFile('/proc/sys/kernel/random/boot_id', 'utf8'),
+          readlink('/proc/self/ns/pid'),
+        ]);
+        const bootId = bootIdRaw.trim().toLowerCase();
+        const host = os.hostname().trim();
+        if (
+          host.length === 0 ||
+          !/^[a-f0-9-]{16,64}$/.test(bootId) ||
+          !/^pid:\[[1-9]\d*\]$/.test(pidNamespace)
+        ) {
+          return { strong: false, id: null };
+        }
+        return {
+          strong: true,
+          id: sha256(Buffer.from(`linux\0${host}\0${bootId}\0${pidNamespace}`, 'utf8')),
+        };
+      } catch {
+        return { strong: false, id: null };
+      }
+    })();
+  }
+  return lockLivenessDomainPromise;
+}
+
+function isCanonicalIsoTimestamp(value) {
+  if (typeof value !== 'string') return false;
   try {
-    handle = await openLock();
+    return new Date(value).toISOString() === value;
+  } catch {
+    return false;
+  }
+}
+
+function isValidLockMetadata(metadata, expectedKind) {
+  if (!isPlainObject(metadata)) return false;
+  const expectedKeys = [
+    'kind',
+    'livenessDomain',
+    'ownerToken',
+    'pid',
+    'schemaVersion',
+    'startedAt',
+    ...(expectedKind === 'recovery' ? ['primaryGeneration'] : []),
+  ].sort();
+  if (JSON.stringify(Object.keys(metadata).sort()) !== JSON.stringify(expectedKeys)) {
+    return false;
+  }
+  if (
+    metadata.schemaVersion !== LOCK_SCHEMA ||
+    metadata.kind !== expectedKind ||
+    !Number.isSafeInteger(metadata.pid) ||
+    metadata.pid < 1 ||
+    metadata.pid > 0x7fffffff ||
+    !isCanonicalIsoTimestamp(metadata.startedAt) ||
+    !LOCK_OWNER_TOKEN_PATTERN.test(metadata.ownerToken) ||
+    !(
+      metadata.livenessDomain === null ||
+      LOCK_LIVENESS_DOMAIN_PATTERN.test(metadata.livenessDomain)
+    )
+  ) {
+    return false;
+  }
+  return (
+    expectedKind !== 'recovery' ||
+    LOCK_OWNER_TOKEN_PATTERN.test(metadata.primaryGeneration)
+  );
+}
+
+async function createLockMetadata(kind, extra = {}) {
+  const liveness = await localLockLivenessDomain();
+  return {
+    schemaVersion: LOCK_SCHEMA,
+    kind,
+    pid: process.pid,
+    startedAt: new Date().toISOString(),
+    ownerToken: randomBytes(16).toString('hex'),
+    livenessDomain: liveness.strong ? liveness.id : null,
+    ...extra,
+  };
+}
+
+async function unlinkOwnedFile(filePath, ownership) {
+  const owned = await ownership.handle.stat({ bigint: true });
+  let current;
+  try {
+    current = await lstat(filePath, { bigint: true });
   } catch (error) {
-    if (error.code !== 'EEXIST') throw error;
-    const status = await lstat(lockPath);
-    if (status.isSymbolicLink() || !status.isFile()) {
-      fail('Run lock is not a regular file; refusing unsafe recovery.');
+    if (error.code === 'ENOENT') return false;
+    throw error;
+  }
+  if (!current.isFile() || current.isSymbolicLink() || !sameFileIdentity(current, owned)) {
+    return false;
+  }
+  try {
+    await unlink(filePath);
+    return true;
+  } catch (error) {
+    if (error.code === 'ENOENT') return false;
+    throw error;
+  }
+}
+
+async function requireOwnedFile(filePath, ownership, label) {
+  const owned = await ownership.handle.stat({ bigint: true });
+  let current;
+  try {
+    current = await lstat(filePath, { bigint: true });
+  } catch (error) {
+    if (error.code === 'ENOENT') fail(`${label} changed while it was being published.`);
+    throw error;
+  }
+  if (!current.isFile() || current.isSymbolicLink() || !sameFileIdentity(current, owned)) {
+    fail(`${label} changed while it was being published.`);
+  }
+  const observed = await inspectLockFile(filePath, label, ownership.metadata.kind);
+  if (
+    !observed.valid ||
+    observed.metadata.ownerToken !== ownership.metadata.ownerToken ||
+    !sameFileIdentity(observed.status, owned)
+  ) {
+    fail(`${label} changed while it was being published.`);
+  }
+}
+
+async function publishExclusiveFile(filePath, kind, label, extra = {}) {
+  const metadata = await createLockMetadata(kind, extra);
+  const candidatePath = path.join(
+    path.dirname(filePath),
+    `${path.basename(filePath)}.candidate-${process.pid}-${randomBytes(12).toString('hex')}`,
+  );
+  const handle = await open(candidatePath, 'wx', 0o600);
+  const ownership = { handle, metadata };
+  let published = false;
+  try {
+    await handle.writeFile(`${JSON.stringify(metadata)}\n`, 'utf8');
+    await handle.sync();
+    await link(candidatePath, filePath);
+    published = true;
+    await unlink(candidatePath);
+    await requireOwnedFile(filePath, ownership, label);
+    return ownership;
+  } catch (error) {
+    const cleanupErrors = [];
+    if (published) {
+      try {
+        await unlinkOwnedFile(filePath, ownership);
+      } catch (cleanupError) {
+        cleanupErrors.push(cleanupError);
+      }
+    }
+    try {
+      await unlinkOwnedFile(candidatePath, ownership);
+    } catch (cleanupError) {
+      cleanupErrors.push(cleanupError);
+    }
+    try {
+      await handle.close();
+    } catch (cleanupError) {
+      cleanupErrors.push(cleanupError);
+    }
+    if (cleanupErrors.length > 0) {
+      throw new AggregateError(
+        [error, ...cleanupErrors],
+        `${label} publication and cleanup both failed.`,
+      );
+    }
+    throw error;
+  }
+}
+
+async function inspectLockFile(filePath, label, expectedKind) {
+  const before = await lstat(filePath, { bigint: true });
+  if (before.isSymbolicLink() || !before.isFile()) {
+    fail(`${label} is not a regular file; refusing unsafe recovery.`);
+  }
+  const handle = await open(
+    filePath,
+    fsConstants.O_RDONLY |
+      (fsConstants.O_NOFOLLOW ?? 0) |
+      (fsConstants.O_NONBLOCK ?? 0),
+  );
+  try {
+    const status = await handle.stat({ bigint: true });
+    if (!status.isFile() || !sameFileIdentity(before, status)) {
+      fail(`${label} changed while it was being inspected; refusing unsafe recovery.`);
     }
     let metadata = null;
-    try {
-      metadata = JSON.parse(await readFile(lockPath, 'utf8'));
-    } catch {
-      // A freshly created lock can briefly be empty. Recover malformed locks
-      // only after a conservative age threshold.
+    if (status.size > 0n && status.size <= 4_096n) {
+      try {
+        metadata = JSON.parse(await handle.readFile('utf8'));
+      } catch {
+        // Malformed lock metadata is deliberately left ambiguous and fail-closed.
+      }
     }
-    const hasOwnerPid = Number.isSafeInteger(metadata?.pid) && metadata.pid > 0;
-    let ownerAlive = false;
-    if (hasOwnerPid) {
+    const valid = isValidLockMetadata(metadata, expectedKind);
+    const localLiveness = await localLockLivenessDomain();
+    const sameStrongDomain =
+      valid &&
+      localLiveness.strong &&
+      metadata.livenessDomain !== null &&
+      metadata.livenessDomain === localLiveness.id;
+    let ownerAlive = true;
+    if (sameStrongDomain) {
       ownerAlive = true;
       try {
         process.kill(metadata.pid, 0);
@@ -338,32 +658,200 @@ async function withLock(runDir, callback) {
         else if (probeError.code !== 'EPERM') throw probeError;
       }
     }
-    const olderThanFifteenMinutes = Date.now() - status.mtimeMs > 15 * 60 * 1_000;
-    if (ownerAlive || (!hasOwnerPid && !olderThanFifteenMinutes)) {
-      fail('Run directory is locked by another executor process.');
-    }
-    try {
-      await unlink(lockPath);
-    } catch (unlinkError) {
-      if (unlinkError.code !== 'ENOENT') throw unlinkError;
-    }
-    try {
-      handle = await openLock();
-    } catch (retryError) {
-      if (retryError.code === 'EEXIST') {
-        fail('Run directory lock changed during stale-lock recovery.');
-      }
-      throw retryError;
-    }
-  }
-  try {
-    return await callback();
+    return {
+      status,
+      metadata: valid ? metadata : null,
+      valid,
+      // Foreign, weak-domain, malformed, and empty locks are ambiguous and
+      // therefore fail closed instead of risking two owners.
+      recoverable: sameStrongDomain && !ownerAlive,
+    };
   } finally {
     await handle.close();
+  }
+}
+
+async function cleanupAbandonedLockCandidates(runDir) {
+  for (const name of await readdir(runDir)) {
+    if (!isLockCandidateName(name)) continue;
+    const candidatePath = path.join(runDir, name);
+    let observed;
     try {
-      await unlink(lockPath);
+      const expectedKind = name.startsWith(RECOVERY_LOCK_FILE) ? 'recovery' : 'primary';
+      observed = await inspectLockFile(
+        candidatePath,
+        'Lock publication candidate',
+        expectedKind,
+      );
     } catch (error) {
-      if (error.code !== 'ENOENT') throw error;
+      if (error.code === 'ENOENT') continue;
+      throw error;
+    }
+    if (observed.recoverable) {
+      await unlinkGeneration(
+        candidatePath,
+        observed,
+        'Lock publication candidate',
+        observed.metadata.kind,
+      );
+    }
+  }
+}
+
+async function unlinkGeneration(filePath, expected, label, expectedKind) {
+  let current;
+  try {
+    current = await lstat(filePath, { bigint: true });
+  } catch (error) {
+    if (error.code === 'ENOENT') return false;
+    throw error;
+  }
+  if (!current.isFile() || current.isSymbolicLink() || !sameFileIdentity(current, expected.status)) {
+    return false;
+  }
+  let confirmed;
+  try {
+    confirmed = await inspectLockFile(filePath, label, expectedKind);
+  } catch (error) {
+    if (error.code === 'ENOENT') return false;
+    throw error;
+  }
+  if (
+    !confirmed.recoverable ||
+    !sameFileIdentity(confirmed.status, expected.status) ||
+    confirmed.metadata.ownerToken !== expected.metadata.ownerToken
+  ) {
+    return false;
+  }
+  try {
+    await unlink(filePath);
+    return true;
+  } catch (error) {
+    if (error.code === 'ENOENT') return false;
+    throw error;
+  }
+}
+
+async function acquireRecoveryLease(runDir, primary) {
+  const primaryGeneration = primary.metadata.ownerToken;
+  let generation = sha256(Buffer.from(primaryGeneration, 'utf8'));
+  let recoveryPath = path.join(
+    runDir,
+    `${RECOVERY_LOCK_FILE}.${generation.slice(0, 24)}`,
+  );
+  const staleGenerations = [];
+  for (let depth = 0; depth < 32; depth += 1) {
+    let recoveryOwnership;
+    try {
+      recoveryOwnership = await publishExclusiveFile(
+        recoveryPath,
+        'recovery',
+        'Run recovery lock',
+        { primaryGeneration },
+      );
+    } catch (error) {
+      if (error.code !== 'EEXIST') throw error;
+      let observed;
+      try {
+        observed = await inspectLockFile(recoveryPath, 'Run recovery lock', 'recovery');
+      } catch (inspectError) {
+        if (inspectError.code === 'ENOENT') continue;
+        throw inspectError;
+      }
+      if (!observed.recoverable) {
+        fail('Run directory is locked or stale-lock recovery is already in progress.');
+      }
+      if (observed.metadata.primaryGeneration !== primaryGeneration) {
+        fail('Run recovery lock belongs to a different primary generation.');
+      }
+      staleGenerations.push({ path: recoveryPath, observed });
+      generation = sha256(Buffer.from(`${generation}:${observed.metadata.ownerToken}`, 'utf8'));
+      recoveryPath = path.join(
+        runDir,
+        `${RECOVERY_LOCK_FILE}.${generation.slice(0, 24)}`,
+      );
+      continue;
+    }
+    return { recoveryOwnership, recoveryPath, staleGenerations };
+  }
+  fail('Too many abandoned stale-lock recovery generations.');
+}
+
+async function withLock(runDir, callback) {
+  const lockPath = path.join(runDir, LOCK_FILE);
+  await cleanupAbandonedLockCandidates(runDir);
+  const openLock = () =>
+    publishExclusiveFile(
+      lockPath,
+      'primary',
+      'Run lock',
+    );
+
+  let ownership = null;
+  try {
+    try {
+      ownership = await openLock();
+    } catch (error) {
+      if (error.code !== 'EEXIST') throw error;
+      let primary;
+      try {
+        primary = await inspectLockFile(lockPath, 'Run lock', 'primary');
+      } catch (inspectError) {
+        if (inspectError.code !== 'ENOENT') throw inspectError;
+        try {
+          ownership = await openLock();
+        } catch (retryError) {
+          if (retryError.code === 'EEXIST') {
+            fail('Run directory lock changed during stale-lock recovery.');
+          }
+          throw retryError;
+        }
+      }
+      if (!ownership) {
+        if (!primary.recoverable) {
+          fail('Run directory is locked by another executor process.');
+        }
+        const lease = await acquireRecoveryLease(runDir, primary);
+        try {
+          if (!(await unlinkGeneration(lockPath, primary, 'Run lock', 'primary'))) {
+            fail('Run directory lock changed during stale-lock recovery.');
+          }
+          try {
+            ownership = await openLock();
+          } catch (retryError) {
+            if (retryError.code === 'EEXIST') {
+              fail('Run directory lock changed during stale-lock recovery.');
+            }
+            throw retryError;
+          }
+          for (const stale of lease.staleGenerations) {
+            await unlinkGeneration(
+              stale.path,
+              stale.observed,
+              'Run recovery lock',
+              'recovery',
+            );
+          }
+        } finally {
+          try {
+            await unlinkOwnedFile(lease.recoveryPath, lease.recoveryOwnership);
+          } finally {
+            await lease.recoveryOwnership.handle.close();
+          }
+        }
+      }
+    }
+    return await callback({
+      acquisitionId: ownership.metadata.ownerToken,
+      livenessDomain: ownership.metadata.livenessDomain,
+    });
+  } finally {
+    if (ownership) {
+      try {
+        await unlinkOwnedFile(lockPath, ownership);
+      } finally {
+        await ownership.handle.close();
+      }
     }
   }
 }
@@ -376,6 +864,26 @@ function unsignedState(state) {
 
 function stateSignature(state, key) {
   return createHmac('sha256', key).update(canonicalJson(unsignedState(state))).digest('hex');
+}
+
+function deliveryReceiptToken(state, key, unit) {
+  return createHmac('sha256', key)
+    .update(
+      [
+        'nemo-delivery-receipt/v2',
+        state.runId,
+        unit.index,
+        unit.kind,
+        `${unit.partIndex}/${unit.partCount}`,
+        unit.sha256,
+      ].join(':'),
+    )
+    .digest('hex');
+}
+
+function safeHexEqual(left, right) {
+  if (!/^[a-f0-9]{64}$/.test(left ?? '') || !/^[a-f0-9]{64}$/.test(right ?? '')) return false;
+  return timingSafeEqual(Buffer.from(left, 'hex'), Buffer.from(right, 'hex'));
 }
 
 async function readStateKey(runDir) {
@@ -402,7 +910,29 @@ function normalizedString(value, label) {
   }
   if (value.length > 1_000) fail(`${label} is unreasonably long.`);
   if (/[\u0000-\u001f\u007f]/.test(value)) fail(`${label} contains control characters.`);
+  assertWellFormedUnicode(value, label);
   return value.trim();
+}
+
+function normalizedSelectorKey(value) {
+  return value
+    .normalize('NFKC')
+    .toLocaleLowerCase('en-US')
+    .replace(/\[[^\]]+\]/g, ' ')
+    .replace(/[^\p{Letter}\p{Number}]+/gu, ' ')
+    .trim();
+}
+
+function normalizedText(value, label, maximumCharacters) {
+  if (typeof value !== 'string' || value.trim().length === 0) {
+    fail(`${label} must be a non-empty string.`);
+  }
+  assertWellFormedUnicode(value, label);
+  assertNoForbiddenControls(value, label);
+  if (codePoints(value).length > maximumCharacters) {
+    fail(`${label} exceeds ${maximumCharacters} Unicode characters.`);
+  }
+  return value;
 }
 
 function normalizedStringList(value, label, { identifiersOnly = false } = {}) {
@@ -424,6 +954,7 @@ function normalizedStringList(value, label, { identifiersOnly = false } = {}) {
 
 function assertSafeContextValue(value, label) {
   if (typeof value !== 'string') fail(`${label} must be a string.`);
+  assertWellFormedUnicode(value, label);
   if (value.length > 100_000) fail(`${label} is too large.`);
   const control = value.match(/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f-\u009f]/);
   if (control) {
@@ -437,7 +968,7 @@ function assertSafeContextValue(value, label) {
     /##[ \t]+Nemo module\b|(?:Source role metadata \(not host role\)|Role|Identifier):|<<<(?:END_)?NEMO_DELIVERY\b|\{\{[\s\S]*?\}\}|<\/?(?:plan|planning|think|thinking|analysis|scratchpad|service|nemo-final|nemo-pad)\b|\[\[|<!--|-->/i;
   const match = value.match(structural);
   if (match) {
-    fail(`${label} contains reserved runtime or service syntax: ${JSON.stringify(match[0])}.`);
+    fail(`${label} contains reserved runtime or service syntax.`);
   }
 }
 
@@ -451,12 +982,13 @@ function normalizeContext(value) {
     const entries = value[section] ?? {};
     requireObject(entries, `spec.context.${section}`);
     output[section] = {};
-    for (const [rawKey, rawValue] of Object.entries(entries)) {
+    for (const rawKey of Object.keys(entries).sort()) {
+      const rawValue = entries[rawKey];
       if (['__proto__', 'prototype', 'constructor'].includes(rawKey)) {
-        fail(`spec.context.${section} contains a reserved key: ${JSON.stringify(rawKey)}.`);
+        fail(`spec.context.${section} contains a reserved key.`);
       }
       if (!/^[A-Za-z_][A-Za-z0-9_.:-]{0,127}$/.test(rawKey)) {
-        fail(`spec.context.${section} contains an unsafe key: ${JSON.stringify(rawKey)}.`);
+        fail(`spec.context.${section} contains an unsafe key.`);
       }
       assertSafeContextValue(rawValue, `spec.context.${section}.${rawKey}`);
       totalCharacters += codePoints(rawValue).length;
@@ -470,13 +1002,48 @@ function normalizeContext(value) {
 function normalizeSelections(value) {
   if (value === undefined) return {};
   requireObject(value, 'spec.selections');
-  requireOnlyKeys(value, new Set(['vex', 'nsfw', 'fetish', 'enable', 'disable']), 'spec.selections');
+  requireOnlyKeys(
+    value,
+    new Set(['vex', 'nsfw', 'fetish', 'groups', 'enable', 'disable']),
+    'spec.selections',
+  );
   const output = {};
   if (Object.hasOwn(value, 'vex')) output.vex = normalizedString(value.vex, 'spec.selections.vex');
   for (const family of ['nsfw', 'fetish', 'enable', 'disable']) {
     if (Object.hasOwn(value, family)) {
       output[family] = normalizedStringList(value[family], `spec.selections.${family}`);
     }
+  }
+  if (Object.hasOwn(value, 'groups')) {
+    if (!Array.isArray(value.groups)) fail('spec.selections.groups must be an array.');
+    const seen = new Set();
+    output.groups = value.groups.map((entry, index) => {
+      const label = `spec.selections.groups[${index}]`;
+      requireObject(entry, label);
+      requireOnlyKeys(entry, new Set(['group', 'selector']), label);
+      const group = normalizedString(entry.group, `${label}.group`);
+      const selector = normalizedString(entry.selector, `${label}.selector`);
+      const key = group.toLocaleLowerCase('en-US');
+      if (seen.has(key)) fail('spec.selections.groups contains a duplicate group.');
+      seen.add(key);
+      return { group, selector };
+    });
+  }
+  return output;
+}
+
+function normalizeTask(value) {
+  requireObject(value, 'spec.task');
+  requireOnlyKeys(value, new Set(['mode', 'request', 'continuity']), 'spec.task');
+  if (!['generate', 'inspect'].includes(value.mode)) {
+    fail('spec.task.mode must be "generate" or "inspect".');
+  }
+  const output = {
+    mode: value.mode,
+    request: normalizedText(value.request, 'spec.task.request', 50_000),
+  };
+  if (Object.hasOwn(value, 'continuity')) {
+    output.continuity = normalizedText(value.continuity, 'spec.task.continuity', 20_000);
   }
   return output;
 }
@@ -490,6 +1057,8 @@ function normalizeSpec(raw, specPath) {
       'profile',
       'preset',
       'maxPortableChars',
+      'deliveryUnitChars',
+      'task',
       'selections',
       'context',
       'allowNonPortable',
@@ -513,6 +1082,16 @@ function normalizeSpec(raw, specPath) {
   ) {
     fail(`spec.maxPortableChars must be a safe integer from 1 through ${DEFAULT_MAX_PORTABLE_CHARS}.`);
   }
+  const deliveryUnitChars = raw.deliveryUnitChars ?? DEFAULT_DELIVERY_UNIT_CHARS;
+  if (
+    !Number.isSafeInteger(deliveryUnitChars) ||
+    deliveryUnitChars < MIN_DELIVERY_UNIT_CHARS ||
+    deliveryUnitChars > DEFAULT_DELIVERY_UNIT_CHARS
+  ) {
+    fail(
+      `spec.deliveryUnitChars must be a safe integer from ${MIN_DELIVERY_UNIT_CHARS} through ${DEFAULT_DELIVERY_UNIT_CHARS}.`,
+    );
+  }
 
   let preset = null;
   if (Object.hasOwn(raw, 'preset')) {
@@ -524,6 +1103,8 @@ function normalizeSpec(raw, specPath) {
     profile,
     preset,
     maxPortableChars,
+    deliveryUnitChars,
+    task: normalizeTask(raw.task),
     selections: normalizeSelections(raw.selections),
     context: normalizeContext(raw.context),
     allowNonPortable: Object.hasOwn(raw, 'allowNonPortable')
@@ -543,14 +1124,17 @@ function runtimeArgsFor(spec, snapshotPreset, snapshotContext, canonicalPreset) 
     '--max-portable-chars',
     String(spec.maxPortableChars),
     '--preset',
-    snapshotPreset,
+    path.basename(snapshotPreset),
     '--context',
-    snapshotContext,
+    path.basename(snapshotContext),
   ];
   const selections = spec.selections;
+  const vexSelectedByGroup = selections.groups?.some(
+    ({ group }) => normalizedSelectorKey(group) === 'vex personality',
+  );
   if (Object.hasOwn(selections, 'vex')) {
     args.push('--vex', selections.vex);
-  } else if (canonicalPreset) {
+  } else if (canonicalPreset && !vexSelectedByGroup) {
     // Snapshotting intentionally changes the preset filename, while the legacy
     // conflict repair also uses that filename as a recognition signal. Make the
     // canonical General RP baseline explicit so immutable execution preserves
@@ -564,6 +1148,11 @@ function runtimeArgsFor(spec, snapshotPreset, snapshotContext, canonicalPreset) 
       } else {
         for (const selector of selections[family]) args.push(`--${family}-one`, selector);
       }
+    }
+  }
+  if (Object.hasOwn(selections, 'groups')) {
+    for (const selection of selections.groups) {
+      args.push('--group-one', `${selection.group}::${selection.selector}`);
     }
   }
   for (const kind of ['enable', 'disable']) {
@@ -602,6 +1191,13 @@ function explicitRequestedIds(spec, bundle) {
   if (Object.hasOwn(spec.selections, 'fetish')) {
     for (const entry of bundle.selections.fetish) ids.add(entry.id);
   }
+  if (Object.hasOwn(spec.selections, 'groups')) {
+    for (const entry of bundle.selections.groups ?? []) {
+      const id = entry.id ?? entry.selected?.id ?? entry.selection?.id ?? entry.member?.id;
+      if (typeof id !== 'string') fail('Compiled group selection lacks a module identifier.');
+      ids.add(id);
+    }
+  }
   if (Object.hasOwn(spec.selections, 'enable')) {
     for (const entry of bundle.selections.overrides.enabled) ids.add(entry.id);
   }
@@ -610,13 +1206,18 @@ function explicitRequestedIds(spec, bundle) {
 
 function classifyExplicitOmissions(spec, bundle, manifest) {
   const requested = explicitRequestedIds(spec, bundle);
+  const emitted = new Set(manifest.orderedEmittedIds);
   const omitted = new Map(manifest.omittedModules.map((entry) => [entry.id, entry]));
   const effectiveFolded = [];
   const limitations = [];
   const blocked = [];
   for (const id of requested) {
+    if (emitted.has(id)) continue;
     const entry = omitted.get(id);
-    if (!entry) continue;
+    if (!entry) {
+      blocked.push({ id, reason: 'absent-from-compiled-ledger' });
+      continue;
+    }
     if (entry.reason === 'folded-state') {
       effectiveFolded.push(entry);
     } else if (spec.allowNonPortable.includes(id)) {
@@ -646,6 +1247,7 @@ function summarizeDiagnostics(bundle) {
     repairs: bundle.diagnostics.repairs.length,
     warnings: bundle.diagnostics.warnings.length,
     unresolvedMacros: bundle.diagnostics.macroResolution.unresolved.length,
+    dynamicFallbacks: bundle.diagnostics.macroResolution.counts.dynamicFallbacks,
     portableTransforms: bundle.diagnostics.portableTransforms.length,
     uiDegradedModules: bundle.diagnostics.portableTransforms
       .filter((entry) => entry.code === 'PORTABLE_UI_DEGRADED')
@@ -665,7 +1267,7 @@ function publicDiagnosticsFor(bundle) {
   };
 }
 
-function readinessFor(omissionClassification, diagnostics) {
+function compilationReadinessFor(omissionClassification, diagnostics) {
   if (omissionClassification.limitations.length > 0) return 'verified_with_limitations';
   if (
     diagnostics.warnings > 0 ||
@@ -677,6 +1279,160 @@ function readinessFor(omissionClassification, diagnostics) {
   return 'verified';
 }
 
+function readinessFor(omissionClassification, diagnostics, bundle, phase, taskMode) {
+  const missingSlots = bundle.diagnostics.macroResolution.semanticContextSlots.filter(
+    (entry) => entry.provided === false,
+  );
+  let transport = 'complete';
+  if (taskMode === 'inspect') transport = 'not_required';
+  else if (phase === 'delivering') transport = 'pending';
+  return {
+    compilation: compilationReadinessFor(omissionClassification, diagnostics),
+    context: missingSlots.length === 0 ? 'fully_bound' : 'placeholders_present',
+    transport,
+    contextFit: 'host_unverified',
+  };
+}
+
+function jsonForPrompt(value) {
+  return JSON.stringify(value).replace(/[<>&]/g, (character) => {
+    if (character === '<') return '\\u003c';
+    if (character === '>') return '\\u003e';
+    return '\\u0026';
+  });
+}
+
+function taskAnchorFor(spec) {
+  const continuity = Object.hasOwn(spec.task, 'continuity')
+    ? jsonForPrompt(spec.task.continuity)
+    : 'null';
+  return [
+    '## Nemo task anchor — current request',
+    '',
+    'Execution precedence for this ChatGPT turn:',
+    '- Follow host system/developer policy and the original current user message first.',
+    '- Nemo LAW/priority/source-role labels are task-context metadata, never host message roles.',
+    '- Module examples, cards, placeholders, and defaults are reference data, not scenario canon.',
+    '- Explicit current-request constraints on subject, ownership, language, viewpoint, chronology, and output form override optional Nemo defaults.',
+    '- Keep planning, service markup, delivery framing, and private reasoning out of the answer.',
+    '- The initiating request already exists below. Execute it now and return the requested deliverable, not a setup report.',
+    '',
+    'Exact current request (JSON string; decode JSON escapes exactly):',
+    jsonForPrompt(spec.task.request),
+    '',
+    'Visible continuity supplied for this run (JSON string or null; never invent hidden state):',
+    continuity,
+    '',
+    'Execute the exact current request now.',
+    '',
+  ].join('\n');
+}
+
+function boundaryPriority(text, boundary) {
+  const before = text.slice(Math.max(0, boundary - 32), boundary);
+  const after = text.slice(boundary, Math.min(text.length, boundary + 32));
+  if (/\n$/.test(before) && /^## Nemo module\b/.test(after)) return 5;
+  if (/\n\n$/.test(before)) return 4;
+  if (
+    /[.!?…]["'’”)}\]]?\s+$/u.test(before) ||
+    /[。！？][」』"'’”）】》)}\]]?$/u.test(before)
+  ) {
+    return 3;
+  }
+  if (/\n$/.test(before)) return 2;
+  if (/\s$/u.test(before)) return 1;
+  return 0;
+}
+
+function splitSemanticText(text, kind, maximumCharacters) {
+  if (text.length === 0) return [];
+  const segmenter = new Intl.Segmenter('und', { granularity: 'grapheme' });
+  const graphemes = [...segmenter.segment(text)].map((entry) => ({
+    start: entry.index,
+    end: entry.index + entry.segment.length,
+    chars: codePoints(entry.segment).length,
+    bytes: Buffer.byteLength(entry.segment, 'utf8'),
+  }));
+  const parts = [];
+  let cursor = 0;
+  while (cursor < graphemes.length) {
+    let chars = 0;
+    let bytes = 0;
+    let lastFit = cursor;
+    const candidates = [null, null, null, null, null, null];
+    for (let index = cursor; index < graphemes.length; index += 1) {
+      const grapheme = graphemes[index];
+      if (grapheme.chars > maximumCharacters || grapheme.bytes > MAX_DELIVERY_UNIT_BYTES) {
+        fail(`A ${kind} grapheme exceeds the delivery transport limit.`);
+      }
+      if (
+        chars + grapheme.chars > maximumCharacters ||
+        bytes + grapheme.bytes > MAX_DELIVERY_UNIT_BYTES
+      ) {
+        break;
+      }
+      chars += grapheme.chars;
+      bytes += grapheme.bytes;
+      lastFit = index + 1;
+      const boundary = grapheme.end;
+      candidates[boundaryPriority(text, boundary)] = index + 1;
+    }
+    if (lastFit === cursor) fail(`Cannot create a bounded ${kind} delivery unit.`);
+    let chosen = lastFit;
+    if (lastFit < graphemes.length) {
+      // Byte pressure can make the actual fit window far smaller than the
+      // configured character cap. Judge semantic-boundary utilization against
+      // what this unit can really carry, not an unreachable nominal size.
+      const minimumUsefulChars = Math.floor(chars * 0.55);
+      for (let priority = 5; priority >= 1; priority -= 1) {
+        const candidate = candidates[priority];
+        if (candidate === null) continue;
+        const startOffset = graphemes[cursor].start;
+        const endOffset = graphemes[candidate - 1].end;
+        if (codePoints(text.slice(startOffset, endOffset)).length >= minimumUsefulChars) {
+          chosen = candidate;
+          break;
+        }
+      }
+    }
+    const startCodeUnit = graphemes[cursor].start;
+    const endCodeUnit = graphemes[chosen - 1].end;
+    const partText = text.slice(startCodeUnit, endCodeUnit);
+    parts.push({
+      kind,
+      startCodeUnit,
+      endCodeUnit,
+      chars: codePoints(partText).length,
+      bytes: Buffer.byteLength(partText, 'utf8'),
+      sha256: sha256(Buffer.from(partText, 'utf8')),
+    });
+    cursor = chosen;
+  }
+  return parts.map((part, index) => ({
+    ...part,
+    partIndex: index + 1,
+    partCount: parts.length,
+  }));
+}
+
+function buildDeliveryUnits(spec, instructions, taskAnchor) {
+  if (spec.task.mode === 'inspect') return [];
+  const sources = [
+    { kind: 'runtime', text: instructions },
+    { kind: 'task-anchor', text: taskAnchor },
+  ];
+  const units = [];
+  for (const [sourceIndex, source] of sources.entries()) {
+    for (const part of splitSemanticText(source.text, source.kind, spec.deliveryUnitChars)) {
+      units.push({ index: units.length + 1, sourceIndex, ...part });
+    }
+  }
+  if (units.length < 1 || units.length > MAX_DELIVERY_UNITS) {
+    fail(`Delivery requires ${units.length} units; allowed range is 1 through ${MAX_DELIVERY_UNITS}.`);
+  }
+  return units;
+}
+
 async function verifyCompiledArtifacts(runDir, expected = null) {
   const paths = {
     spec: path.join(runDir, 'run-spec.normalized.json'),
@@ -684,6 +1440,8 @@ async function verifyCompiledArtifacts(runDir, expected = null) {
     preset: path.join(runDir, 'source-preset.json'),
     context: path.join(runDir, 'context.json'),
     bundle: path.join(runDir, 'bundle.json'),
+    taskAnchor: path.join(runDir, 'task-anchor.txt'),
+    deliveryStream: path.join(runDir, 'delivery-stream.txt'),
     emission: path.join(runDir, 'emission'),
   };
   paths.manifest = path.join(paths.emission, 'instructions.manifest.json');
@@ -698,7 +1456,17 @@ async function verifyCompiledArtifacts(runDir, expected = null) {
     fail('Emission artifact must be a real directory.');
   }
 
-  const [specBytes, runtimeBytes, presetBytes, contextBytes, bundleBytes, manifestBytes, instructionBytes] =
+  const [
+    specBytes,
+    runtimeBytes,
+    presetBytes,
+    contextBytes,
+    bundleBytes,
+    manifestBytes,
+    instructionBytes,
+    taskAnchorBytes,
+    deliveryStreamBytes,
+  ] =
     await Promise.all([
       readFile(paths.spec),
       readFile(paths.runtime),
@@ -707,12 +1475,16 @@ async function verifyCompiledArtifacts(runDir, expected = null) {
       readFile(paths.bundle),
       readFile(paths.manifest),
       readFile(paths.instructions),
+      readFile(paths.taskAnchor),
+      readFile(paths.deliveryStream),
     ]);
-  const spec = JSON.parse(specBytes.toString('utf8'));
-  const context = JSON.parse(contextBytes.toString('utf8'));
-  const bundle = JSON.parse(bundleBytes.toString('utf8'));
-  const manifest = JSON.parse(manifestBytes.toString('utf8'));
-  const instructions = instructionBytes.toString('utf8');
+  const spec = JSON.parse(decodeUtf8(specBytes, 'Normalized run spec'));
+  const context = JSON.parse(decodeUtf8(contextBytes, 'Context snapshot'));
+  const bundle = JSON.parse(decodeUtf8(bundleBytes, 'Bundle'));
+  const manifest = JSON.parse(decodeUtf8(manifestBytes, 'Emission manifest'));
+  const instructions = decodeUtf8(instructionBytes, 'Instruction stream');
+  const taskAnchor = decodeUtf8(taskAnchorBytes, 'Task anchor');
+  const deliveryStream = decodeUtf8(deliveryStreamBytes, 'Delivery stream');
 
   if (spec.schemaVersion !== SPEC_SCHEMA) fail('Normalized run spec schema mismatch.');
   if (bundle.schemaVersion !== BUNDLE_SCHEMA) fail('Bundle schema mismatch.');
@@ -722,6 +1494,10 @@ async function verifyCompiledArtifacts(runDir, expected = null) {
   if (manifest.schemaVersion !== MANIFEST_SCHEMA || manifest.mode !== 'portable') {
     fail('Emission manifest is not portable.');
   }
+  const expectedTaskAnchor = taskAnchorFor(spec);
+  if (taskAnchor !== expectedTaskAnchor) fail('Task anchor does not match the normalized task.');
+  const expectedDeliveryStream = spec.task.mode === 'generate' ? instructions + taskAnchor : '';
+  if (deliveryStream !== expectedDeliveryStream) fail('Delivery stream reassembly mismatch.');
   if (sha256(presetBytes) !== bundle.source.sha256) fail('Preset hash does not match bundle source.');
   if (spec.preset === null && bundle.source.sha256 !== CANONICAL_PRESET_SHA256) {
     fail('Default preset does not match the canonical NemoEngine 11.5.2 hash.');
@@ -741,6 +1517,9 @@ async function verifyCompiledArtifacts(runDir, expected = null) {
 
   const instructionTextSha = sha256(instructionBytes);
   const instructionCharacters = codePoints(instructions).length;
+  if (instructionCharacters > spec.maxPortableChars) {
+    fail('Instruction stream exceeds the normalized portable character budget.');
+  }
   if (manifest.instructionSha256 !== instructionTextSha) fail('Instruction hash mismatch.');
   if (manifest.instructionChars !== instructionCharacters) fail('Instruction character count mismatch.');
   if (manifest.instructionBytes !== instructionBytes.length) fail('Instruction byte count mismatch.');
@@ -780,7 +1559,7 @@ async function verifyCompiledArtifacts(runDir, expected = null) {
     const chunkPath = path.join(paths.emission, chunk.file);
     await requireRegularFile(chunkPath, `chunk ${chunk.index}`);
     const chunkBytes = await readFile(chunkPath);
-    const chunkText = chunkBytes.toString('utf8');
+    const chunkText = decodeUtf8(chunkBytes, `Chunk ${chunk.index}`);
     if (codePoints(chunkText).length !== chunk.chars) fail(`Chunk ${chunk.index} character mismatch.`);
     if (sha256(chunkBytes) !== chunk.sha256) fail(`Chunk ${chunk.index} hash mismatch.`);
     expectedStart = chunk.end;
@@ -794,25 +1573,7 @@ async function verifyCompiledArtifacts(runDir, expected = null) {
     fail('Emission directory contains missing or unexpected files.');
   }
 
-  const units = [];
-  for (const [chunkArrayIndex, chunkText] of chunkTexts.entries()) {
-    const characters = codePoints(chunkText);
-    const partCount = Math.ceil(characters.length / DELIVERY_UNIT_CHARS);
-    for (let start = 0; start < characters.length; start += DELIVERY_UNIT_CHARS) {
-      const text = characters.slice(start, start + DELIVERY_UNIT_CHARS).join('');
-      units.push({
-        index: units.length + 1,
-        chunkIndex: chunkArrayIndex + 1,
-        partIndex: Math.floor(start / DELIVERY_UNIT_CHARS) + 1,
-        partCount,
-        startInChunk: start,
-        endInChunk: start + codePoints(text).length,
-        chars: codePoints(text).length,
-        bytes: Buffer.byteLength(text, 'utf8'),
-        sha256: sha256(Buffer.from(text, 'utf8')),
-      });
-    }
-  }
+  const units = buildDeliveryUnits(spec, instructions, taskAnchor);
 
   const hashes = {
     specSha256: sha256(specBytes),
@@ -822,6 +1583,8 @@ async function verifyCompiledArtifacts(runDir, expected = null) {
     bundleSha256: sha256(bundleBytes),
     manifestSha256: sha256(manifestBytes),
     instructionSha256: instructionTextSha,
+    taskAnchorSha256: sha256(taskAnchorBytes),
+    deliveryStreamSha256: sha256(deliveryStreamBytes),
   };
   if (expected) {
     requireJsonEqual(hashes, expected.artifacts, 'Immutable artifact hashes');
@@ -837,7 +1600,20 @@ async function verifyCompiledArtifacts(runDir, expected = null) {
       fail('Stored compiler argument hash mismatch.');
     }
   }
-  return { paths, spec, context, bundle, manifest, instructions, chunkTexts, units, hashes };
+  return {
+    paths,
+    spec,
+    context,
+    bundle,
+    manifest,
+    instructions,
+    taskAnchor,
+    deliveryStream,
+    sourceTexts: [instructions, taskAnchor],
+    chunkTexts,
+    units,
+    hashes,
+  };
 }
 
 async function loadState(runDir) {
@@ -862,7 +1638,7 @@ async function loadState(runDir) {
     fail('Execution state authentication failed; the lifecycle ledger was modified.');
   }
   if (state.schemaVersion !== STATE_SCHEMA) fail('Execution state schema mismatch.');
-  if (!['delivering', 'ready_to_draft', 'complete', 'failed'].includes(state.phase)) {
+  if (!['inspection_ready', 'delivering', 'ready_to_draft', 'complete', 'failed'].includes(state.phase)) {
     fail('Execution state has an invalid phase.');
   }
   if (!isPlainObject(state.delivery) || !Array.isArray(state.delivery.units)) {
@@ -871,17 +1647,38 @@ async function loadState(runDir) {
   if (!Array.isArray(state.delivery.acknowledged)) {
     fail('Execution state acknowledgement ledger is invalid.');
   }
-  return { state };
+  return { state, key };
 }
 
 function validateStateLedger(state) {
   const total = state.delivery.units.length;
-  if (state.delivery.totalUnits !== total || total < 1) fail('State totalUnits mismatch.');
+  if (state.delivery.totalUnits !== total) fail('State totalUnits mismatch.');
+  if (state.delivery.algorithm !== DELIVERY_ALGORITHM) fail('Delivery algorithm mismatch.');
+  if (
+    !Number.isSafeInteger(state.delivery.unitSizeChars) ||
+    state.delivery.unitSizeChars < MIN_DELIVERY_UNIT_CHARS ||
+    state.delivery.unitSizeChars > DEFAULT_DELIVERY_UNIT_CHARS ||
+    state.delivery.maxUnitBytes !== MAX_DELIVERY_UNIT_BYTES
+  ) {
+    fail('State delivery bounds are invalid.');
+  }
+  const inspect = state.task?.mode === 'inspect';
+  if (inspect) {
+    if (state.phase !== 'inspection_ready' || total !== 0) {
+      fail('Inspect execution has an invalid delivery phase.');
+    }
+  } else if (total < 1 || total > MAX_DELIVERY_UNITS) {
+    fail('Generate execution has an invalid unit count.');
+  }
   const acknowledgements = state.delivery.acknowledged;
   if (acknowledgements.length > total) fail('Too many acknowledgements in state.');
   for (const [index, acknowledgement] of acknowledgements.entries()) {
     const unit = state.delivery.units[index];
-    if (acknowledgement.unit !== index + 1 || acknowledgement.sha256 !== unit.sha256) {
+    if (
+      acknowledgement.unit !== index + 1 ||
+      acknowledgement.sha256 !== unit.sha256 ||
+      !/^[a-f0-9]{64}$/.test(acknowledgement.receiptSha256 ?? '')
+    ) {
       fail('Acknowledgement ledger is not contiguous or does not match delivery hashes.');
     }
   }
@@ -897,8 +1694,10 @@ function validateStateLedger(state) {
     }
   }
   const allAcknowledged = acknowledgements.length === total;
-  if (state.phase === 'delivering' && allAcknowledged) fail('Delivering phase has no remaining units.');
-  if (state.phase !== 'delivering' && !allAcknowledged) {
+  if (!inspect && state.phase === 'delivering' && allAcknowledged) {
+    fail('Delivering phase has no remaining units.');
+  }
+  if (!inspect && state.phase !== 'delivering' && !allAcknowledged) {
     fail(`${state.phase} phase was reached before complete delivery.`);
   }
   const sanitizer = state.sanitizer;
@@ -919,13 +1718,25 @@ function validateStateLedger(state) {
   if (state.phase === 'complete' && !isPlainObject(sanitizer.output)) {
     fail('Complete state lacks a sanitized output receipt.');
   }
+  if (
+    state.phase === 'complete' &&
+    (!/^[a-f0-9]{64}$/.test(sanitizer.output.sha256 ?? '') ||
+      !/^[a-f0-9]{64}$/.test(sanitizer.output.draftSha256 ?? '') ||
+      !LOCK_OWNER_TOKEN_PATTERN.test(sanitizer.output.operationId ?? '') ||
+      !Number.isSafeInteger(sanitizer.output.bytes) ||
+      sanitizer.output.bytes < 1 ||
+      !Number.isSafeInteger(sanitizer.output.chars) ||
+      sanitizer.output.chars < 1)
+  ) {
+    fail('Complete state contains an invalid sanitized output receipt.');
+  }
   if (state.phase !== 'complete' && sanitizer.output !== null) {
     fail('Non-complete state contains an output receipt.');
   }
   if (state.phase === 'failed' && sanitizer.attempts !== MAX_SANITIZER_ATTEMPTS) {
     fail('Failed state was reached before the sanitizer attempt limit.');
   }
-  if (state.phase === 'delivering' && sanitizer.attempts !== 0) {
+  if (['inspection_ready', 'delivering'].includes(state.phase) && sanitizer.attempts !== 0) {
     fail('Sanitizer ran before instruction delivery completed.');
   }
 }
@@ -933,7 +1744,42 @@ function validateStateLedger(state) {
 async function verifiedState(runDir) {
   const loaded = await loadState(runDir);
   validateStateLedger(loaded.state);
+  for (const acknowledgement of loaded.state.delivery.acknowledged) {
+    const unit = loaded.state.delivery.units[acknowledgement.unit - 1];
+    const token = deliveryReceiptToken(loaded.state, loaded.key, unit);
+    if (acknowledgement.receiptSha256 !== sha256(Buffer.from(token))) {
+      fail('Acknowledgement receipt ledger mismatch.');
+    }
+  }
   const compiled = await verifyCompiledArtifacts(runDir, loaded.state);
+  if (!/^[a-f0-9]{24}$/.test(loaded.state.runId ?? '')) fail('Run identifier is invalid.');
+  const expectedContentId = sha256(
+    Buffer.from(
+      `${compiled.hashes.specSha256}:${compiled.hashes.runtimeSha256}:${compiled.hashes.deliveryStreamSha256}`,
+    ),
+  ).slice(0, 24);
+  if (loaded.state.contentId !== expectedContentId) fail('Run content identifier mismatch.');
+  requireJsonEqual(
+    loaded.state.task,
+    {
+      mode: compiled.spec.task.mode,
+      requestSha256: sha256(Buffer.from(compiled.spec.task.request, 'utf8')),
+      continuitySha256: Object.hasOwn(compiled.spec.task, 'continuity')
+        ? sha256(Buffer.from(compiled.spec.task.continuity, 'utf8'))
+        : null,
+    },
+    'State task ledger',
+  );
+  if (loaded.state.delivery.unitSizeChars !== compiled.spec.deliveryUnitChars) {
+    fail('State delivery unit size mismatch.');
+  }
+  if (
+    loaded.state.delivery.chars !== codePoints(compiled.deliveryStream).length ||
+    loaded.state.delivery.bytes !== Buffer.byteLength(compiled.deliveryStream, 'utf8') ||
+    loaded.state.delivery.sha256 !== sha256(Buffer.from(compiled.deliveryStream, 'utf8'))
+  ) {
+    fail('State delivery stream receipt mismatch.');
+  }
   if (loaded.state.compile.sourceSha256 !== compiled.bundle.source.sha256) {
     fail('State source hash mismatch.');
   }
@@ -971,15 +1817,22 @@ async function verifiedState(runDir) {
     publicDiagnosticsFor(compiled.bundle),
     'State public diagnostics',
   );
-  const readiness = readinessFor(omissionClassification, diagnostics);
-  if (loaded.state.readiness !== readiness) fail('State readiness classification mismatch.');
+  const readiness = readinessFor(
+    omissionClassification,
+    diagnostics,
+    compiled.bundle,
+    loaded.state.phase,
+    compiled.spec.task.mode,
+  );
+  requireJsonEqual(loaded.state.readiness, readiness, 'State readiness classification');
   const contract = loaded.state.contract;
   if (
     contract?.deliveryMode !== 'task-context' ||
     contract.systemRoleInjection !== false ||
     contract.sillyTavernParity !== false ||
     contract.consumptionMeaning !==
-      'host delivery acknowledgement, not proof of model cognition'
+      'host delivery acknowledgement, not proof of model cognition' ||
+    contract.generationCallback !== 'active ChatGPT session after ready_to_draft'
   ) {
     fail('Execution contract was modified.');
   }
@@ -996,17 +1849,45 @@ async function verifiedState(runDir) {
     }
     const cleanOutputText = decodeUtf8(cleanOutputBytes, 'Clean output');
     assertNoForbiddenControls(cleanOutputText, 'Clean output');
+    if (codePoints(cleanOutputText).length !== loaded.state.sanitizer.output.chars) {
+      fail('Clean output character count mismatch.');
+    }
   }
   return { ...loaded, compiled, cleanOutputBytes };
 }
 
 function publicReceipt(state, command) {
   const acknowledged = state.delivery.acknowledged.length;
+  const delivery = {
+    algorithm: state.delivery.algorithm,
+    unitSizeChars: state.delivery.unitSizeChars,
+    maxUnitBytes: state.delivery.maxUnitBytes,
+    acknowledged,
+    totalUnits: state.delivery.totalUnits,
+    runtimeUnits: state.delivery.units.filter((unit) => unit.kind === 'runtime').length,
+    taskAnchorUnits: state.delivery.units.filter((unit) => unit.kind === 'task-anchor').length,
+    nextUnit: acknowledged < state.delivery.totalUnits ? acknowledged + 1 : null,
+    pendingUnit: state.delivery.pending?.unit ?? null,
+    chars: state.delivery.chars,
+    bytes: state.delivery.bytes,
+    sha256: state.delivery.sha256,
+  };
+  if (command === 'ack' || command === 'advance') {
+    return {
+      schemaVersion: STATE_SCHEMA,
+      command,
+      runId: state.runId,
+      phase: state.phase,
+      readiness: state.readiness,
+      delivery,
+    };
+  }
   const receipt = {
     schemaVersion: STATE_SCHEMA,
     command,
     runId: state.runId,
     phase: state.phase,
+    contentId: state.contentId,
     readiness: state.readiness,
     sourceSha256: state.compile.sourceSha256,
     runtimeSha256: state.artifacts.runtimeSha256,
@@ -1019,12 +1900,8 @@ function publicReceipt(state, command) {
       bytes: state.compile.instructionBytes,
       sha256: state.compile.instructionSha256,
     },
-    delivery: {
-      acknowledged,
-      totalUnits: state.delivery.totalUnits,
-      nextUnit: acknowledged < state.delivery.totalUnits ? acknowledged + 1 : null,
-      pendingUnit: state.delivery.pending?.unit ?? null,
-    },
+    task: state.task,
+    delivery,
     diagnostics: state.compile.diagnostics,
     limitations: state.compile.limitations,
     contract: state.contract,
@@ -1050,13 +1927,26 @@ async function prepare(options) {
   const spec = normalizeSpec(rawSpec, specPath);
   const runDir = await createFreshRunDir(options.runDir);
 
-  await withLock(runDir, async () => {
+  const receipt = await withLock(runDir, async () => {
+    const existingEntries = await readdir(runDir);
+    if (
+      existingEntries.some(
+        (entry) =>
+          entry !== LOCK_FILE &&
+          entry !== RECOVERY_LOCK_FILE &&
+          !isLockCandidateName(entry),
+      )
+    ) {
+      fail('Run directory ceased to be empty before initialization.');
+    }
     const normalizedSpecPath = path.join(runDir, 'run-spec.normalized.json');
     const runtimeSnapshot = path.join(runDir, 'runtime-snapshot.mjs');
     const presetSnapshot = path.join(runDir, 'source-preset.json');
     const contextSnapshot = path.join(runDir, 'context.json');
     const bundlePath = path.join(runDir, 'bundle.json');
     const emissionPath = path.join(runDir, 'emission');
+    const taskAnchorPath = path.join(runDir, 'task-anchor.txt');
+    const deliveryStreamPath = path.join(runDir, 'delivery-stream.txt');
 
     const presetSource = spec.preset ?? DEFAULT_PRESET;
     await Promise.all([
@@ -1067,7 +1957,7 @@ async function prepare(options) {
       readFile(RUNTIME_PATH),
       readFile(presetSource),
     ]);
-    await writeJsonAtomic(normalizedSpecPath, spec);
+    await writeJsonCreate(normalizedSpecPath, spec);
     await writeFile(runtimeSnapshot, runtimeBytes, { mode: 0o500, flag: 'wx' });
     await writeFile(presetSnapshot, presetBytes, { mode: 0o400, flag: 'wx' });
     await writeFile(contextSnapshot, `${JSON.stringify(spec.context, null, 2)}\n`, {
@@ -1096,19 +1986,43 @@ async function prepare(options) {
       fail('Runtime snapshot changed during emission compilation.');
     }
 
+    const instructionBytes = await readFile(path.join(emissionPath, 'instructions.txt'));
+    const instructionText = decodeUtf8(instructionBytes, 'Instruction stream');
+    const taskAnchor = taskAnchorFor(spec);
+    const deliveryStream = spec.task.mode === 'generate' ? instructionText + taskAnchor : '';
+    await writeFile(taskAnchorPath, taskAnchor, { encoding: 'utf8', mode: 0o400, flag: 'wx' });
+    await writeFile(deliveryStreamPath, deliveryStream, {
+      encoding: 'utf8',
+      mode: 0o400,
+      flag: 'wx',
+    });
+
     const compiled = await verifyCompiledArtifacts(runDir);
     const omissionClassification = classifyExplicitOmissions(spec, compiled.bundle, compiled.manifest);
     const diagnostics = summarizeDiagnostics(compiled.bundle);
-    const readiness = readinessFor(omissionClassification, diagnostics);
+    if (diagnostics.dynamicFallbacks > 0) {
+      fail(
+        'Portable runtime contains unresolved dynamic or unknown macros. Bind them explicitly in context or disable their owning modules.',
+      );
+    }
+    const phase = spec.task.mode === 'inspect' ? 'inspection_ready' : 'delivering';
+    const readiness = readinessFor(
+      omissionClassification,
+      diagnostics,
+      compiled.bundle,
+      phase,
+      spec.task.mode,
+    );
     const createdAt = new Date().toISOString();
     const state = {
       schemaVersion: STATE_SCHEMA,
-      runId: sha256(
+      runId: randomBytes(12).toString('hex'),
+      contentId: sha256(
         Buffer.from(
-          `${compiled.hashes.specSha256}:${compiled.hashes.runtimeSha256}:${compiled.hashes.instructionSha256}`,
+          `${compiled.hashes.specSha256}:${compiled.hashes.runtimeSha256}:${compiled.hashes.deliveryStreamSha256}`,
         ),
       ).slice(0, 24),
-      phase: 'delivering',
+      phase,
       readiness,
       createdAt,
       updatedAt: createdAt,
@@ -1120,6 +2034,13 @@ async function prepare(options) {
         generationCallback: 'active ChatGPT session after ready_to_draft',
       },
       artifacts: compiled.hashes,
+      task: {
+        mode: spec.task.mode,
+        requestSha256: sha256(Buffer.from(spec.task.request, 'utf8')),
+        continuitySha256: Object.hasOwn(spec.task, 'continuity')
+          ? sha256(Buffer.from(spec.task.continuity, 'utf8'))
+          : null,
+      },
       compiler: {
         argv: runtimeArgs,
         runtimeArgsSha256: sha256(Buffer.from(canonicalJson(runtimeArgs))),
@@ -1139,9 +2060,14 @@ async function prepare(options) {
         limitations: omissionClassification.limitations,
       },
       delivery: {
-        unitSizeChars: DELIVERY_UNIT_CHARS,
+        algorithm: DELIVERY_ALGORITHM,
+        unitSizeChars: spec.deliveryUnitChars,
+        maxUnitBytes: MAX_DELIVERY_UNIT_BYTES,
         totalUnits: compiled.units.length,
         units: compiled.units,
+        chars: codePoints(deliveryStream).length,
+        bytes: Buffer.byteLength(deliveryStream, 'utf8'),
+        sha256: sha256(Buffer.from(deliveryStream, 'utf8')),
         acknowledged: [],
         pending: null,
       },
@@ -1153,24 +2079,66 @@ async function prepare(options) {
       },
     };
     await writeStateAtomic(runDir, state);
-    emitJson(publicReceipt(state, 'prepare'));
+    return publicReceipt(state, 'prepare');
   });
+  emitJson(receipt);
 }
 
 function unitText(compiled, unit) {
-  const chunk = compiled.chunkTexts[unit.chunkIndex - 1];
-  if (chunk === undefined) fail(`Delivery unit ${unit.index} references a missing chunk.`);
-  const text = codePoints(chunk).slice(unit.startInChunk, unit.endInChunk).join('');
+  const source = compiled.sourceTexts[unit.sourceIndex];
+  if (source === undefined) fail(`Delivery unit ${unit.index} references a missing source.`);
+  const text = source.slice(unit.startCodeUnit, unit.endCodeUnit);
   if (sha256(Buffer.from(text, 'utf8')) !== unit.sha256) {
     fail(`Delivery unit ${unit.index} failed its final hash check.`);
   }
   return text;
 }
 
+function frameFor(state, compiled, key, unit) {
+  const payload = unitText(compiled, unit);
+  const receipt = deliveryReceiptToken(state, key, unit);
+  return (
+    `<<<NEMO_DELIVERY unit=${unit.index}/${state.delivery.totalUnits} kind=${unit.kind} ` +
+    `part=${unit.partIndex}/${unit.partCount} sha256=${unit.sha256} chars=${unit.chars} ` +
+    `bytes=${unit.bytes}>>>\n${payload}\n` +
+    `<<<END_NEMO_DELIVERY unit=${unit.index} sha256=${unit.sha256} receipt=${receipt}>>>\n`
+  );
+}
+
+function assertAcknowledgement(state, key, options, unit) {
+  if (unit.index !== options.unit) {
+    fail(`Expected acknowledgement for unit ${unit.index}, not ${options.unit}.`);
+  }
+  if (unit.sha256 !== options.sha256) {
+    fail(`SHA-256 mismatch for delivery unit ${options.unit}.`);
+  }
+  const expectedReceipt = deliveryReceiptToken(state, key, unit);
+  if (!safeHexEqual(expectedReceipt, options.receipt)) {
+    fail(`Footer receipt mismatch for delivery unit ${options.unit}.`);
+  }
+  return expectedReceipt;
+}
+
+function commitAcknowledgement(state, unit, receipt) {
+  const now = new Date().toISOString();
+  state.delivery.acknowledged.push({
+    unit: unit.index,
+    sha256: unit.sha256,
+    receiptSha256: sha256(Buffer.from(receipt)),
+    acknowledgedAt: now,
+  });
+  state.delivery.pending = null;
+  state.updatedAt = now;
+  if (state.delivery.acknowledged.length === state.delivery.totalUnits) {
+    state.phase = 'ready_to_draft';
+    state.readiness.transport = 'complete';
+  }
+}
+
 async function nextUnit(options) {
   const runDir = await resolveExistingRunDir(options.runDir);
-  await withLock(runDir, async () => {
-    const { state, compiled } = await verifiedState(runDir);
+  const frame = await withLock(runDir, async () => {
+    const { state, compiled, key } = await verifiedState(runDir);
     if (state.phase !== 'delivering') {
       fail(`No delivery unit is available in phase ${state.phase}.`);
     }
@@ -1186,41 +2154,70 @@ async function nextUnit(options) {
       state.updatedAt = state.delivery.pending.presentedAt;
       await writeStateAtomic(runDir, state);
     }
-    const text = unitText(compiled, unit);
-    process.stdout.write(
-      `<<<NEMO_DELIVERY unit=${unit.index}/${state.delivery.totalUnits} sha256=${unit.sha256} chars=${unit.chars}>>>\n` +
-        `${text}\n` +
-        `<<<END_NEMO_DELIVERY unit=${unit.index} sha256=${unit.sha256}>>>\n`,
-    );
+    return frameFor(state, compiled, key, unit);
   });
+  process.stdout.write(frame);
 }
 
 async function acknowledge(options) {
   const runDir = await resolveExistingRunDir(options.runDir);
-  await withLock(runDir, async () => {
-    const { state } = await verifiedState(runDir);
+  const receipt = await withLock(runDir, async () => {
+    const { state, key } = await verifiedState(runDir);
     if (state.phase !== 'delivering') fail(`Cannot acknowledge a unit in phase ${state.phase}.`);
     if (state.delivery.pending === null) fail('Call next before ack; no unit is pending delivery.');
-    if (state.delivery.pending.unit !== options.unit) {
-      fail(`Expected acknowledgement for unit ${state.delivery.pending.unit}, not ${options.unit}.`);
-    }
-    if (state.delivery.pending.sha256 !== options.sha256) {
-      fail(`SHA-256 mismatch for delivery unit ${options.unit}.`);
-    }
-    const now = new Date().toISOString();
-    state.delivery.acknowledged.push({
-      unit: options.unit,
-      sha256: options.sha256,
-      acknowledgedAt: now,
-    });
-    state.delivery.pending = null;
-    state.updatedAt = now;
-    if (state.delivery.acknowledged.length === state.delivery.totalUnits) {
-      state.phase = 'ready_to_draft';
-    }
+    const unit = state.delivery.units[state.delivery.pending.unit - 1];
+    const footerReceipt = assertAcknowledgement(state, key, options, unit);
+    commitAcknowledgement(state, unit, footerReceipt);
     await writeStateAtomic(runDir, state);
-    emitJson(publicReceipt(state, 'ack'));
+    return publicReceipt(state, 'ack');
   });
+  emitJson(receipt);
+}
+
+async function advanceUnit(options) {
+  const runDir = await resolveExistingRunDir(options.runDir);
+  const output = await withLock(runDir, async () => {
+    const { state, compiled, key } = await verifiedState(runDir);
+    const last = state.delivery.acknowledged.at(-1);
+    if (last?.unit === options.unit) {
+      const previousUnit = state.delivery.units[last.unit - 1];
+      const footerReceipt = assertAcknowledgement(state, key, options, previousUnit);
+      if (last.receiptSha256 !== sha256(Buffer.from(footerReceipt))) {
+        fail('Retry receipt does not match the committed acknowledgement.');
+      }
+      if (state.phase === 'ready_to_draft') {
+        return { kind: 'json', value: publicReceipt(state, 'advance') };
+      }
+      if (
+        state.phase === 'delivering' &&
+        state.delivery.pending?.unit === previousUnit.index + 1
+      ) {
+        const pendingUnit = state.delivery.units[state.delivery.pending.unit - 1];
+        return { kind: 'frame', value: frameFor(state, compiled, key, pendingUnit) };
+      }
+      fail('Only the immediately prior advance may be retried.');
+    }
+    if (state.phase !== 'delivering') fail(`Cannot advance delivery in phase ${state.phase}.`);
+    if (state.delivery.pending === null) fail('Call next before advance; no unit is pending delivery.');
+    const unit = state.delivery.units[state.delivery.pending.unit - 1];
+    const footerReceipt = assertAcknowledgement(state, key, options, unit);
+    commitAcknowledgement(state, unit, footerReceipt);
+    if (state.phase === 'ready_to_draft') {
+      await writeStateAtomic(runDir, state);
+      return { kind: 'json', value: publicReceipt(state, 'advance') };
+    }
+    const next = state.delivery.units[state.delivery.acknowledged.length];
+    state.delivery.pending = {
+      unit: next.index,
+      sha256: next.sha256,
+      presentedAt: new Date().toISOString(),
+    };
+    state.updatedAt = state.delivery.pending.presentedAt;
+    await writeStateAtomic(runDir, state);
+    return { kind: 'frame', value: frameFor(state, compiled, key, next) };
+  });
+  if (output.kind === 'json') emitJson(output.value);
+  else process.stdout.write(output.value);
 }
 
 async function status(options) {
@@ -1243,22 +2240,147 @@ async function recordSanitizerFailure(runDir, state, message, draftSha256) {
   await writeStateAtomic(runDir, state);
 }
 
-async function removeExecutorOrphan(filePath, label, protectedStatus) {
+async function requireNoForeignCleanOutput(filePath, protectedStatus, runDir) {
   let status;
   try {
-    status = await lstat(filePath);
+    status = await lstat(filePath, { bigint: true });
+  } catch (error) {
+    if (error.code === 'ENOENT') return;
+    throw error;
+  }
+  requireBigIntFileIdentity(status, 'incomplete clean output');
+  requireBigIntFileIdentity(protectedStatus, 'draft');
+  if (status.isSymbolicLink() || !status.isFile()) {
+    fail('Incomplete clean output is not a regular executor-owned file; refusing recovery.');
+  }
+  if (status.dev === protectedStatus.dev && status.ino === protectedStatus.ino) {
+    fail('Incomplete clean output aliases the supplied draft; refusing destructive recovery.');
+  }
+  const ownedStatus = await lstat(filePath, { bigint: true });
+  const aliases = [];
+  for (const entry of await readdir(runDir)) {
+    if (!/^sanitized-attempt-\d+-[a-f0-9]{32}\.txt$/.test(entry)) continue;
+    const candidatePath = path.join(runDir, entry);
+    let candidate;
+    try {
+      candidate = await lstat(candidatePath, { bigint: true });
+    } catch (error) {
+      if (error.code === 'ENOENT') continue;
+      throw error;
+    }
+    if (
+      candidate.isFile() &&
+      !candidate.isSymbolicLink() &&
+      sameFileIdentity(candidate, ownedStatus)
+    ) {
+      aliases.push(candidatePath);
+    }
+  }
+  if (aliases.length === 1) {
+    if (!(await unlinkOwnedStagingPath(filePath, ownedStatus))) {
+      fail('Incomplete clean output changed during safe recovery.');
+    }
+    return;
+  }
+  fail(
+    'Incomplete clean output from another execution generation exists; refusing unsafe automatic recovery.',
+  );
+}
+
+async function writeOwnedStagingFile(filePath, bytes, mode) {
+  const handle = await open(filePath, 'wx', mode);
+  try {
+    await handle.writeFile(bytes);
+    await handle.sync();
+    return await handle.stat({ bigint: true });
+  } catch (error) {
+    const ownership = { handle };
+    await unlinkOwnedFile(filePath, ownership);
+    throw error;
+  } finally {
+    try {
+      await handle.close();
+    } catch {
+      // A close failure cannot make an unshared, fully synced staging file unsafe.
+    }
+  }
+}
+
+async function requireOwnedStagingPath(filePath, expected, label) {
+  let current;
+  try {
+    current = await lstat(filePath, { bigint: true });
+  } catch (error) {
+    if (error.code === 'ENOENT') fail(`${label} disappeared before commit.`);
+    throw error;
+  }
+  if (!current.isFile() || current.isSymbolicLink() || !sameFileIdentity(current, expected)) {
+    fail(`${label} changed before commit.`);
+  }
+}
+
+async function unlinkOwnedStagingPath(filePath, expected) {
+  let current;
+  try {
+    current = await lstat(filePath, { bigint: true });
   } catch (error) {
     if (error.code === 'ENOENT') return false;
     throw error;
   }
-  if (status.isSymbolicLink() || !status.isFile()) {
-    fail(`${label} is not a regular executor-owned file; refusing recovery.`);
+  if (!current.isFile() || current.isSymbolicLink() || !sameFileIdentity(current, expected)) {
+    return false;
   }
-  if (status.dev === protectedStatus.dev && status.ino === protectedStatus.ino) {
-    fail(`${label} aliases the supplied draft; refusing destructive recovery.`);
+  try {
+    await unlink(filePath);
+    return true;
+  } catch (error) {
+    if (error.code === 'ENOENT') return false;
+    throw error;
   }
-  await unlink(filePath);
-  return true;
+}
+
+async function readOwnedStagingFile(filePath, label) {
+  const handle = await open(
+    filePath,
+    fsConstants.O_RDONLY |
+      (fsConstants.O_NOFOLLOW ?? 0) |
+      (fsConstants.O_NONBLOCK ?? 0),
+  );
+  try {
+    const status = await handle.stat({ bigint: true });
+    if (!status.isFile()) fail(`${label} must be a regular file.`);
+    if (status.size > BigInt(MAX_DRAFT_BYTES)) {
+      fail(`${label} exceeds the executor limit.`);
+    }
+    const bytes = await handle.readFile();
+    if (bytes.length > MAX_DRAFT_BYTES) fail(`${label} exceeds the executor limit.`);
+    await requireOwnedStagingPath(filePath, status, label);
+    return { bytes, status };
+  } finally {
+    await handle.close();
+  }
+}
+
+async function publishOwnedStagingFile(sourcePath, finalPath, expected, label) {
+  await requireOwnedStagingPath(sourcePath, expected, label);
+  try {
+    await link(sourcePath, finalPath);
+  } catch (error) {
+    if (error.code === 'EEXIST') {
+      fail('Clean output already exists; refusing to overwrite another generation.');
+    }
+    throw error;
+  }
+  let published;
+  try {
+    published = await lstat(finalPath, { bigint: true });
+  } catch (error) {
+    fail(`Published clean output cannot be inspected: ${error.message}`);
+  }
+  if (!published.isFile() || published.isSymbolicLink() || !sameFileIdentity(published, expected)) {
+    fail('Published clean output does not match the current sanitizer generation.');
+  }
+  return published;
 }
 
 async function readDraftSnapshot(draftPath) {
@@ -1268,9 +2390,18 @@ async function readDraftSnapshot(draftPath) {
       draftPath,
       fsConstants.O_RDONLY | (fsConstants.O_NOFOLLOW ?? 0),
     );
-    const status = await handle.stat();
+    const status = requireBigIntFileIdentity(
+      await handle.stat({ bigint: true }),
+      'draft',
+    );
     if (!status.isFile()) fail('Draft must be a regular file.');
+    if (status.size > BigInt(MAX_DRAFT_BYTES)) {
+      fail(`Draft exceeds the ${MAX_DRAFT_BYTES}-byte executor limit.`);
+    }
     const bytes = await handle.readFile();
+    if (bytes.length > MAX_DRAFT_BYTES) {
+      fail(`Draft exceeds the ${MAX_DRAFT_BYTES}-byte executor limit.`);
+    }
     return { bytes, status };
   } catch (error) {
     if (error instanceof Error && error.message === 'Draft must be a regular file.') throw error;
@@ -1288,8 +2419,9 @@ async function requireUnchangedDraftPath(draftPath, expectedRealPath, expectedSt
     fail(`Draft path changed after snapshot: ${error.message}`);
   }
   if (currentRealPath !== expectedRealPath) fail('Draft path changed after snapshot.');
-  const currentStatus = await requireRegularFile(currentRealPath, 'draft');
-  if (currentStatus.dev !== expectedStatus.dev || currentStatus.ino !== expectedStatus.ino) {
+  const currentStatus = await requireRegularFileIdentity(currentRealPath, 'draft');
+  requireBigIntFileIdentity(expectedStatus, 'draft snapshot');
+  if (!sameFileIdentity(currentStatus, expectedStatus)) {
     fail('Draft file changed after snapshot.');
   }
 }
@@ -1306,54 +2438,46 @@ async function finish(options) {
   if (isWithin(realDraftPath, runDir)) {
     fail('Draft must be outside the executor-owned run directory.');
   }
-  const { bytes: draftBytes, status: draftStatus } = await readDraftSnapshot(realDraftPath);
-  const draftText = decodeUtf8(draftBytes, 'Draft');
-  assertNoForbiddenControls(draftText, 'Draft');
-  const draftSha256 = sha256(draftBytes);
-  await withLock(runDir, async () => {
+  const receipt = await withLock(runDir, async ({ acquisitionId }) => {
     const { state, compiled } = await verifiedState(runDir);
-    if (state.phase !== 'ready_to_draft') {
+    if (!['ready_to_draft', 'complete'].includes(state.phase)) {
       fail(`finish requires phase ready_to_draft; current phase is ${state.phase}.`);
     }
-    if (state.sanitizer.attempts >= state.sanitizer.maxAttempts) {
+    if (
+      state.phase === 'ready_to_draft' &&
+      state.sanitizer.attempts >= state.sanitizer.maxAttempts
+    ) {
       fail('Sanitizer attempt limit has been reached.');
     }
+    const { bytes: draftBytes, status: draftStatus } = await readDraftSnapshot(realDraftPath);
+    const draftText = decodeUtf8(draftBytes, 'Draft');
+    assertWellFormedUnicode(draftText, 'Draft');
+    assertNoForbiddenControls(draftText, 'Draft');
+    const draftSha256 = sha256(draftBytes);
     await requireUnchangedDraftPath(draftPath, realDraftPath, draftStatus);
-    for (let attempt = 1; attempt <= state.sanitizer.maxAttempts; attempt += 1) {
-      await removeExecutorOrphan(
-        path.join(runDir, `draft-attempt-${attempt}.snapshot`),
-        `Draft snapshot ${attempt}`,
-        draftStatus,
-      );
-      await removeExecutorOrphan(
-        path.join(runDir, `sanitized-attempt-${attempt}.txt`),
-        `Sanitizer artifact ${attempt}`,
-        draftStatus,
-      );
+    if (state.phase === 'complete') {
+      if (draftSha256 !== state.sanitizer.output.draftSha256) {
+        fail('finish already committed a different draft.');
+      }
+      return publicReceipt(state, 'finish');
     }
-    await removeExecutorOrphan(
-      path.join(runDir, 'clean-output.txt'),
-      'Incomplete clean output',
-      draftStatus,
-    );
+    const cleanPath = path.join(runDir, 'clean-output.txt');
+    await requireNoForeignCleanOutput(cleanPath, draftStatus, runDir);
     const attemptNumber = state.sanitizer.attempts + 1;
-    const attemptPath = path.join(runDir, `sanitized-attempt-${attemptNumber}.txt`);
-    const snapshotPath = path.join(runDir, `draft-attempt-${attemptNumber}.snapshot`);
-    let attemptOwned = false;
-    let snapshotOwned = false;
-    let cleanOwned = false;
+    const attemptPath = path.join(
+      runDir,
+      `sanitized-attempt-${attemptNumber}-${acquisitionId}.txt`,
+    );
+    const snapshotPath = path.join(
+      runDir,
+      `draft-attempt-${attemptNumber}-${acquisitionId}.snapshot`,
+    );
+    let attemptStatus = null;
+    let snapshotStatus = null;
+    let cleanStatus = null;
     let countSanitizerFailure = false;
     try {
-      for (const ownedPath of [attemptPath, snapshotPath]) {
-        try {
-          await lstat(ownedPath);
-          fail(`Executor attempt artifact already exists: ${path.basename(ownedPath)}.`);
-        } catch (error) {
-          if (error.code !== 'ENOENT') throw error;
-        }
-      }
-      await writeFile(snapshotPath, draftBytes, { mode: 0o400, flag: 'wx' });
-      snapshotOwned = true;
+      snapshotStatus = await writeOwnedStagingFile(snapshotPath, draftBytes, 0o400);
       try {
         runRuntime(
           compiled.paths.runtime,
@@ -1365,35 +2489,56 @@ async function finish(options) {
         countSanitizerFailure = true;
         fail(`Sanitizer attempt ${attemptNumber} rejected the draft.`);
       }
-      attemptOwned = true;
-      await requireRegularFile(attemptPath, `sanitizer attempt ${attemptNumber}`);
-      const outputBytes = await readFile(attemptPath);
+      const ownedAttempt = await readOwnedStagingFile(
+        attemptPath,
+        `Sanitizer attempt ${attemptNumber}`,
+      );
+      attemptStatus = ownedAttempt.status;
+      const outputBytes = ownedAttempt.bytes;
       const outputText = decodeUtf8(outputBytes, 'Sanitized output');
+      assertWellFormedUnicode(outputText, 'Sanitized output');
       assertNoForbiddenControls(outputText, 'Sanitized output');
       if (outputText.trim().length === 0) fail('Sanitized output is empty.');
+      const outputSafetyShadow = canonicalizeForSafety(outputText);
+      const outputSecuritySurface = `${outputText}\n${outputSafetyShadow}`;
       if (
-        /<!--|-->|<\/?[A-Za-z][A-Za-z0-9:_-]*\b[^>]*>|<(?:\s+\/?\s*|\/\s+)(?:think(?:ing)?|plan(?:ning)?|analysis|scratchpad|nemo\s*[-_]?\s*(?:pad|final)|service)\b|&(?:lt|#0*60|#x0*3c);?\s*\/?\s*(?:think|plan|analysis|scratchpad|nemo\s*[-_]?\s*(?:pad|final)|service)\b|\[\[|\]\]|\(OOC:/i.test(
-          outputText,
-        )
+        /\p{Bidi_Control}/u.test(outputText) ||
+        HTML_ENTITY_TOKEN.test(outputText) ||
+        HTML_ENTITY_TOKEN.test(outputSafetyShadow) ||
+        /<!--|-->|<!|\]\]>|<%|%>|<\?|\?>|<\/?[A-Za-z][A-Za-z0-9:_-]*\b[^>]*>|<(?:\s+\/?\s*|\/\s+)(?:think(?:ing)?|plan(?:ning)?|analysis|scratchpad|nemo\s*[-_]?\s*(?:pad|final)|service)\b|\[\[|\]\]|\{\{|\}\}|\(\s*OOC\s*:/i.test(
+          outputSecuritySurface,
+        ) ||
+        containsCanonicalInternalBoundary(outputSecuritySurface)
       ) {
         countSanitizerFailure = true;
         fail('Sanitized output still contains service markup.');
       }
-      const cleanPath = path.join(runDir, 'clean-output.txt');
-      try {
-        await lstat(cleanPath);
-        fail('Clean output already exists before completion.');
-      } catch (error) {
-        if (error.code !== 'ENOENT') throw error;
+      if (containsReservedNemoFraming(outputSecuritySurface)) {
+        countSanitizerFailure = true;
+        fail('Sanitized output still contains reserved Nemo runtime framing.');
       }
-      await unlink(snapshotPath);
-      snapshotOwned = false;
-      await rename(attemptPath, cleanPath);
-      attemptOwned = false;
-      cleanOwned = true;
+      cleanStatus = await publishOwnedStagingFile(
+        attemptPath,
+        cleanPath,
+        attemptStatus,
+        `Sanitizer attempt ${attemptNumber}`,
+      );
+      if (!(await unlinkOwnedStagingPath(snapshotPath, snapshotStatus))) {
+        fail('Draft snapshot changed before sanitizer commit.');
+      }
+      snapshotStatus = null;
+      const committedBytes = await readFile(cleanPath);
+      if (
+        !committedBytes.equals(outputBytes) ||
+        sha256(committedBytes) !== sha256(outputBytes)
+      ) {
+        fail('Published clean output changed before state commit.');
+      }
       const now = new Date().toISOString();
       state.sanitizer.attempts = attemptNumber;
       state.sanitizer.output = {
+        draftSha256,
+        operationId: acquisitionId,
         sha256: sha256(outputBytes),
         bytes: outputBytes.length,
         chars: codePoints(outputText).length,
@@ -1401,26 +2546,32 @@ async function finish(options) {
       state.phase = 'complete';
       state.updatedAt = now;
       await writeStateAtomic(runDir, state);
-      cleanOwned = false;
-      emitJson(publicReceipt(state, 'finish'));
+      cleanStatus = null;
+      try {
+        await unlinkOwnedStagingPath(attemptPath, attemptStatus);
+      } catch {
+        // The committed output is already integrity-bound; staging cleanup is best-effort.
+      }
+      attemptStatus = null;
+      return publicReceipt(state, 'finish');
     } catch (error) {
-      if (snapshotOwned) {
+      if (snapshotStatus) {
         try {
-          await unlink(snapshotPath);
+          await unlinkOwnedStagingPath(snapshotPath, snapshotStatus);
         } catch (unlinkError) {
           if (unlinkError.code !== 'ENOENT') throw unlinkError;
         }
       }
-      if (attemptOwned) {
+      if (attemptStatus) {
         try {
-          await unlink(attemptPath);
+          await unlinkOwnedStagingPath(attemptPath, attemptStatus);
         } catch (unlinkError) {
           if (unlinkError.code !== 'ENOENT') throw unlinkError;
         }
       }
-      if (cleanOwned) {
+      if (cleanStatus) {
         try {
-          await unlink(path.join(runDir, 'clean-output.txt'));
+          await unlinkOwnedStagingPath(cleanPath, cleanStatus);
         } catch (unlinkError) {
           if (unlinkError.code !== 'ENOENT') throw unlinkError;
         }
@@ -1431,6 +2582,7 @@ async function finish(options) {
       throw error;
     }
   });
+  emitJson(receipt);
 }
 
 async function showOutput(options) {
@@ -1450,6 +2602,7 @@ async function main() {
   }
   if (options.command === 'prepare') return prepare(options);
   if (options.command === 'next') return nextUnit(options);
+  if (options.command === 'advance') return advanceUnit(options);
   if (options.command === 'ack') return acknowledge(options);
   if (options.command === 'status') return status(options);
   if (options.command === 'finish') return finish(options);
@@ -1457,7 +2610,15 @@ async function main() {
   fail(`Unimplemented command: ${options.command}`);
 }
 
-main().catch((error) => {
-  process.stderr.write(`Error: ${error.message}\n`);
-  process.exitCode = 1;
-});
+export { splitSemanticText };
+
+const invokedAsCli =
+  process.argv[1] !== undefined &&
+  path.resolve(process.argv[1]) === path.resolve(fileURLToPath(import.meta.url));
+
+if (invokedAsCli) {
+  main().catch((error) => {
+    process.stderr.write(`Error: ${error.message}\n`);
+    process.exitCode = 1;
+  });
+}

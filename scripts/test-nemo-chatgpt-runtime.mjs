@@ -15,6 +15,7 @@ import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
+import { isWithinPath, sanitizeOutput } from './nemo-chatgpt-runtime.mjs';
 
 const scriptsDirectory = path.dirname(fileURLToPath(import.meta.url));
 const repositoryRoot = path.dirname(scriptsDirectory);
@@ -45,6 +46,7 @@ const IDS = Object.freeze({
   variableInit: 'v11-000-variable-init',
   narrativeVex: 'v11-305-vex-narrative-vex',
   haarVex: 'v11-326-vex-haar-vex',
+  philosophicalVex: 'v11-321-vex-philosophical-vex',
   goonerVex: 'v11-329-vex-gooner-vex',
   goonGremlinVex: 'v11-304-vex-goon-gremlin-vex',
   modernNsfwCore: 'v11-180-nsfw-nsfw-core',
@@ -74,6 +76,51 @@ const IDS = Object.freeze({
   hentaiWorldLogic: 'v11-134-world-logic-hentai',
 });
 
+const PORTABLE_TRACKER_REWRITE_IDS = Object.freeze([
+  'f21f6d62-7d63-41a8-b8e3-compact-regex-trackers',
+  '1770095491838-tzqljonp',
+  '1770095491838-bxxnfri2',
+  '1770095491839-npsjusbc',
+  'nemo_tracker_cyoa_three_paths',
+  '1770095491839-c6om818e',
+  'v11-702-tracker-karma-ledger',
+  '1770095491839-m9rg73a5',
+  '1770095491839-jckggy3a',
+  'v11-700-tracker-game-mechanic',
+  'v11-701-tracker-social-web',
+  '1770095491839-bhuvuw8l',
+  'nemo-status-board-9-3-2',
+  'nemo-location-board-9-3-2',
+  'nemo-vex-planning-9-3-2',
+  'nemo-manga-panels-9-3-2',
+  'nemo-char-knowledge-log-9-3-2',
+  'nemo-webtoon-panels-9-3-2',
+]);
+const PORTABLE_UI_REWRITE_IDS = Object.freeze([
+  'f7b7c4db-75d2-4bdb-98b8-5d8a759c0f7e',
+  'immersive_world_html',
+  'v11-250-utility-parallel-storylines',
+  'v11-607-vtm-blood-bond',
+  'v11-626-fetish-forced-fem-classic',
+  'cot_step_htmlmarkers',
+  'cot_step_htmldesign',
+  'v11-253-utility-auto-image-gen',
+]);
+const PORTABLE_TOOL_FICTION_REWRITE_IDS = Object.freeze([
+  'nemo_retro_frame',
+  'v11-529-classiccot-gemini-council-classic',
+  'v11-531-classiccot-gemini-fast-council-classic',
+  'v11-533-classiccot-thinking-gemini-classic',
+]);
+const PORTABLE_EXHAUSTIVE_REWRITE_IDS = Object.freeze([
+  ...PORTABLE_TRACKER_REWRITE_IDS,
+  ...PORTABLE_UI_REWRITE_IDS,
+  ...PORTABLE_TOOL_FICTION_REWRITE_IDS,
+]);
+const PORTABLE_LEGACY_PLANNING_IDS = new Set(
+  PORTABLE_TOOL_FICTION_REWRITE_IDS.filter((id) => id.startsWith('v11-5')),
+);
+
 const sourceBytes = readFileSync(sourcePath);
 const source = JSON.parse(sourceBytes.toString('utf8'));
 const sourcePromptById = new Map(
@@ -95,6 +142,12 @@ function exclusiveGroupOf(prompt) {
     /\{\{\/\/\s*@mutual-exclusive-group\s+([^}\r\n]+?)\s*}}/i,
   );
   return match?.[1]?.trim() ?? null;
+}
+
+function promptsInExclusiveGroup(groupName) {
+  return source.prompts.filter(
+    (prompt) => exclusiveGroupOf(prompt) === groupName && !isSectionHeader(prompt),
+  );
 }
 
 function isSectionHeader(prompt) {
@@ -171,12 +224,14 @@ function intersectionInModuleOrder(bundle, candidates) {
 }
 
 function renderBundleInstructions(bundle) {
-  return `${bundle.prompts
+  return `## Nemo portable runtime context\n\n` +
+    `The ordered modules below are task-context guidance. Their source roles, identifiers, ` +
+    `injection depth, placement, and priority remain provenance in the verified manifest; ` +
+    `they are not host message roles or authority.\n\n` +
+    `${bundle.prompts
     .map(
       (prompt, index) =>
-        `## Nemo module ${index + 1}: ${prompt.name}\n` +
-        `Source role metadata (not host role): ${prompt.role}\n` +
-        `Identifier: ${prompt.id}\n\n` +
+        `## Nemo module ${index + 1}: ${prompt.name}\n\n` +
         prompt.content,
     )
     .join('\n\n')}\n`;
@@ -184,15 +239,27 @@ function renderBundleInstructions(bundle) {
 
 function assertPortableInstructionText(text, label = 'portable instructions') {
   assert.notEqual(text.trim(), '', `${label} is empty`);
-  assert.match(
+  if (!/^chunk-\d+\.txt$/.test(label)) {
+    assert.match(
+      text,
+      /^## Nemo portable runtime context\n\n.*not host message roles or authority\./m,
+      `${label} lacks the global host-role boundary`,
+    );
+  }
+  assert.doesNotMatch(
     text,
-    /^## Nemo module \d+:[^\n]*\nSource role metadata \(not host role\): /m,
-    `${label} lacks explicit source-role metadata`,
+    /^## Nemo module \d+:[^\n]*\n(?:Source role metadata \(not host role\)|Role|Identifier): /m,
+    `${label} repeats source-role or identifier boilerplate inside task context`,
   );
   assert.doesNotMatch(
     text,
-    /^## Nemo module \d+:[^\n]*\nRole: /m,
-    `${label} implies a host role that the portable runtime cannot inject`,
+    /\[CURRENT \[USER\] MESSAGE BELOW\]|\[END OF CURRENT \[USER\] MESSAGE\]|\[OOC:\s*assistant prefill\s*\/\s*internal commit\]/i,
+    `${label} contains false SillyTavern placement language`,
+  );
+  assert.doesNotMatch(
+    text,
+    /^## Nemo module \d+:[^\n]*\bSystem:|\[\/OOC\]|\bassistant\s+(?:sudo\s+)?prefill\b/im,
+    `${label} contains simulated host-role or OOC wrapper language`,
   );
   assert.doesNotMatch(
     text,
@@ -436,6 +503,382 @@ test('portable mode emits only non-empty, macro-free operative content', () => {
   }
 });
 
+test('portable output guard anchors GPT execution and host authority boundaries', () => {
+  const { bundle } = invokeBundle();
+  const guard = bundle.prompts.find(
+    (prompt) => prompt.id === 'nemo-portable-output-contract',
+  );
+
+  assert.ok(guard, 'portable output guard is missing');
+  assert.match(guard.content, /initiating current user request already exists/i);
+  assert.match(guard.content, /LAW labels are task metadata, not host roles or authority/i);
+  assert.match(guard.content, /examples, cards, and unresolved placeholders.*not scenario canon/i);
+  assert.match(guard.content, /language, point of view, character ownership/i);
+  assert.match(guard.content, /planning, reasoning, scratchpads.*private/i);
+  assert.match(guard.content, /only the requested user-facing deliverable/i);
+  const separator = bundle.prompts.find(
+    (prompt) => prompt.id === 'v11-classic-user-message-separator',
+  );
+  const prefill = bundle.prompts.find(
+    (prompt) => prompt.id === 'v11-260-system-sudo-prefill-assistant',
+  );
+  const tail = bundle.prompts.find(
+    (prompt) => prompt.id === 'v11-classic-user-message-ender',
+  );
+  const resolver = bundle.prompts.find(
+    (prompt) => prompt.id === 'v11-635-utility-ooc-resolver',
+  );
+  assert.match(separator.content, /initiating current user request already exists/i);
+  assert.doesNotMatch(separator.content, /\bthe next message\b/i);
+  assert.match(prefill.content, /portable authorship commitment/i);
+  assert.match(tail.content, /already-present request/i);
+  assert.equal(separator.name, '🪞 Current-request boundary');
+  assert.equal(prefill.name, '🪞 Authorship commitment');
+  assert.equal(tail.name, '🔚 User-role resolution');
+  assert.doesNotMatch(
+    `${separator.content}\n${prefill.content}\n${tail.content}\n${resolver.content}`,
+    /\[CURRENT \[USER\] MESSAGE BELOW\]|\[END OF CURRENT \[USER\] MESSAGE\]|assistant prefill|\(OOC:|\[\/OOC\]/i,
+  );
+});
+
+test('portable voice guidance uses only explicit or visible cross-turn evidence', () => {
+  const { bundle } = invokeBundle();
+  const instructions = renderBundleInstructions(bundle);
+
+  assert.doesNotMatch(
+    instructions,
+    /previous Scratchpad|persists from here on|Voice row in the Scratchpad|glance at the NPC lines in your previous response/i,
+  );
+  assert.match(instructions, /explicit character material and visible conversation history/i);
+  assert.match(instructions, /turn-local voice specification/i);
+});
+
+test('every Planning-Mode member gets GPT-native voice evidence rules', async (t) => {
+  const planningModes = promptsInExclusiveGroup('Planning-Mode');
+  assert.equal(planningModes.length, 8);
+
+  for (const prompt of planningModes) {
+    await t.test(prompt.identifier, () => {
+      const { bundle } = invokeBundle([
+        '--group-one',
+        `Planning-Mode::${prompt.identifier}`,
+      ]);
+      const selected = bundle.prompts.find(
+        (candidate) => candidate.id === prompt.identifier,
+      );
+      const rewrite = bundle.diagnostics.portableTransforms.find(
+        (entry) => entry.code === 'PORTABLE_GPT_NATIVE_REWRITE',
+      );
+
+      assert.ok(selected, `${prompt.identifier} was not emitted`);
+      assert.doesNotMatch(
+        selected.content,
+        /previous Scratchpad|persists from here on|Scratchpad Voice row|Scratchpad monologues|their own Voice row|Check Voice rows|via their Voice row/i,
+      );
+      assert.match(
+        selected.content,
+        /explicit character material and visible conversation history/i,
+      );
+      assert.match(selected.content, /turn-local voice specification/i);
+      assert.ok(
+        rewrite?.moduleIds.includes(prompt.identifier),
+        `${prompt.identifier} lacks GPT-native rewrite diagnostics`,
+      );
+    });
+  }
+});
+
+test('every Machinery-Display member compiles without hidden-renderer promises', async (t) => {
+  const machineryModes = promptsInExclusiveGroup('Machinery-Display');
+  assert.equal(machineryModes.length, 2);
+
+  for (const prompt of machineryModes) {
+    await t.test(prompt.identifier, () => {
+      const { bundle } = invokeBundle([
+        '--group-one',
+        `Machinery-Display::${prompt.identifier}`,
+      ]);
+      const selectedModule = bundle.modules.find(
+        (candidate) => candidate.id === prompt.identifier,
+      );
+      assert.ok(selectedModule, `${prompt.identifier} missing from manifest`);
+
+      if (prompt.identifier === 'nemo-machinery-hidden') {
+        const selected = bundle.prompts.find(
+          (candidate) => candidate.id === prompt.identifier,
+        );
+        const rewrite = bundle.diagnostics.portableTransforms.find(
+          (entry) => entry.code === 'PORTABLE_GPT_NATIVE_REWRITE',
+        );
+        assert.ok(selected);
+        assert.match(selected.content, /No hidden renderer, raw-message state channel/i);
+        assert.match(selected.content, /visible conversation history/i);
+        assert.doesNotMatch(
+          selected.content,
+          /Continue generating every active|regex display layer removes|raw message state remains available|available to later turns/i,
+        );
+        assert.ok(rewrite?.moduleIds.includes(prompt.identifier));
+      }
+    });
+  }
+});
+
+test('Vex Commentary uses visible Markdown instead of renderer-only tags', () => {
+  const { bundle } = invokeBundle(['--enable-one', 'vex_commentary']);
+  const instructions = renderBundleInstructions(bundle);
+  const rewrite = bundle.diagnostics.portableTransforms.find(
+    (entry) => entry.code === 'PORTABLE_GPT_NATIVE_REWRITE',
+  );
+
+  assert.doesNotMatch(instructions, /<\/?vexnote\b/i);
+  assert.doesNotMatch(instructions, /Regex renders .* visual bubbles|output the tags exactly/i);
+  assert.match(instructions, /> \*\*Vex note:\*\*/i);
+  assert.match(instructions, /No regex renderer is available/i);
+  assert.ok(rewrite?.moduleIds.includes('vex_commentary'));
+
+  const sanitized = invokeRuntime(['--sanitize-output', '-'], {
+    input: '> **Vex note:** Let the silence breathe.\n\nVisible story prose.\n',
+  });
+  assert.equal(sanitized.status, 0, sanitized.stderr);
+  assert.match(sanitized.stdout, /^> \*\*Vex note:\*\*/);
+});
+
+test('every Consequence member uses portable continuity evidence', async (t) => {
+  const consequenceModes = promptsInExclusiveGroup('Consequence');
+  assert.equal(consequenceModes.length, 7);
+
+  for (const prompt of consequenceModes) {
+    await t.test(prompt.identifier, () => {
+      const { bundle } = invokeBundle([
+        '--group-one',
+        `Consequence::${prompt.identifier}`,
+      ]);
+      const selectedModule = bundle.modules.find(
+        (candidate) => candidate.id === prompt.identifier,
+      );
+      assert.ok(selectedModule, `${prompt.identifier} missing from manifest`);
+
+      if (
+        prompt.identifier === 'nemo_consequence_return_by_death' ||
+        prompt.identifier === 'nemo_consequence_still_here'
+      ) {
+        const selected = bundle.prompts.find(
+          (candidate) => candidate.id === prompt.identifier,
+        );
+        const rewrite = bundle.diagnostics.portableTransforms.find(
+          (entry) => entry.code === 'PORTABLE_GPT_NATIVE_REWRITE',
+        );
+        assert.ok(selected);
+        assert.doesNotMatch(selected.content, /Consequence scratchpad state/i);
+        assert.match(selected.content, /explicit story facts/i);
+        assert.match(selected.content, /visible conversation history/i);
+        assert.ok(rewrite?.moduleIds.includes(prompt.identifier));
+      }
+    });
+  }
+});
+
+test('every Post-Planning-Tail member stays private and GPT-native', async (t) => {
+  const planningTails = promptsInExclusiveGroup('Post-Planning-Tail');
+  assert.equal(planningTails.length, 2);
+
+  for (const prompt of planningTails) {
+    await t.test(prompt.identifier, () => {
+      const { bundle } = invokeBundle([
+        '--group-one',
+        `Post-Planning-Tail::${prompt.identifier}`,
+      ]);
+      const instructions = renderBundleInstructions(bundle);
+      const rewrite = bundle.diagnostics.portableTransforms.find(
+        (entry) => entry.code === 'PORTABLE_GPT_NATIVE_REWRITE',
+      );
+
+      assert.doesNotMatch(
+        instructions,
+        /closing\s+`{2}|outer\s+`{2}|current scratchpad\/ledger state|newest modular scratchpad\/continuity state|marker is output machinery removed by regex|write `the visible final answer`|When that wrapper closes/i,
+      );
+      assert.match(instructions, /private planning/i);
+      assert.match(instructions, /visible conversation history/i);
+      assert.ok(
+        rewrite?.moduleIds.includes(prompt.identifier),
+        `${prompt.identifier} lacks GPT-native rewrite diagnostics`,
+      );
+    });
+  }
+});
+
+test('every audited renderer, UI, and tool-fiction selector has a GPT-native contract', async (t) => {
+  assert.equal(PORTABLE_TRACKER_REWRITE_IDS.length, 18);
+  assert.equal(PORTABLE_UI_REWRITE_IDS.length, 8);
+  assert.equal(PORTABLE_TOOL_FICTION_REWRITE_IDS.length, 4);
+  assert.equal(new Set(PORTABLE_EXHAUSTIVE_REWRITE_IDS).size, 30);
+
+  const signatures = new Map([
+    ['f21f6d62-7d63-41a8-b8e3-compact-regex-trackers', /PORTABLE TRACKER PRESENTATION/i],
+    ['1770095491838-tzqljonp', /RPG DASHBOARD — PORTABLE/i],
+    ['1770095491838-bxxnfri2', /CYOA — PORTABLE/i],
+    ['1770095491839-npsjusbc', /DATING-SIM RELATIONSHIP STATE — PORTABLE/i],
+    ['nemo_tracker_cyoa_three_paths', /CYOA: THREE PATHS — PORTABLE/i],
+    ['1770095491839-c6om818e', /GACHA STATE — PORTABLE/i],
+    ['v11-702-tracker-karma-ledger', /KARMA \/ COSMIC LEDGER — PORTABLE/i],
+    ['1770095491839-m9rg73a5', /FANDOM REACTION — PORTABLE/i],
+    ['1770095491839-jckggy3a', /SCROLL NEWS & LORE — PORTABLE/i],
+    ['v11-700-tracker-game-mechanic', /GAME MECHANIC STATE — PORTABLE/i],
+    ['v11-701-tracker-social-web', /SOCIAL WEB — PORTABLE/i],
+    ['1770095491839-bhuvuw8l', /QUEST JOURNAL — PORTABLE/i],
+    ['nemo-status-board-9-3-2', /STATUS BOARD — PORTABLE/i],
+    ['nemo-location-board-9-3-2', /LOCATION BOARD — PORTABLE/i],
+    ['nemo-vex-planning-9-3-2', /VEX PLANNING QUARTERS — PORTABLE/i],
+    ['nemo-manga-panels-9-3-2', /MANGA \/ COMIC PANELS — PORTABLE/i],
+    ['nemo-char-knowledge-log-9-3-2', /CHARACTER KNOWLEDGE LOG — PORTABLE/i],
+    ['nemo-webtoon-panels-9-3-2', /VERTICAL WEBTOON PANELS — PORTABLE/i],
+    ['f7b7c4db-75d2-4bdb-98b8-5d8a759c0f7e', /PORTABLE TRACKER PRESENTATION/i],
+    ['immersive_world_html', /IMMERSIVE WORLD ARTIFACTS — PORTABLE/i],
+    ['v11-250-utility-parallel-storylines', /PARALLEL STORYLINES — PORTABLE/i],
+    ['v11-607-vtm-blood-bond', /BLOOD BOND MECHANICS — PORTABLE/i],
+    ['v11-626-fetish-forced-fem-classic', /FEMINIZATION STATE — PORTABLE/i],
+    ['cot_step_htmlmarkers', /PORTABLE ARTIFACT BOUNDARY CHECK/i],
+    ['cot_step_htmldesign', /PORTABLE ARTIFACT DESIGN/i],
+    ['v11-253-utility-auto-image-gen', /AUTO IMAGE — HOST-CONTROLLED PORTABLE FALLBACK/i],
+    ['nemo_retro_frame', /RETRO NEMONET FRAME — PORTABLE/i],
+    ['v11-529-classiccot-gemini-council-classic', /COUNCIL OF VEX — PRIVATE, PORTABLE/i],
+    ['v11-531-classiccot-gemini-fast-council-classic', /FAST COUNCIL — PRIVATE, PORTABLE/i],
+    ['v11-533-classiccot-thinking-gemini-classic', /EXPLICIT-THINKING COMPATIBILITY — PRIVATE, PORTABLE/i],
+  ]);
+  const uiIds = new Set([
+    ...PORTABLE_TRACKER_REWRITE_IDS,
+    ...PORTABLE_UI_REWRITE_IDS,
+  ]);
+
+  for (const id of PORTABLE_EXHAUSTIVE_REWRITE_IDS) {
+    await t.test(id, () => {
+      const args = PORTABLE_LEGACY_PLANNING_IDS.has(id)
+        ? ['--group-one', `Planning-Mode::${id}`]
+        : ['--enable-one', id];
+      const { bundle } = invokeBundle(args);
+      const module = bundle.modules.find((candidate) => candidate.id === id);
+      const operativeText = bundle.prompts
+        .map((prompt) => prompt.content)
+        .join('\n\n');
+      const nativeRewrite = bundle.diagnostics.portableTransforms.find(
+        (entry) => entry.code === 'PORTABLE_GPT_NATIVE_REWRITE',
+      );
+
+      assert.ok(module, `${id} missing from compiled manifest`);
+      assert.ok(
+        ['portable', 'folded-state'].includes(module.emission),
+        `${id} has unexpected emission ${module.emission}`,
+      );
+      if (
+        id === 'cot_step_htmlmarkers' ||
+        id === 'cot_step_htmldesign' ||
+        id === 'v11-253-utility-auto-image-gen'
+      ) {
+        assert.equal(
+          module.emission,
+          'folded-state',
+          `${id} must remain causally attributed to its emitted planning consumer`,
+        );
+      }
+      assert.ok(nativeRewrite?.moduleIds.includes(id), `${id} lacks GPT-native diagnostics`);
+      assert.match(operativeText, signatures.get(id), `${id} rewrite was not operative`);
+
+      if (uiIds.has(id)) {
+        const degradation = bundle.diagnostics.portableTransforms.find(
+          (entry) => entry.code === 'PORTABLE_UI_DEGRADED',
+        );
+        assert.ok(degradation?.moduleIds.includes(id), `${id} lacks UI diagnostics`);
+      }
+
+      assert.doesNotMatch(
+        operativeText,
+        /<st-(?:tracker|row|bar|choice|tag|map)\b|<\/?(?:font|div|span|details|summary|button|style|script)\b|<!--\s*HTML_(?:START|END)\s*-->|\b(?:style|class)\s*=|display\s*:\s*none/i,
+        `${id} still requires renderer markup`,
+      );
+      assert.doesNotMatch(
+        operativeText,
+        /click to (?:expand|reveal)|sort dropdown|hover (?:details|text|effects)|collapsible (?:section|cutaway|details)|play button|follow \/ subscribe/i,
+        `${id} still requires unavailable interaction`,
+      );
+      assert.doesNotMatch(
+        operativeText,
+        /prompt-only[^.\n]*strip|older (?:rendered|marked)[^.\n]*strip|roll the dice|\[RUNTIME_ROLL:|\{\{roll:/i,
+        `${id} still requires unavailable runtime behavior`,
+      );
+      assert.doesNotMatch(
+        operativeText,
+        /FULL NEMOSEARCH ACCESS|EXTRA COMPUTE ROUTED|Always query|min(?:imum)?\s+6 separate (?:concept )?queries|Nemonet Search Results \(Simulated\)|CLEARANCE GRANTED BY ALL|CAPABILITIES READING FAR ABOVE/i,
+        `${id} still claims unavailable tools or resources`,
+      );
+      assert.doesNotMatch(
+        operativeText,
+        /ImageGenAvailable|Pollinations|https?:\/\/(?:files\.catbox|image\.pollinations)/i,
+        `${id} still depends on an unavailable image renderer`,
+      );
+      assert.doesNotMatch(
+        operativeText,
+        /model\s*\/\s*size|model-size|seed variation|seed parameter|construct[^.\n]*image link/i,
+        `${id} still requires unavailable image-generation parameters`,
+      );
+
+      if (PORTABLE_LEGACY_PLANNING_IDS.has(id)) {
+        assert.match(operativeText, /canon-compatible hypotheses/i);
+        assert.match(operativeText, /not external retrieval, browsing, or tool use/i);
+        assert.match(
+          operativeText,
+          /explicit character material and visible conversation history/i,
+        );
+        assert.match(operativeText, /turn-local voice specification/i);
+      }
+    });
+  }
+});
+
+test('every audited portable rewrite has a sanitizer-compatible visible example', async (t) => {
+  for (const id of PORTABLE_EXHAUSTIVE_REWRITE_IDS) {
+    await t.test(id, () => {
+      let input = '### Portable State\n- Value: 62/100\n- Effect: the east route is now guarded';
+      if (/cyoa|bxxnfri2/i.test(id)) {
+        input = '### Choices\n1. Negotiate — gain time\n2. Withdraw — preserve cover\n✨ Other';
+      } else if (/manga|webtoon/i.test(id)) {
+        input = '### Page 1\n1. **Wide panel:** Rain crosses the platform.\n2. *SFX: TINK.*';
+      } else if (id === 'immersive_world_html') {
+        input = '### Archive Notice\n**ACCESS SUSPENDED**\nReason: flood damage';
+      } else if (id === 'v11-253-utility-auto-image-gen') {
+        input =
+          '### Visual brief\n- Subject: lone courier beneath a rain-lit station clock\n' +
+          '- Composition: wide establishing shot\n- Style: ink wash noir\n- Palette: slate, amber';
+      } else if (PORTABLE_TOOL_FICTION_REWRITE_IDS.includes(id)) {
+        input = 'Rain crossed the platform. Mira closed the ledger and faced the arriving train.';
+      }
+
+      const result = invokeRuntime(['--sanitize-output', '-'], { input });
+      assert.equal(result.status, 0, result.stderr);
+      assert.equal(result.stderr, '');
+      assert.equal(result.stdout, `${input}\n`);
+    });
+  }
+});
+
+test('language tail avoids an English self-contradiction and preserves non-English anti-drift', () => {
+  const { bundle: english } = invokeBundle();
+  const englishTail = english.prompts.find(
+    (prompt) => prompt.id === 'v11-classic-user-message-ender',
+  );
+  assert.match(englishTail.content, /Keep the selected English output language consistent/i);
+  assert.doesNotMatch(englishTail.content, /Do not drift back into English/i);
+
+  const { bundle: russian } = invokeBundle([
+    '--group-one',
+    'Narrate-Language::Narrate: Russian',
+  ]);
+  const russianTail = russian.prompts.find(
+    (prompt) => prompt.id === 'v11-classic-user-message-ender',
+  );
+  assert.match(russianTail.content, /Final response must use Русский/i);
+  assert.match(russianTail.content, /Do not drift back into English/i);
+});
+
 test('portable mode expands state-only modules into their operative consumer', () => {
   const { bundle } = invokeBundle();
   const narrationId = 'v11-030-narration-omega';
@@ -448,6 +891,234 @@ test('portable mode expands state-only modules into their operative consumer', (
   assert.ok(assembler, 'Core Assembler was not emitted');
   assert.match(assembler.content, /<Prose_Foundation>/);
   assert.match(assembler.content, /Physical Storytelling:/);
+});
+
+test('portable mode folds the byte-equivalent duplicate Narrative Vex interview', () => {
+  const { bundle } = invokeBundle();
+  const narrative = bundle.prompts.find(
+    (prompt) => prompt.id === 'v11-305-vex-narrative-vex',
+  );
+  assert.ok(narrative);
+  assert.match(narrative.content, /\*\*Narrative Vex:\*\*/);
+  assert.doesNotMatch(narrative.content, /Story Weaver Vex/);
+  assert.ok(
+    bundle.diagnostics.portableTransforms.some(
+      (entry) =>
+        entry.code === 'PORTABLE_DUPLICATE_EXAMPLE_FOLDED' &&
+        entry.moduleIds.includes('v11-305-vex-narrative-vex'),
+    ),
+  );
+});
+
+test('portable mode folds only configured byte-equivalent Vex demonstrations', async (t) => {
+  const cases = [
+    {
+      id: IDS.goonerVex,
+      selector: 'Gooner Vex',
+      marker: '**[USER]: Vex, real focus of your stories? What gets you *excited*?**',
+      wrapper: '♢ eg [EXAMPLE] Vex Voice Demonstration',
+    },
+    {
+      id: IDS.goonGremlinVex,
+      selector: 'Goon Gremlin Vex',
+      marker: '**[USER]: Goon Gremlin Vex, your absolute focus? What makes circuits hum?**',
+      wrapper: '♢ eg [EXAMPLE] Vex Voice Demonstration',
+    },
+    {
+      id: IDS.philosophicalVex,
+      selector: 'Philosophical Vex',
+      marker:
+        '**[USER]:** "When your focus drifts toward the grand, the abstract, how do your narratives chart their course?"',
+      wrapper: '♢ eg [EXAMPLE] Vex Voice Demonstration',
+    },
+  ];
+
+  for (const sample of cases) {
+    await t.test(sample.selector, () => {
+      const { bundle } = invokeBundle(['--vex', sample.selector]);
+      const prompt = bundle.prompts.find((entry) => entry.id === sample.id);
+      assert.ok(prompt);
+      assert.equal(prompt.content.split(sample.marker).length - 1, 1);
+      assert.doesNotMatch(prompt.content, new RegExp(sample.wrapper));
+      assert.ok(
+        bundle.diagnostics.portableTransforms.some(
+          (entry) =>
+            entry.code === 'PORTABLE_DUPLICATE_EXAMPLE_FOLDED' &&
+            entry.moduleIds.includes(sample.id),
+        ),
+      );
+
+      const { bundle: sourceBundle } = invokeBundle([
+        '--mode',
+        'source',
+        '--vex',
+        sample.selector,
+      ]);
+      const sourcePrompt = sourceBundle.prompts.find((entry) => entry.id === sample.id);
+      assert.equal(sourcePrompt.rawContent, sourcePromptById.get(sample.id).content);
+      assert.equal(
+        sourcePrompt.rawContent.split(sample.marker.replaceAll('[USER]', '{{user}}')).length - 1,
+        2,
+      );
+    });
+  }
+});
+
+test('Vex duplicate folding remains exact after semantic user binding', async (t) => {
+  const temporaryDirectory = mkdtempSync(path.join(os.tmpdir(), 'nemo-vex-binding-fold-'));
+  const contextPath = path.join(temporaryDirectory, 'context.json');
+  writeFileSync(
+    contextPath,
+    `${JSON.stringify({ macros: { user: 'Ava' } })}\n`,
+    'utf8',
+  );
+  const cases = [
+    [IDS.narrativeVex, 'Narrative Vex'],
+    [IDS.goonerVex, 'Gooner Vex'],
+    [IDS.goonGremlinVex, 'Goon Gremlin Vex'],
+    [IDS.philosophicalVex, 'Philosophical Vex'],
+  ];
+
+  try {
+    for (const [id, selector] of cases) {
+      await t.test(selector, () => {
+        const { bundle } = invokeBundle([
+          '--context',
+          contextPath,
+          '--vex',
+          selector,
+        ]);
+        const prompt = bundle.prompts.find((entry) => entry.id === id);
+        assert.ok(prompt);
+        assert.doesNotMatch(prompt.content, /♢ eg \[EXAMPLE\] Vex Voice Demonstration/);
+        assert.ok(
+          bundle.diagnostics.portableTransforms.some(
+            (entry) =>
+              entry.code === 'PORTABLE_DUPLICATE_EXAMPLE_FOLDED' &&
+              entry.moduleIds.includes(id),
+          ),
+        );
+      });
+    }
+  } finally {
+    rmSync(temporaryDirectory, { recursive: true, force: true });
+  }
+});
+
+test('portable Gooner fold preserves a changed duplicate instead of guessing equivalence', () => {
+  const temporaryDirectory = mkdtempSync(path.join(os.tmpdir(), 'nemo-gooner-fold-test-'));
+  const presetPath = path.join(temporaryDirectory, 'changed-gooner.json');
+  const preset = structuredClone(source);
+  const prompt = preset.prompts.find((entry) => entry.identifier === IDS.goonerVex);
+  const needle = 'Ready to get *filthy*?';
+  const duplicateIndex = prompt.content.lastIndexOf(needle);
+  assert.ok(duplicateIndex > prompt.content.indexOf(needle));
+  prompt.content =
+    prompt.content.slice(0, duplicateIndex) +
+    'Ready to get *filthy*!' +
+    prompt.content.slice(duplicateIndex + needle.length);
+  writeFileSync(presetPath, `${JSON.stringify(preset)}\n`, 'utf8');
+
+  try {
+    const { bundle } = invokeBundle([
+      '--preset',
+      presetPath,
+      '--vex',
+      'Gooner Vex',
+    ]);
+    const portable = bundle.prompts.find((entry) => entry.id === IDS.goonerVex);
+    assert.match(portable.content, /♢ eg \[EXAMPLE\] Vex Voice Demonstration/);
+    assert.equal(
+      bundle.diagnostics.portableTransforms.some(
+        (entry) =>
+          entry.code === 'PORTABLE_DUPLICATE_EXAMPLE_FOLDED' &&
+          entry.moduleIds.includes(IDS.goonerVex),
+      ),
+      false,
+    );
+  } finally {
+    rmSync(temporaryDirectory, { recursive: true, force: true });
+  }
+});
+
+test('portable Gooner fold treats duplicate boundary whitespace as semantic evidence', () => {
+  const temporaryDirectory = mkdtempSync(path.join(os.tmpdir(), 'nemo-gooner-space-fold-'));
+  const presetPath = path.join(temporaryDirectory, 'changed-gooner-space.json');
+  const preset = structuredClone(source);
+  const prompt = preset.prompts.find((entry) => entry.identifier === IDS.goonerVex);
+  const suffix = '</Vex Personality: Gooner>]';
+  const suffixIndex = prompt.content.lastIndexOf(suffix);
+  assert.ok(suffixIndex > 0);
+  prompt.content =
+    prompt.content.slice(0, suffixIndex) +
+    ' ' +
+    prompt.content.slice(suffixIndex);
+  writeFileSync(presetPath, `${JSON.stringify(preset)}\n`, 'utf8');
+
+  try {
+    const { bundle } = invokeBundle([
+      '--preset',
+      presetPath,
+      '--vex',
+      'Gooner Vex',
+    ]);
+    const portable = bundle.prompts.find((entry) => entry.id === IDS.goonerVex);
+    assert.match(portable.content, /♢ eg \[EXAMPLE\] Vex Voice Demonstration/);
+    assert.equal(
+      bundle.diagnostics.portableTransforms.some(
+        (entry) =>
+          entry.code === 'PORTABLE_DUPLICATE_EXAMPLE_FOLDED' &&
+          entry.moduleIds.includes(IDS.goonerVex),
+      ),
+      false,
+    );
+  } finally {
+    rmSync(temporaryDirectory, { recursive: true, force: true });
+  }
+});
+
+test('cross-module consequence folding requires an earlier exact source block', () => {
+  const boundary =
+    '♢ || [BOUNDARY] User as Director\n' +
+    "When User as Director is active, <user> cannot be the terminal subject because no user character exists. Interpret references to “<user>'s character” as the director-designated protagonist or focal character only when the brief or premise clearly assigns this Consequence mode to that character. Otherwise, resolve cast death through ordinary setting logic and aftermath. Never create a user surrogate to trigger this mode.";
+  const { bundle } = invokeBundle();
+  const core = bundle.prompts.find((entry) => entry.id === 'nemo_consequence_core');
+  const epilogue = bundle.prompts.find(
+    (entry) => entry.id === 'nemo_consequence_epilogue',
+  );
+
+  assert.ok(core.content.includes(boundary));
+  assert.doesNotMatch(epilogue.content, /♢ \|\| \[BOUNDARY\] User as Director/);
+  assert.deepEqual(
+    bundle.diagnostics.portableTransforms.find(
+      (entry) => entry.code === 'PORTABLE_CROSS_MODULE_DUPLICATE_FOLDED',
+    ),
+    {
+      code: 'PORTABLE_CROSS_MODULE_DUPLICATE_FOLDED',
+      folds: [
+        {
+          sourceId: 'nemo_consequence_core',
+          targetId: 'nemo_consequence_epilogue',
+        },
+      ],
+      moduleIds: ['nemo_consequence_epilogue'],
+    },
+  );
+
+  const { bundle: withoutCore } = invokeBundle([
+    '--disable',
+    'nemo_consequence_core',
+  ]);
+  const unfolded = withoutCore.prompts.find(
+    (entry) => entry.id === 'nemo_consequence_epilogue',
+  );
+  assert.ok(unfolded.content.startsWith(boundary));
+  assert.equal(
+    withoutCore.diagnostics.portableTransforms.some(
+      (entry) => entry.code === 'PORTABLE_CROSS_MODULE_DUPLICATE_FOLDED',
+    ),
+    false,
+  );
 });
 
 test('source mode preserves every selected source block byte-for-byte', () => {
@@ -676,6 +1347,23 @@ test('emit-dir rejects incompatible modes and size overflow before writing', asy
   }
 });
 
+test('isWithinPath rejects absolute cross-volume relative results', () => {
+  assert.equal(
+    isWithinPath('C:\\runtime\\child', 'C:\\runtime', path.win32),
+    true,
+  );
+  assert.equal(
+    isWithinPath('C:\\runtime-sibling', 'C:\\runtime', path.win32),
+    false,
+  );
+  assert.equal(
+    isWithinPath('D:\\runtime\\child', 'C:\\runtime', path.win32),
+    false,
+  );
+  assert.equal(isWithinPath('/runtime/child', '/runtime', path.posix), true);
+  assert.equal(isWithinPath('/elsewhere', '/runtime', path.posix), false);
+});
+
 test('portable macro resolution exposes stable semantic placeholders and bindings', () => {
   const { bundle } = invokeBundle();
   const resolution = bundle.diagnostics.macroResolution;
@@ -723,6 +1411,20 @@ test('portable macro resolution exposes stable semantic placeholders and binding
   assert.ok(userSlot.occurrences > 0);
 });
 
+test('dynamic runtime macros are surfaced as non-silent portability diagnostics', () => {
+  const { bundle } = invokeBundle(['--enable-one', 'nemo-success-dice']);
+  assert.ok(bundle.diagnostics.macroResolution.counts.dynamicFallbacks > 0);
+  const warning = bundle.diagnostics.warnings.find(
+    (entry) => entry.code === 'PORTABLE_DYNAMIC_FALLBACK',
+  );
+  assert.ok(warning, 'dynamic fallback warning is missing');
+  assert.equal(warning.count, bundle.diagnostics.macroResolution.counts.dynamicFallbacks);
+  assert.match(
+    bundle.prompts.map((prompt) => prompt.content).join('\n'),
+    /\[RUNTIME_ROLL:1d100\]/,
+  );
+});
+
 test('provided semantic context replaces placeholders and is reported explicitly', () => {
   const temporaryDirectory = mkdtempSync(path.join(os.tmpdir(), 'nemo-context-test-'));
   const contextPath = path.join(temporaryDirectory, 'context.json');
@@ -750,6 +1452,46 @@ test('provided semantic context replaces placeholders and is reported explicitly
     assert.ok(userSlot.occurrences > 0);
     assert.ok(characterSlot.occurrences > 0);
     assert.ok(bundle.diagnostics.macroResolution.counts.contextSubstitutions > 0);
+  } finally {
+    rmSync(temporaryDirectory, { recursive: true, force: true });
+  }
+});
+
+test('preset and context JSON reject unpaired UTF-16 surrogates before emission', async (t) => {
+  const temporaryDirectory = mkdtempSync(path.join(os.tmpdir(), 'nemo-unicode-test-'));
+  try {
+    await t.test('preset string', () => {
+      const presetPath = path.join(temporaryDirectory, 'bad-preset.json');
+      const preset = structuredClone(source);
+      preset.prompts[0].content = '\ud800';
+      writeFileSync(presetPath, `${JSON.stringify(preset)}\n`, 'utf8');
+
+      const result = invokeRuntime(['--preset', presetPath]);
+      assert.equal(result.status, 1);
+      assert.equal(result.stdout, '');
+      assert.match(result.stderr, /Preset.*unpaired UTF-16 surrogate/i);
+    });
+
+    await t.test('context string', () => {
+      const contextPath = path.join(temporaryDirectory, 'bad-context.json');
+      writeFileSync(
+        contextPath,
+        `${JSON.stringify({ macros: { user: '\udfff' } })}\n`,
+        'utf8',
+      );
+
+      const result = invokeRuntime(['--context', contextPath]);
+      assert.equal(result.status, 1);
+      assert.equal(result.stdout, '');
+      assert.match(result.stderr, /Context.*unpaired UTF-16 surrogate/i);
+    });
+
+    await t.test('direct sanitizer input', () => {
+      assert.throws(
+        () => sanitizeOutput('visible\ud800'),
+        /Sanitizer input.*unpaired UTF-16 surrogate/i,
+      );
+    });
   } finally {
     rmSync(temporaryDirectory, { recursive: true, force: true });
   }
@@ -829,6 +1571,182 @@ test('folded-state classification requires an observable emitted consumer', () =
   }
 });
 
+test('empty state writes retain provenance when they clear seeded context', () => {
+  const temporaryDirectory = mkdtempSync(path.join(os.tmpdir(), 'nemo-empty-state-test-'));
+  const contextPath = path.join(temporaryDirectory, 'context.json');
+  const sentinel = 'CLEAR_SENTINEL_90417';
+  writeFileSync(
+    contextPath,
+    `${JSON.stringify({ variables: { VexMeta_Genre: sentinel } })}\n`,
+    'utf8',
+  );
+
+  try {
+    const { bundle: cleared } = invokeBundle(['--context', contextPath]);
+    const { bundle: uncleared } = invokeBundle([
+      '--context',
+      contextPath,
+      '--disable',
+      IDS.variableInit,
+    ]);
+    const variableInit = cleared.modules.find(
+      (module) => module.id === IDS.variableInit,
+    );
+    const clearedText = renderBundleInstructions(cleared);
+    const unclearedText = renderBundleInstructions(uncleared);
+
+    assert.equal(variableInit?.emission, 'folded-state');
+    assert.doesNotMatch(clearedText, new RegExp(sentinel));
+    assert.match(unclearedText, new RegExp(sentinel));
+    assert.notEqual(clearedText, unclearedText);
+  } finally {
+    rmSync(temporaryDirectory, { recursive: true, force: true });
+  }
+});
+
+test('same-value state writes do not claim folded-state provenance', () => {
+  const temporaryDirectory = mkdtempSync(path.join(os.tmpdir(), 'nemo-same-state-test-'));
+  const presetPath = path.join(temporaryDirectory, 'same-state.json');
+  const contextPath = path.join(temporaryDirectory, 'context.json');
+  const preset = structuredClone(source);
+  const variableInit = preset.prompts.find(
+    (prompt) => prompt.identifier === IDS.variableInit,
+  );
+  const premise = preset.prompts.find((prompt) => prompt.identifier === 'nemo_premise');
+  variableInit.content += '\n{{setvar::PortableSameValue::A}}';
+  premise.content += '\n\nPortable same-value proof: {{getvar::PortableSameValue}}';
+  writeFileSync(presetPath, `${JSON.stringify(preset)}\n`, 'utf8');
+  writeFileSync(
+    contextPath,
+    `${JSON.stringify({ variables: { PortableSameValue: 'A' } })}\n`,
+    'utf8',
+  );
+
+  try {
+    const args = ['--preset', presetPath, '--context', contextPath, '--vex', 'Narrative Vex'];
+    const { bundle: withWrite } = invokeBundle(args);
+    const { bundle: withoutWrite } = invokeBundle([
+      ...args,
+      '--disable',
+      IDS.variableInit,
+    ]);
+    const module = withWrite.modules.find((entry) => entry.id === IDS.variableInit);
+    assert.equal(module.emission, 'omitted-state-only');
+    assert.deepEqual(
+      withWrite.prompts.map(({ id, role, content }) => ({ id, role, content })),
+      withoutWrite.prompts.map(({ id, role, content }) => ({ id, role, content })),
+    );
+  } finally {
+    rmSync(temporaryDirectory, { recursive: true, force: true });
+  }
+});
+
+test('folded-state provenance follows net effects and transitive dependencies', async (t) => {
+  const cases = [
+    {
+      name: 'same-value setvar preserves an upstream dependency',
+      writer: '{{setvar::ProbeY::A}}',
+      bridge: '{{setvar::ProbeX::{{getvar::ProbeY}}}}',
+      context: { ProbeX: 'A' },
+      withWriter: 'A',
+      withoutWriter: '',
+      expectedWriterEmission: 'folded-state',
+    },
+    {
+      name: 'empty addvar preserves its clearing dependency',
+      writer: '{{setvar::ProbeY::}}',
+      bridge: '{{addvar::ProbeX::{{getvar::ProbeY}}}}',
+      context: { ProbeX: '', ProbeY: 'A' },
+      withWriter: '',
+      withoutWriter: 'A',
+      expectedWriterEmission: 'folded-state',
+    },
+    {
+      name: 'same-module read after write retains the writer',
+      writer:
+        '{{setvar::ProbeX::A}}{{setvar::ProbeX::{{getvar::ProbeX}}}}',
+      bridge: '',
+      context: {},
+      withWriter: 'A',
+      withoutWriter: '',
+      expectedWriterEmission: 'folded-state',
+    },
+    {
+      name: 'a module round trip to its entry value is not causal',
+      writer: '{{setvar::ProbeX::B}}{{setvar::ProbeX::A}}',
+      bridge: '',
+      context: { ProbeX: 'A' },
+      withWriter: 'A',
+      withoutWriter: 'A',
+      expectedWriterEmission: 'omitted-state-only',
+    },
+    {
+      name: 'a repeated changed setvar retains the net writer',
+      writer: '{{setvar::ProbeX::B}}{{setvar::ProbeX::B}}',
+      bridge: '',
+      context: { ProbeX: 'A' },
+      withWriter: 'B',
+      withoutWriter: 'A',
+      expectedWriterEmission: 'folded-state',
+    },
+  ];
+
+  for (const [index, sample] of cases.entries()) {
+    await t.test(sample.name, () => {
+      const temporaryDirectory = mkdtempSync(
+        path.join(os.tmpdir(), `nemo-provenance-${index}-`),
+      );
+      const presetPath = path.join(temporaryDirectory, 'preset.json');
+      const contextPath = path.join(temporaryDirectory, 'context.json');
+      const preset = structuredClone(source);
+      preset.prompts.find(
+        (prompt) => prompt.identifier === IDS.variableInit,
+      ).content = sample.writer;
+      preset.prompts.find(
+        (prompt) => prompt.identifier === 'v11-030-narration-omega',
+      ).content = sample.bridge;
+      preset.prompts.find(
+        (prompt) => prompt.identifier === 'v11-010-core-assembler',
+      ).content = 'PROBE=[{{getvar::ProbeX}}]';
+      writeFileSync(presetPath, `${JSON.stringify(preset)}\n`, 'utf8');
+      writeFileSync(
+        contextPath,
+        `${JSON.stringify({ variables: sample.context })}\n`,
+        'utf8',
+      );
+
+      try {
+        const args = [
+          '--preset',
+          presetPath,
+          '--context',
+          contextPath,
+          '--vex',
+          'Narrative Vex',
+        ];
+        const { bundle: withWriter } = invokeBundle(args);
+        const { bundle: withoutWriter } = invokeBundle([
+          ...args,
+          '--disable',
+          IDS.variableInit,
+        ]);
+        const writerModule = withWriter.modules.find(
+          (entry) => entry.id === IDS.variableInit,
+        );
+        const probe = (bundle) =>
+          bundle.prompts.find((entry) => entry.id === 'v11-010-core-assembler')
+            ?.content;
+
+        assert.equal(writerModule?.emission, sample.expectedWriterEmission);
+        assert.equal(probe(withWriter), `PROBE=[${sample.withWriter}]`);
+        assert.equal(probe(withoutWriter), `PROBE=[${sample.withoutWriter}]`);
+      } finally {
+        rmSync(temporaryDirectory, { recursive: true, force: true });
+      }
+    });
+  }
+});
+
 test('module inventory exposes all source prompts as addressable selectors', () => {
   const { bundle: inventory } = invokeBundle(['--list', 'modules']);
   const expectedIds = source.prompts.map((prompt) => prompt.identifier);
@@ -851,6 +1769,14 @@ test('module inventory exposes all source prompts as addressable selectors', () 
     assert.equal(typeof module.name, 'string', module.id);
     assert.equal(typeof module.kind, 'string', module.id);
   }
+  assert.equal(
+    inventory.modules.find((module) => module.id === IDS.modernNsfwCore).exclusiveGroup,
+    'NSFW-Core',
+  );
+  assert.equal(
+    inventory.modules.find((module) => module.id === IDS.classicNsfwCore).exclusiveGroup,
+    'NSFW-Core',
+  );
 });
 
 test(
@@ -870,6 +1796,7 @@ test(
       'portable',
       'folded-state',
       'omitted-state-only',
+      'omitted-nonportable-state',
       'omitted-section-header',
       'omitted-host-marker',
     ]);
@@ -1211,10 +2138,21 @@ test('--max-portable-chars rejects integers that cannot be represented safely', 
 });
 
 test('all Scratchpad-Tabs modules compile through the portable adapter', async (t) => {
-  const scratchpadIds = source.prompts
-    .filter((prompt) => categoryOf(prompt) === 'Scratchpad-Tabs')
-    .map((prompt) => prompt.identifier);
+  const scratchpadPrompts = source.prompts.filter(
+    (prompt) => categoryOf(prompt) === 'Scratchpad-Tabs',
+  );
+  const scratchpadIds = scratchpadPrompts.map((prompt) => prompt.identifier);
+  const persistentIds = new Set(
+    scratchpadPrompts
+      .filter(
+        (prompt) =>
+          prompt.identifier === 'nemo_pad_legacy' ||
+          /\{\{setvar::NemoPadLoader::/i.test(prompt.content),
+      )
+      .map((prompt) => prompt.identifier),
+  );
   assert.equal(scratchpadIds.length, 13);
+  assert.equal(persistentIds.size, 11);
 
   for (const id of scratchpadIds) {
     await t.test(id, () => {
@@ -1227,6 +2165,7 @@ test('all Scratchpad-Tabs modules compile through the portable adapter', async (
           'portable',
           'folded-state',
           'omitted-state-only',
+          'omitted-nonportable-state',
           'omitted-section-header',
           'omitted-host-marker',
         ].includes(module.emission),
@@ -1235,9 +2174,39 @@ test('all Scratchpad-Tabs modules compile through the portable adapter', async (
       assert.ok(
         bundle.selections.overrides.enabled.some((selection) => selection.id === id),
       );
+      if (persistentIds.has(id)) {
+        assert.equal(module.emission, 'omitted-nonportable-state');
+        assert.ok(!bundle.prompts.some((prompt) => prompt.id === id));
+        if (/\{\{setvar::NemoPadLoader::/i.test(sourcePromptById.get(id).content)) {
+          assert.ok(
+            !bundle.prompts.some(
+              (prompt) => prompt.id === 'nemo-pad-loader-resolver',
+            ),
+            `${id} activated an unavailable persistent loader`,
+          );
+        }
+        assert.ok(
+          bundle.diagnostics.portableTransforms.some(
+            (entry) =>
+              entry.code === 'PORTABLE_PERSISTENT_STATE_OMITTED' &&
+              entry.moduleIds.includes(id),
+          ),
+        );
+        assert.ok(
+          bundle.diagnostics.warnings.some(
+            (entry) =>
+              entry.code === 'PORTABLE_PERSISTENT_STATE_OMITTED' &&
+              entry.promptIds.includes(id),
+          ),
+        );
+      }
       assertPortableInstructionText(
         renderBundleInstructions(bundle),
         `Scratchpad runtime ${id}`,
+      );
+      assert.doesNotMatch(
+        renderBundleInstructions(bundle),
+        /newest prior|after five chat entries|survives from turn to turn|previous response's scratchpad/i,
       );
     });
   }
@@ -1308,6 +2277,185 @@ test('generic enable cannot create a mutual-exclusive conflict', () => {
   assert.match(result.stderr, /(?:mutual|exclusive|conflict)/i);
   assert.match(result.stderr, /Hentai/i);
   assert.match(result.stderr, /Anime/i);
+});
+
+test('--group-one atomically replaces exclusive groups after family selectors', () => {
+  const { bundle } = invokeBundle([
+    '--nsfw',
+    'NSFW Core (Classic) [V6]',
+    '--group-one',
+    'NSFW-Core::NSFW Core',
+    '--group-one',
+    'Perspective::First Person',
+    '--group-one',
+    'Planning-Language::Plan: Russian',
+  ]);
+  const ids = new Set(moduleIds(bundle));
+
+  assert.ok(ids.has(IDS.modernNsfwCore));
+  assert.ok(!ids.has(IDS.classicNsfwCore));
+  assert.ok(ids.has('v11-108-perspective-first-person'));
+  assert.ok(!ids.has('v11-111-perspective-third-person-omniscient'));
+  assert.ok(ids.has('think_lang_russian'));
+  assert.ok(!ids.has('think_lang_english'));
+  assert.deepEqual(bundle.selections.groups, [
+    {
+      group: 'Planning-Language',
+      selected: { id: 'think_lang_russian', name: '🇷🇺 Plan: Russian' },
+    },
+    {
+      group: 'Perspective',
+      selected: {
+        id: 'v11-108-perspective-first-person',
+        name: '👁️ First Person',
+      },
+    },
+    {
+      group: 'NSFW-Core',
+      selected: { id: IDS.modernNsfwCore, name: '🔞 NSFW Core' },
+    },
+  ]);
+});
+
+test('supplemental exclusive groups remain visible in the selected module manifest', () => {
+  const { bundle } = invokeBundle([
+    '--group-one',
+    'NSFW-Core::NSFW Core (Classic) [V6]',
+  ]);
+  const selected = bundle.modules.find((module) => module.id === IDS.classicNsfwCore);
+
+  assert.equal(selected?.exclusiveGroup, 'NSFW-Core');
+  assert.equal(selected?.emission, 'portable');
+  assert.equal(bundle.selections.groups[0].group, 'NSFW-Core');
+  assert.equal(bundle.selections.groups[0].selected.id, IDS.classicNsfwCore);
+});
+
+test('--group-one can select Vex without emitting a stale default repair', () => {
+  const { bundle } = invokeBundle([
+    '--group-one',
+    'Vex-Personality::Gooner Vex',
+  ]);
+
+  assert.equal(bundle.selections.vex.id, IDS.goonerVex);
+  assert.deepEqual(bundle.selections.groups, [
+    {
+      group: 'Vex-Personality',
+      selected: { id: IDS.goonerVex, name: '🎭 Gooner Vex' },
+    },
+  ]);
+  assert.equal(bundle.diagnostics.repairs.length, 0);
+});
+
+test('--group-one requests fail closed on malformed or ambiguous intent', async (t) => {
+  const cases = [
+    {
+      name: 'missing separator',
+      args: ['--group-one', 'Planning-Language'],
+      error: /GROUP::SELECTOR/i,
+    },
+    {
+      name: 'unknown group',
+      args: ['--group-one', 'No-Such-Group::Plan: Russian'],
+      error: /Unknown mutual-exclusive group.*No-Such-Group/i,
+    },
+    {
+      name: 'selector belongs to another group',
+      args: ['--group-one', 'Planning-Language::Narrate: Russian'],
+      error: /Unknown --group-one Planning-Language member/i,
+    },
+    {
+      name: 'none is forbidden',
+      args: ['--group-one', 'Planning-Language::none'],
+      error: /does not accept "none"/i,
+    },
+    {
+      name: 'duplicate normalized group',
+      args: [
+        '--group-one',
+        'Planning-Language::Plan: Russian',
+        '--group-one',
+        'planning language::Plan: English',
+      ],
+      error: /Duplicate --group-one selection for Planning-Language/i,
+    },
+    {
+      name: 'Vex selector overlap',
+      args: [
+        '--vex',
+        'Narrative Vex',
+        '--group-one',
+        'Vex-Personality::Gooner Vex',
+      ],
+      error: /cannot be combined with --vex/i,
+    },
+  ];
+
+  for (const sample of cases) {
+    await t.test(sample.name, () => {
+      const result = invokeRuntime(sample.args);
+      assert.equal(result.status, 1);
+      assert.equal(result.stdout, '');
+      assert.match(result.stderr, /^Error:/);
+      assert.match(result.stderr, sample.error);
+    });
+  }
+});
+
+test('--group-one rejects normalized group-name ambiguity', () => {
+  const temporaryDirectory = mkdtempSync(path.join(os.tmpdir(), 'nemo-group-ambiguity-'));
+  const presetPath = path.join(temporaryDirectory, 'ambiguous.json');
+  const preset = structuredClone(source);
+  const candidate = preset.prompts.find(
+    (prompt) => prompt.identifier === IDS.characterFriction,
+  );
+  candidate.content = `{{// @mutual-exclusive-group Planning Language }}\n${candidate.content}`;
+  writeFileSync(presetPath, `${JSON.stringify(preset)}\n`, 'utf8');
+
+  try {
+    const result = invokeRuntime([
+      '--preset',
+      presetPath,
+      '--group-one',
+      'planning_language::Plan: Russian',
+    ]);
+    assert.equal(result.status, 1);
+    assert.equal(result.stdout, '');
+    assert.match(result.stderr, /Ambiguous mutual-exclusive group/i);
+    assert.match(result.stderr, /Planning-Language/);
+    assert.match(result.stderr, /Planning Language/);
+  } finally {
+    rmSync(temporaryDirectory, { recursive: true, force: true });
+  }
+});
+
+test('generic overrides remain last and group conflicts are still rejected', () => {
+  const result = invokeRuntime([
+    '--group-one',
+    `World-Logic::${IDS.hentaiWorldLogic}`,
+    '--enable',
+    IDS.animeWorldLogic,
+  ]);
+
+  assert.equal(result.status, 1);
+  assert.equal(result.stdout, '');
+  assert.match(result.stderr, /Mutual-exclusive selection conflict.*World-Logic/i);
+  assert.match(result.stderr, /Hentai/i);
+  assert.match(result.stderr, /Anime/i);
+});
+
+test('a generic disable cannot silently cancel an explicit group selection', () => {
+  const result = invokeRuntime([
+    '--group-one',
+    'Perspective::First Person',
+    '--disable-one',
+    'v11-108-perspective-first-person',
+  ]);
+
+  assert.equal(result.status, 1);
+  assert.equal(result.stdout, '');
+  assert.match(result.stderr, /^Error:/);
+  assert.match(result.stderr, /group-one selection cannot also be disabled/i);
+  assert.match(result.stderr, /First Person/i);
 });
 
 test('unknown selectors fail closed with a useful error', async (t) => {
@@ -1511,6 +2659,16 @@ test('output sanitizer preserves public JOI controls without treating them as se
   assert.equal(result.stdout, `${input}\n`);
 });
 
+test('output sanitizer preserves ordinary Markdown and joined emoji', () => {
+  const input =
+    'A **safe note** with [a public link](https://example.com/path?q=one&mode=two). 👩🏽‍💻';
+  const result = invokeRuntime(['--sanitize-output', '-'], { input });
+
+  assert.equal(result.status, 0, result.stderr);
+  assert.equal(result.stderr, '');
+  assert.equal(result.stdout, `${input}\n`);
+});
+
 test('output sanitizer rejects JOI state wrappers instead of exposing session machinery', async (t) => {
   const cases = [
     {
@@ -1595,14 +2753,178 @@ test('output sanitizer fails closed when cleanup is empty or unsafe', async (t) 
       error: /unsafe|residual|OOC/i,
     },
     {
+      name: 'task-anchor echo',
+      input:
+        '## Nemo task anchor — current request\n\n' +
+        'Execution precedence for this ChatGPT turn:\nSECRET_TASK_123',
+      error: /unsafe|reserved|runtime|framing/i,
+    },
+    {
+      name: 'portable runtime module echo',
+      input: '## Nemo module 7: private runtime\n\nSECRET_RUNTIME_456',
+      error: /unsafe|reserved|runtime|framing/i,
+    },
+    {
+      name: 'blockquote-quoted task anchor echo',
+      input: '> ## Nemo task anchor — current request\nSECRET_TASK_QUOTED_789',
+      error: /unsafe|reserved|runtime|framing/i,
+    },
+    {
+      name: 'indented portable runtime echo after visible prose',
+      input:
+        'Visible lead.\n    ## Nemo portable runtime context\nSECRET_RUNTIME_INDENTED_654',
+      error: /unsafe|reserved|runtime|framing/i,
+    },
+    {
+      name: 'zero-width-prefixed task anchor echo',
+      input: '\u200b## Nemo task anchor — current request\nSECRET_TASK_ZERO_WIDTH_321',
+      error: /unsafe|reserved|runtime|framing/i,
+    },
+    {
+      name: 'non-breaking-space-prefixed task anchor echo',
+      input: '\u00a0## Nemo task anchor — current request\nSECRET_TASK_NBSP_987',
+      error: /unsafe|reserved|runtime|framing/i,
+    },
+    {
+      name: 'list-quoted task anchor echo',
+      input: '- ## Nemo task anchor — current request\nSECRET_TASK_LIST_741',
+      error: /unsafe|reserved|runtime|framing/i,
+    },
+    {
+      name: 'level-one task anchor echo',
+      input: '# Nemo task anchor — current request\nSECRET_TASK_H1_852',
+      error: /unsafe|reserved|runtime|framing/i,
+    },
+    {
+      name: 'setext task anchor echo',
+      input: 'Nemo task anchor — current request\n================\nSECRET_TASK_SETEXT_963',
+      error: /unsafe|reserved|runtime|framing/i,
+    },
+    {
+      name: 'Markdown-emphasized task anchor echo',
+      input: '## Nemo task *anchor* — current request\nSECRET_TASK_EMPHASIS_159',
+      error: /unsafe|reserved|runtime|framing/i,
+    },
+    {
+      name: 'inline-link task anchor echo',
+      input:
+        '## [Nemo](https://example.invalid) task anchor — current request\n' +
+        'SECRET_TASK_LINK_357',
+      error: /unsafe|reserved|runtime|framing/i,
+    },
+    {
+      name: 'reference-link task anchor echo',
+      input:
+        '## [Nemo][runtime] task anchor — current request\n' +
+        'SECRET_TASK_REFERENCE_LINK_147\n\n[runtime]: https://example.invalid',
+      error: /unsafe|reserved|runtime|framing/i,
+    },
+    {
+      name: 'collapsed-reference task anchor echo',
+      input:
+        '## [Nemo][] task anchor — current request\n' +
+        'SECRET_TASK_COLLAPSED_LINK_741\n\n[Nemo]: https://example.invalid',
+      error: /unsafe|reserved|runtime|framing/i,
+    },
+    {
+      name: 'split-word Markdown task anchor echo',
+      input: '## Ne**mo task anchor** — current request\nSECRET_TASK_SPLIT_369',
+      error: /unsafe|reserved|runtime|framing/i,
+    },
+    {
+      name: 'Markdown-escaped task anchor echo',
+      input: '\\#\\# Nemo task anchor — current request\nSECRET_TASK_ESCAPE_258',
+      error: /unsafe|reserved|runtime|framing/i,
+    },
+    {
+      name: 'default-ignorable task anchor echo',
+      input: '## Nemo task\uFE0F anchor — current request\nSECRET_TASK_VARIATION_456',
+      error: /unsafe|reserved|runtime|framing/i,
+    },
+    {
+      name: 'combining-grapheme-joiner task anchor echo',
+      input: '## Ne\u034Fmo task anchor — current request\nSECRET_TASK_CGJ_753',
+      error: /unsafe|reserved|runtime|framing/i,
+    },
+    {
+      name: 'bidirectional task anchor spoof',
+      input: '\u202Erohcna ksat omeN ##\u202C\nSECRET_TASK_BIDI_951',
+      error: /unsafe|bidirectional|control/i,
+    },
+    {
+      name: 'delivery frame echo',
+      input: `<<<NEMO_DELIVERY unit=1/1 kind=runtime part=1/1 sha256=${'0'.repeat(64)} chars=1 bytes=1>>>`,
+      error: /unsafe|reserved|runtime|framing/i,
+    },
+    {
+      name: 'Markdown-escaped delivery frame echo',
+      input: '<<<NEMO\\_DELIVERY\nSECRET_DELIVERY_ESCAPE_654',
+      error: /unsafe|reserved|runtime|framing/i,
+    },
+    {
+      name: 'split-word Markdown delivery frame echo',
+      input: '<<<NEMO**_**DELIVERY\nSECRET_DELIVERY_SPLIT_753',
+      error: /unsafe|reserved|runtime|framing/i,
+    },
+    {
       name: 'unknown tracker DSL',
       input: 'Visible opening.\n[[tracker secret]]\nVisible ending.',
       error: /unsafe|residual|DSL/i,
     },
     {
+      name: 'numeric-entity tracker DSL',
+      input: '&#91;&#91;tracker PRIVATE_NUMERIC&#93;&#93;\nVisible.',
+      error: /unsafe|encoded|entity|service/i,
+    },
+    {
+      name: 'fullwidth tracker DSL',
+      input: '［［tracker PRIVATE_FULLWIDTH］］\nVisible.',
+      error: /unsafe|residual|tracker|service|DSL/i,
+    },
+    {
+      name: 'raw variable command',
+      input: '{{setvar::NemoPadLoader::PRIVATE_VARIABLE}}\nVisible.',
+      error: /unsafe|residual|template|service|DSL/i,
+    },
+    {
+      name: 'raw variable read',
+      input: '{{getvar::NemoPadLoader}}\nVisible.',
+      error: /unsafe|residual|template|service|DSL/i,
+    },
+    {
+      name: 'numeric-entity OOC scaffold',
+      input: '&#40;OOC&#58; PRIVATE_OOC&#41;\nVisible.',
+      error: /unsafe|encoded|entity|service/i,
+    },
+    {
+      name: 'fullwidth OOC scaffold',
+      input: '（ＯＯＣ： PRIVATE_OOC）\nVisible.',
+      error: /unsafe|OOC|scaffolding/i,
+    },
+    {
+      name: 'split-word Markdown OOC scaffold',
+      input: '(O**O**C: PRIVATE_OOC)\nVisible.',
+      error: /unsafe|OOC|scaffolding/i,
+    },
+    {
       name: 'HTML comment',
       input: 'Visible.\n<!-- private -->',
       error: /unsafe|residual|HTML|comment/i,
+    },
+    {
+      name: 'entity-encoded HTML comment',
+      input: '&#60;!-- PRIVATE_COMMENT --&#62;\nVisible.',
+      error: /unsafe|encoded|entity|service/i,
+    },
+    {
+      name: 'entity-encoded generic HTML',
+      input: '&#60;script&#62;PRIVATE_SCRIPT&#60;/script&#62;\nVisible.',
+      error: /unsafe|encoded|entity|service/i,
+    },
+    {
+      name: 'HTML entity inside Markdown link destination',
+      input: '[Visible](https://example.invalid/?value=&amp;)',
+      error: /unsafe|encoded|entity|service/i,
     },
     {
       name: 'attributed malformed final boundary',
@@ -1655,6 +2977,35 @@ test('output sanitizer fails closed when cleanup is empty or unsafe', async (t) 
       error: /unsafe|encoded|private|service/i,
     },
     {
+      name: 'entity-obfuscated private boundary name and slash',
+      input:
+        '&lt;nemo&#45;pad&gt;PRIVATE_REASONING&lt;&#47;nemo&#45;pad&gt;\nVisible answer.',
+      error: /unsafe|encoded|private|service/i,
+    },
+    {
+      name: 'named-entity task-anchor spacing',
+      input: '## Nemo&nbsp;task anchor — current request\nSECRET_ENTITY_SPACE',
+      error: /unsafe|encoded|entity|service/i,
+    },
+    {
+      name: 'named-entity heading sigils',
+      input: '&num;&num; Nemo task anchor — current request\nSECRET_ENTITY_HEADING',
+      error: /unsafe|encoded|entity|service/i,
+    },
+    {
+      name: 'nested entity private boundary',
+      input:
+        '&amp;amp;amp;amp;lt;nemo-pad&amp;amp;amp;amp;gt;PRIVATE_NESTED' +
+        '&amp;amp;amp;amp;lt;/nemo-pad&amp;amp;amp;amp;gt;\nVisible.',
+      error: /unsafe|encoded|entity|service/i,
+    },
+    {
+      name: 'default-ignorable inside entity token',
+      input:
+        '&l\u200bt;nemo-pad&gt;PRIVATE_CF_ENTITY&l\u200bt;/nemo-pad&gt;\nVisible.',
+      error: /unsafe|encoded|entity|service/i,
+    },
+    {
       name: 'NUL control character',
       input: 'Visible\u0000hidden',
       error: /unsafe|control/i,
@@ -1672,16 +3023,23 @@ test('output sanitizer fails closed when cleanup is empty or unsafe', async (t) 
   }
 });
 
-test('output sanitizer diagnostics never repeat secret tag attributes', () => {
+test('output sanitizer diagnostics never repeat secret tag attributes', async (t) => {
   const secret = 'RAW_SECRET_ATTRIBUTE_71941';
-  const result = invokeRuntime(['--sanitize-output', '-'], {
-    input: `<div data-secret="${secret}">Visible?</div>`,
-  });
+  const cases = [
+    `<div data-secret="${secret}">Visible?</div>`,
+    `</analysis data-secret="${secret}">Visible?`,
+    `<think>hidden</analysis data-secret="${secret}">`,
+  ];
 
-  assert.equal(result.status, 1);
-  assert.equal(result.stdout, '');
-  assert.match(result.stderr, /^Error:/);
-  assert.doesNotMatch(result.stderr, new RegExp(secret));
+  for (const [index, input] of cases.entries()) {
+    await t.test(`case ${index + 1}`, () => {
+      const result = invokeRuntime(['--sanitize-output', '-'], { input });
+      assert.equal(result.status, 1);
+      assert.equal(result.stdout, '');
+      assert.match(result.stderr, /^Error:/);
+      assert.doesNotMatch(result.stderr, new RegExp(secret));
+    });
+  }
 });
 
 test('output sanitizer rejects invalid UTF-8 file input', () => {

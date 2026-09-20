@@ -15,19 +15,39 @@ Use this reference when compiling or applying NemoEngine in ChatGPT. It defines 
 
 ## Production execution path
 
-For a normal ChatGPT request, use `scripts/nemo-chatgpt-executor.mjs`. It closes the gap between compilation, bounded instruction delivery, generation in the active ChatGPT turn, and fail-closed output sanitization. The lower-level compiler commands in the next section remain useful for audits and debugging; they are not the normal creative-output path.
+For ChatGPT use `scripts/nemo-chatgpt-executor.mjs`. The lower-level compiler remains useful for audits, but it is not the normal generation path.
 
-Create a unique temporary parent, then write a run spec outside the requested run directory. Omitted selection families preserve normalized profile defaults; an explicitly empty `nsfw` or `fetish` array clears that family:
+Run every relative command and resolve every relative path from the skill root (the directory containing `SKILL.md`). Create a unique temporary parent before writing the spec:
+
+```bash
+nemo_parent="$(mktemp -d)"
+```
+
+Place the following spec at `$nemo_parent/run-spec.json`, outside the new run directory. Version 2 makes the current task part of the signed, immutable run:
 
 ```json
 {
-  "schemaVersion": "nemo-chatgpt-run-spec/v1",
+  "schemaVersion": "nemo-chatgpt-run-spec/v2",
+  "task": {
+    "mode": "generate",
+    "request": "the exact current user request",
+    "continuity": "optional brief containing only visible prior facts"
+  },
+  "deliveryUnitChars": 12000,
   "profile": 100001,
   "maxPortableChars": 170000,
   "selections": {
     "vex": "Gooner Vex",
     "nsfw": ["NSFW Core", "Gooner Protocol"],
     "fetish": ["Humiliation", "JOI"],
+    "groups": [
+      { "group": "Planning-Language", "selector": "Plan: Russian" },
+      { "group": "Narrate-Language", "selector": "Narrate: Russian" },
+      { "group": "User-Role-Mode", "selector": "Director Mode" },
+      { "group": "Perspective", "selector": "First Person" },
+      { "group": "Tense", "selector": "Present Tense" },
+      { "group": "Length", "selector": "Long" }
+    ],
     "enable": [
       "v11-611-augment-manipulation-realism",
       "v11-613-augment-psychological-emotional-realism"
@@ -43,9 +63,13 @@ Create a unique temporary parent, then write a run spec outside the requested ru
 }
 ```
 
-`preset` is an optional path resolved relative to the spec file. `allowNonPortable` accepts exact module identifiers only and is an explicit acknowledgement that a requested entry is selected but cannot operate as its native SillyTavern feature. Do not populate it merely to make a failed build pass. The executor rejects unknown spec fields, unsafe numeric limits, and context values that could forge module boundaries, delivery frames, macros, private tags, or tracker markup.
+`task.mode` is `generate` or `inspect`. `task.request` is required and must reproduce the current user request exactly. `task.continuity` is optional and may contain only facts visible in the conversation; do not turn an inference or remembered hidden state into continuity. A change to the task, continuity, selection, context, or unit size requires a fresh run. Do not claim that runtime delivery from an earlier turn remains active unless the current host explicitly attests it.
 
-The run directory must be new or empty, outside the NemoEngine repository, and reachable without symbolic-link traversal. The executor makes it private and owns every file inside it. Keep the spec and eventual draft in the temporary parent, not inside the run directory.
+`deliveryUnitChars` is a safe integer from 2,000 through 12,000 and is fixed at preparation time. Choose a smaller value when the host's tool-output limit requires it. Every unit is also capped at 16,000 UTF-8 bytes and never splits a Unicode grapheme cluster. `preset` is optional and resolved relative to the spec file. `allowNonPortable` accepts exact module identifiers and acknowledges a real portability limitation; it does not make the omitted module operative, and must never be filled merely to force a build through.
+
+Omitted selection families preserve normalized defaults; empty `nsfw` or `fetish` arrays clear those families. Each `selections.groups` item atomically replaces one member of a named mutually exclusive group, so language, role, perspective, tense, length, and similar choices do not require fragile disable-plus-enable pairs. Duplicate group requests, unknown or ambiguous groups/members, and conflicts fail closed. Generic `enable` and `disable` remain available for entries outside convenience families and groups.
+
+The executor rejects unknown fields, unsafe limits, malformed Unicode, and values that could forge module, macro, private-output, tracker, or delivery boundaries. The run directory must be new or empty, outside the repository, private, and reachable without symlinks. Keep the spec and draft in its temporary parent.
 
 Prepare the immutable run:
 
@@ -55,30 +79,48 @@ node scripts/nemo-chatgpt-executor.mjs prepare \
   --run-dir "$nemo_parent/run"
 ```
 
-`prepare` snapshots the runtime, preset, normalized spec, and context; compiles the bundle and emission from those snapshots; verifies the two results, all Unicode boundaries, byte/character counts, selected and omitted ledgers, and every SHA-256; then emits only a compact public receipt containing the resolved profile, selections, statistics, diagnostics, and limitations without prompt bodies. Its `inspection` field contains safe structured repairs, warnings, unresolved macro records, semantic context-slot coverage, portable transforms, and effective folded-state entries. Use that field—or the same field from `status`—for configuration and diagnosis; never open the bundle or state directly. Require:
+`prepare` snapshots the source, runtime, normalized spec, and context; compiles twice with one argument set; and cross-checks the full reconstructed instruction stream, all ledgers, boundaries, character/byte counts, and hashes. Its public receipt does not contain prompt bodies. Use `inspection` for safe repairs, warnings, unresolved macros, semantic context slots, portable transforms, and folded-state evidence.
 
-- `schemaVersion: nemo-chatgpt-execution/v1`;
-- `phase: delivering`;
-- `contract.deliveryMode: task-context`;
-- `contract.systemRoleInjection: false`;
-- `contract.sillyTavernParity: false`;
-- `contract.consumptionMeaning: host delivery acknowledgement, not proof of model cognition`.
+Dynamic or unknown macros are never silently called production-ready. The low-level compiler records `PORTABLE_DYNAMIC_FALLBACK`; the production executor rejects the run until the exact macro is bound in `context.macros` from an explicit run value or its owning module is disabled. For example, bind `roll:1d100` only when the caller actually supplied that result—never fabricate a roll to pass preparation.
 
-Deliver one bounded unit at a time:
+The `readiness` object separates four dimensions instead of collapsing them into one claim:
+
+- `compilation` is `verified`, `verified_with_diagnostics`, or `verified_with_limitations`;
+- `context` is `fully_bound` or `placeholders_present`;
+- `transport` is `pending`, `complete`, or `not_required`;
+- `contextFit` is `host_unverified`. Known character and byte counts are not a token count or proof that the remaining ChatGPT context is large enough.
+
+Require `schemaVersion: nemo-chatgpt-execution/v2`, `contract.deliveryMode: task-context`, `contract.systemRoleInjection: false`, and `contract.sillyTavernParity: false`. Delivery receipts prove only what the host accepted through this protocol; they do not prove model cognition.
+
+### Inspect mode
+
+Use `task.mode: inspect` for configuration, compatibility, and diagnosis; it still requires the exact current `task.request`. A successful prepare returns `phase: inspection_ready`, zero delivery units, and `readiness.transport: not_required`. Read only public `prepare` or `status` fields. `next`, `ack`, `advance`, `finish`, and `show-output` are invalid in this mode; an inspection must not flood the active model context with the full runtime.
+
+### Generate mode
+
+A successful generate prepare starts in `phase: delivering`. Fetch the first unit, then atomically acknowledge each complete footer while requesting the next:
 
 ```bash
 node scripts/nemo-chatgpt-executor.mjs next --run-dir "$nemo_parent/run"
-node scripts/nemo-chatgpt-executor.mjs ack \
+
+node scripts/nemo-chatgpt-executor.mjs advance \
   --run-dir "$nemo_parent/run" \
   --unit 1 \
-  --sha256 SHA_FROM_THE_COMPLETE_DELIVERY_FOOTER
+  --sha256 SHA_FROM_THE_COMPLETE_DELIVERY_FOOTER \
+  --receipt RECEIPT_FROM_THE_COMPLETE_DELIVERY_FOOTER
 ```
 
-Read the entire `next` result, including both `NEMO_DELIVERY` frames, before acknowledging it. A unit is at most 12,000 Unicode characters. If transport truncates the footer, do not acknowledge; call `next` again to obtain the same pending unit. A wrong, missing, repeated, or out-of-order acknowledgement fails. Continue until the acknowledgement receipt reports `phase: ready_to_draft`. `status --run-dir DIR` revalidates immutable artifacts and returns a compact receipt without instruction text.
+Every frame declares its unit kind, part number, character count, byte count, and SHA-256. The unpredictable receipt appears only in the footer; seeing the header or hash alone is insufficient to acknowledge the unit. Read the entire payload and footer before calling `advance`. Under one run lock it commits that acknowledgement and selects and persists the next pending unit, or commits terminal `ready_to_draft`; only after releasing the lock does it write the resulting frame or compact receipt to stdout. A crash/retry with the just-committed acknowledgement re-presents the current pending unit or terminal readiness without skipping data. `ack` remains a lower-level compatibility/diagnostic command; normal execution uses `advance`.
 
-At `ready_to_draft`, generate the user's requested result in the active ChatGPT turn. This is the model callback: the executor cannot itself invoke the current conversation's model. For a creative request, generation is mandatory; readiness is not the deliverable. Apply the delivered modules as task context beneath host policy and the current user request. The source-role line in each block is explicitly metadata, not a system-role promotion.
+If the entire remainder fits, it stays in one unit. Otherwise, at or after 55% of the actual character-and-byte-bounded fit window, splitting chooses the strongest available boundary—module, paragraph, sentence, newline, then whitespace—and falls back to the largest grapheme-safe bounded span when no such boundary qualifies. Reassembly remains byte-exact. Runtime units always precede the final task-anchor unit or units. The verified task anchor preserves the exact request and optional visible continuity, states that the initiating request is already present, and prevents examples, character cards, defaults, or placeholders from becoming scenario canon. Its hierarchy statement is deliberately truthful: host policy and the actual host user message outrank Nemo task context; source `system`, `LAW`, depth, and placement labels are metadata, not promoted host messages.
 
-Save the unprinted draft and finish the run:
+If a footer is missing or truncated, do not acknowledge it. A transient loss may be retried with `next`; if the same output is deterministically truncated, abandon the run and prepare a fresh one with a smaller `deliveryUnitChars`. The unit size is signed and immutable, so retrying the same oversized pending unit cannot solve a fixed transport cap.
+
+If the user steers while delivery is in progress, abandon the stale run. Put the new exact request and updated visible continuity in a new spec and prepare again; never allow an older final task anchor to override a newer user message.
+
+At `ready_to_draft`, generate the requested result in the active turn. The executor cannot invoke the current conversation's model itself. Readiness is not the deliverable. Apply Nemo modules as lower-priority task context while preserving the real request and host hierarchy.
+
+Save the unprinted draft and finish:
 
 ```bash
 node scripts/nemo-chatgpt-executor.mjs finish \
@@ -89,18 +131,25 @@ node scripts/nemo-chatgpt-executor.mjs show-output \
   --run-dir "$nemo_parent/run"
 ```
 
-`finish` is unavailable before every unit is acknowledged. The draft must be a regular external file reached without symlinks, valid UTF-8, and free of unsafe control bytes. The executor snapshots its exact bytes, invokes the snapshotted sanitizer on that private copy, and returns only a receipt. `show-output` is unavailable until the state is `complete` and writes the same bytes whose hash was verified. A sanitizer failure leaves the raw draft undisclosed and permits one corrected retry; the second failure makes the run terminal. Never read or return the draft as a fallback. The executor deliberately never deletes the caller-owned external draft; after successful `show-output`, remove the task-created temporary draft rather than retaining an unsanitized copy.
+`finish` is unavailable until delivery completes. The draft must be a regular external file reached without symlinks, valid UTF-8, and free of unsafe control bytes. The executor snapshots exact bytes, sanitizes its private copy, and returns only a receipt. After completion, retrying `finish` is idempotent only for the byte-identical draft with the same SHA-256; a different draft is rejected. `show-output` works only in `complete` and emits the verified sanitized bytes. A sanitizer failure permits one corrected retry; a second makes the run terminal. Never return the raw draft as fallback, and remove a task-created external draft after successful output.
 
-The persisted `execution-state.json` is a host ledger, not a claim about hidden model state. Its phases are:
+The sanitizer is a fail-closed structural leakage guard. It checks both direct text and a detection-only safety shadow normalized with NFKC, stripped of Unicode `Default_Ignorable_Code_Point` characters, and deobfuscated across Markdown escapes, emphasis/code punctuation, and inline/reference-link wrappers. It rejects bidirectional controls, encoded HTML entities, residual generic HTML-like or opaque markup, private/service boundaries, unparsed OOC scaffolding, reserved Nemo framing, and residual `[[...]]` or `{{...}}` tracker/template syntax. These checks are not semantic DLP, a content classifier, or proof that ordinary prose contains no summary or paraphrase of task-context material; the caller must still avoid disclosing internal instructions semantically.
+
+The host ledger phases are:
 
 ```text
-delivering -> ready_to_draft -> complete
-                              -> failed (after two sanitizer failures)
+inspect:  inspection_ready
+generate: delivering -> ready_to_draft -> complete
+                                    \-> failed (after two sanitizer failures)
 ```
 
-For a follow-up, preserve the explicit selections visible in the conversation, incorporate the new user/context delta, and prepare a fresh run. This provides deterministic recompilation without pretending that SillyTavern variables or hidden model cognition persist across turns.
+The run directory is private (`0700`) and lifecycle state is authenticated with a per-run key. Never open, copy, edit, or expose `.execution-state.key`, hand-edit `execution-state.json`, or bypass executor commands. This detects accidental/direct state edits while the key remains private; it is not a security boundary against a process already trusted as the same operating-system account.
 
-The executor makes the run directory private (`0700`) and authenticates lifecycle state with a per-run key. Never open, copy, edit, or expose `.execution-state.key` or hand-edit `execution-state.json`; use executor commands only. This detects direct or accidental state edits while that private key remains untouched. It is not a security boundary against a process running as the same operating-system account that deliberately reads or replaces both the state and its key; that local account is part of the trusted host. A dead-process lock is recovered automatically, while a live lock remains fail-closed.
+Primary and recovery locks use a strict metadata schema and exact key set: kind, bounded PID, canonical timestamp, random owner token, and liveness domain, plus the primary-generation token for recovery leases. Their names are published atomically only after the candidate metadata has been written and synchronized, using an exclusive hard link followed by inode and metadata revalidation.
+
+Automatic stale-lock recovery is deliberately narrower than an age check. It is attempted only on Linux when the current hostname, kernel boot ID, and PID namespace produce the same strong liveness-domain identity recorded by the lock and the recorded PID is then provably absent. A live owner, non-Linux or otherwise weak local domain, foreign domain, wrong schema/kind/key set, malformed/partial/empty metadata, unsafe file type, or changing inode fails closed. Recoverable abandoned publication candidates are removed only after the same domain, owner-token, and inode checks.
+
+A recovery lease is namespaced from the primary lock's owner token and carries that token as `primaryGeneration`; abandoned lease generations must match it and the recovery chain is bounded. Every successful primary-lock acquisition also supplies a unique operation ID used in the draft and sanitizer staging names. Sanitized output is published through an exclusive hard link, so an orphan child from an older acquisition cannot overwrite a newer generation's `clean-output.txt`. If a crash leaves an uncommitted clean output, automatic cleanup is allowed only when it is a regular file with exactly one same-inode, operation-scoped sanitizer staging alias. A clean output that cannot be uniquely attributed this way fails closed; because the run directory is opaque, abandon it and prepare a fresh run rather than editing it manually.
 
 ## Low-level compiler contract (audit and debugging)
 
@@ -120,6 +169,7 @@ nemo_runtime_args=(
 # nemo_runtime_args+=(--vex "Gooner Vex")
 # nemo_runtime_args+=(--nsfw "NSFW Core,Gooner Protocol")
 # nemo_runtime_args+=(--fetish "Femdom,NTR")
+# nemo_runtime_args+=(--group-one "Narrate-Language::Narrate: Russian")
 # nemo_runtime_args+=(--context "$nemo_run_dir/context.json")
 
 node scripts/nemo-chatgpt-runtime.mjs \
@@ -147,7 +197,7 @@ Before applying any instruction, inspect the saved `bundle.json` and manifest wi
 6. Manifest chunk indices begin at 1; boundaries are contiguous from character 0 through `instructionChars`; every `end - start` equals `chars`; every chunk is at most 24,000 characters; there are at most eight.
 7. Recompute every chunk's Unicode character count and SHA-256. Concatenate chunks in manifest order and verify the overall character count, byte count, and SHA-256.
 
-Before reading, ensure the active context can hold the complete declared instruction artifact; if it cannot, select fewer modules and recompile rather than applying a partial runtime. Read every manifest-listed chunk sequentially, one chunk per bounded tool result, and keep a ledger of consumed indices. Do not generate until indices `1..N` have all been read and the final boundary equals `instructionChars`. If a tool reports output truncation, reread only that chunk in smaller, contiguous Unicode-character ranges and verify complete local coverage before continuing.
+Before reading, determine whether the host explicitly exposes enough context-capacity information to establish a fit. If it does not, report fit as host-unverified rather than converting character counts into a false token guarantee. Never apply a partial runtime. Read every manifest-listed chunk sequentially, one chunk per bounded tool result, and keep a ledger of consumed indices. Do not generate until indices `1..N` have all been read and the final boundary equals `instructionChars`. If a tool reports output truncation, reread only that chunk in smaller, contiguous Unicode-character ranges and verify complete local coverage before continuing.
 
 The compiler internally verifies the emitted round trip, but the caller still performs these checks to detect incomplete transport or reading. `--instructions-only --out PATH` is available for controlled integrations; it is not the normal skill path because it lacks the manifest-led chunk consumption contract.
 
@@ -191,6 +241,7 @@ node scripts/nemo-chatgpt-runtime.mjs
   [--disable LIST]
   [--nsfw-one SELECTOR]
   [--fetish-one SELECTOR]
+  [--group-one GROUP::SELECTOR]
   [--enable-one SELECTOR]
   [--disable-one SELECTOR]
   [--sanitize-output PATH|-]
@@ -216,7 +267,7 @@ Before compilation, write `context.json` from semantic values the user actually 
 
 `--sanitize-output PATH` reads a drafted answer from that path, while `--sanitize-output -` reads stdin. Sanitization is standalone; in this skill, always provide `--out`. A blank or unsafe result is an error.
 
-`SELECTOR` accepts an exact identifier or a normalized exact name. `LIST` accepts comma-separated names/identifiers or repeated flags. When a display name itself contains a comma, use the corresponding `--*-one` option so the value remains one selector; the production executor does this automatically for every array entry. `none` clears a family where supported. `--enable` and `--disable` address any of the source's 458 entries and are applied after family selections; the family flags provide stricter, convenient replacement semantics for Vex, NSFW, and Fetish selections. Use `--list modules` to inspect the complete inventory. Invalid or ambiguous selectors fail with exit status 1 instead of guessing.
+`SELECTOR` accepts an exact identifier or normalized exact name. `LIST` accepts comma-separated names/identifiers or repeated flags. When a display name contains a comma, use the corresponding `--*-one` form so it remains one selector; the executor does this for array entries. `--group-one GROUP::SELECTOR` atomically selects one member of an exclusive group. `none` clears a family where supported. `--enable` and `--disable` address any of the source's 458 entries and are applied after family and group selections. Use `--list modules` to inspect exact names. Invalid, ambiguous, duplicate, or conflicting selectors fail instead of being guessed.
 
 ## Selection rules
 
@@ -224,7 +275,7 @@ Use only selections supported by the request:
 
 - Begin with profile `100001`; apply explicit user choices as overrides to that baseline.
 - On a follow-up to an already configured NemoEngine story, preserve the last explicit module selections available in the conversation and apply only the user's new changes. Do not silently reset to the baseline or assume hidden runtime persistence.
-- Use `--enable` or `--disable` for any prompt outside the three convenience families. A request to change a specific core, plan, genre, style, pacing, agency, world, utility, tracker, databank, or system entry must not be ignored merely because it lacks a dedicated family flag.
+- Use an atomic group selection for a mutually exclusive family and `--enable` or `--disable` for other prompts. A request to change a specific core, plan, genre, style, pacing, agency, world, utility, tracker, databank, or system entry must not be ignored merely because it lacks a dedicated family flag.
 - If the request does not alter Vex selection, keep the normalized Narrative Vex default.
 - A specific Vex named: replace Narrative Vex with `--vex`, or pair a generic disable of the current Vex with an enable of the replacement. The final stack must contain exactly one Vex; zero or multiple Vex personalities fail closed.
 - “Gooner” requested without a narrower variant: use `Gooner Vex` plus `NSFW Core,Gooner Protocol`.
@@ -281,7 +332,7 @@ Resolve known semantic conflicts from the user's stated role and desired behavio
 - Both can request fefnik HTML/state rendering. Report its portability warning; do not silently enable `Harmonized HTML Enable (fefnik)` or claim the SillyTavern panel is rendered.
 - If a direct request still leaves one of these choices genuinely ambiguous, ask one focused question. Otherwise compile and proceed.
 
-Route the authorship mode from the requested deliverable. These are mutually exclusive, so disable the current mode before enabling its replacement:
+Route the authorship mode from the requested deliverable with one `User-Role-Mode` group selection:
 
 | Request | User-role entry |
 |---|---|
@@ -290,7 +341,11 @@ Route the authorship mode from the requested deliverable. These are mutually exc
 | An external brief with no user character in the fiction | `User as Director` |
 | Continuation or revision of prose the user already wrote | `Cowriter Frame` |
 
-Treat an explicitly requested narration language, perspective, tense, and length as module overrides. Profile `100001` defaults to English narration and third-person omniscient; do not let those defaults override a request for Russian, first person, or another explicit form.
+Treat explicitly requested planning/narration language, perspective, tense, and length as atomic group selections. Profile `100001` defaults to English narration and third-person omniscient; do not let those defaults override a request for Russian, first person, or another explicit form.
+
+### Auto Image portability
+
+The portable rewrite for `v11-253-utility-auto-image-gen` never fabricates an external image URL or claims that generation occurred. It may use an image tool only when the current host actually exposes one and the current user explicitly requests an image; the invocation remains host-controlled and outside Nemo textual service markup. Without that capability, it emits at most a concise Markdown `Visual brief`—subject, composition, style, palette, and constraints—when visual planning is requested or materially helps the deliverable, and otherwise emits nothing. When its consumer is active, the module is represented as `folded-state` through that emitted consumer; if the consumer is explicitly disabled, it becomes `omitted-state-only` and an explicit production request fails closed. Both cases report `PORTABLE_GPT_NATIVE_REWRITE` and `PORTABLE_UI_DEGRADED`; these diagnostics are compatibility evidence, not a claim of native renderer parity.
 
 ## Applying a low-level compiled bundle (audit path)
 
@@ -298,6 +353,7 @@ Require `schemaVersion: nemo-chatgpt-runtime/v1` and `compatibility.mode: portab
 
 - `folded-state` means the entry's resolved variable state was consumed by an emitted block such as Core Assembler. It is effective through that consumer even though it has no separate instruction block.
 - `omitted-state-only` means no active emitted consumer used the state; do not claim an operative effect.
+- `omitted-nonportable-state` means the module requires hidden cross-turn state that ChatGPT portable mode cannot provide. Scratchpad Legacy and loader-backed Modular/Pad Tab modules use this reason. The executor blocks an explicit request unless its exact ID appears in `allowNonPortable`; allowing it acknowledges that it remains ineffective and does not enable persistence. `nemo_pad_consequence` and the loader resolver by themselves remain `omitted-state-only`.
 - `omitted-section-header` is organizational only.
 - `omitted-host-marker` requires host placement and is not executed by ChatGPT.
 - Any requested entry with neither an emitted block nor verified folded effect must be reported as selected but non-portable.
