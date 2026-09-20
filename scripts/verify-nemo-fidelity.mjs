@@ -227,9 +227,14 @@ function guardRegistryProjection(guards) {
 async function main() {
   const options = parseArguments(process.argv.slice(2));
   requestedOutput = options.out;
-  const guards = await readJson(path.join(AUDIT_ROOT, 'fidelity-guard.json'));
-  const evidenceDocument = await readJson(
-    path.join(AUDIT_ROOT, 'provenance', 'excerpts.json'),
+  const evidenceManifest = await readJson(path.join(AUDIT_ROOT, 'manifest.json'));
+  const guardDocumentPath = path.join(AUDIT_ROOT, 'fidelity-guard.json');
+  const provenanceDocumentPath = path.join(AUDIT_ROOT, 'provenance', 'excerpts.json');
+  const guardDocumentBytes = await readFile(guardDocumentPath);
+  const provenanceDocumentBytes = await readFile(provenanceDocumentPath);
+  const guards = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(guardDocumentBytes));
+  const evidenceDocument = JSON.parse(
+    new TextDecoder('utf-8', { fatal: true }).decode(provenanceDocumentBytes),
   );
   const excerpts = evidenceDocument.excerpts;
   const globalEvidenceIds = evidenceDocument.global_evidence_ids;
@@ -245,8 +250,48 @@ async function main() {
 
   check(Array.isArray(guards), 'guards.array');
   check(guards.length === 17, 'guards.count17');
+  check(
+    evidenceManifest.schemaVersion === 'nemo-fidelity-evidence-manifest/v1',
+    'manifest.schema',
+  );
+  check(
+    evidenceManifest.reviewedAt === '2026-09-20T18:00:00Z',
+    'manifest.reviewed_at',
+  );
+  check(evidenceManifest.repository === REPOSITORY, 'manifest.repository');
+  check(evidenceManifest.auditedRef === AUDITED_REF, 'manifest.ref');
+  check(evidenceManifest.guardDocument?.guards === 17, 'manifest.guards17');
+  check(
+    evidenceManifest.guardDocument?.sha256 === sha256(guardDocumentBytes),
+    'manifest.guard_document_sha256',
+  );
+  check(
+    evidenceManifest.provenanceDocument?.excerpts === 52,
+    'manifest.excerpts52',
+  );
+  check(
+    evidenceManifest.provenanceDocument?.sourceFiles === 12,
+    'manifest.source_files12',
+  );
+  check(
+    evidenceManifest.provenanceDocument?.sha256 === sha256(provenanceDocumentBytes),
+    'manifest.provenance_document_sha256',
+  );
+  check(
+    evidenceManifest.knownDynamicGap?.guardId === 'FG-C010' &&
+      evidenceManifest.knownDynamicGap?.status === 'PENDING_BROWSER_E2E',
+    'manifest.known_dynamic_gap',
+  );
   check(Array.isArray(excerpts), 'excerpts.array');
   check(excerpts.length === 52, 'excerpts.count52');
+  check(
+    evidenceDocument.schemaVersion === 'nemo-fidelity-provenance/v1',
+    'excerpts.schema',
+  );
+  check(
+    evidenceDocument.reviewedAt === evidenceManifest.reviewedAt,
+    'excerpts.reviewed_at',
+  );
   check(evidenceDocument.repository === REPOSITORY, 'excerpts.repository');
   check(evidenceDocument.ref === AUDITED_REF, 'excerpts.ref');
   check(
@@ -275,6 +320,18 @@ async function main() {
     Buffer.from(JSON.stringify(guardRegistryProjection(guards)), 'utf8'),
   );
   check(guardRegistrySha256 === GUARD_REGISTRY_SHA256, 'guards.exact_registry');
+  check(
+    evidenceManifest.guardDocument?.registrySha256 === guardRegistrySha256,
+    'manifest.guard_registry_sha256',
+  );
+  check(
+    evidenceManifest.guardDocument?.schemaVersion === 'nemo-fidelity-guard-array/v1',
+    'manifest.guard_schema',
+  );
+  check(
+    evidenceManifest.provenanceDocument?.schemaVersion === evidenceDocument.schemaVersion,
+    'manifest.provenance_schema',
+  );
 
   const evidenceById = new Map();
   const fileCache = new Map();
@@ -620,6 +677,8 @@ async function main() {
     },
     evidence: {
       fidelityGuards: guards.length,
+      manifestSchemaVersion: evidenceManifest.schemaVersion,
+      reviewedAt: evidenceManifest.reviewedAt,
       guardRegistrySha256,
       excerpts: excerpts.length,
       sourceFiles: fileCache.size,

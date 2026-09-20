@@ -1,0 +1,24 @@
+{
+  "schemaVersion": "nemo-fidelity-evidence-manifest/v1",
+  "reviewedAt": "2026-09-20T18:00:00Z",
+  "repository": "producesplatinum-ai/NemoEngine",
+  "auditedRef": "b988a06eedb24b916182d0b5d545eb9a2dbabe02",
+  "guardDocument": {
+    "path": "fidelity-guard.json",
+    "schemaVersion": "nemo-fidelity-guard-array/v1",
+    "guards": 17,
+    "sha256": "0aacebe614400b2c844f0fa2c344523b8aded4af1f727d1e59732885dddd697c",
+    "registrySha256": "f6e00dcbc89c081b4e450c5102b3ee83789324c00f495443b9c0f3ee5d1cb037"
+  },
+  "provenanceDocument": {
+    "path": "provenance/excerpts.json",
+    "schemaVersion": "nemo-fidelity-provenance/v1",
+    "excerpts": 52,
+    "sha256": "16f8678e23d2b2e62e2672f10aa52c7ad5a665670a53664cb7efbaad21bb5b72",
+    "sourceFiles": 12
+  },
+  "knownDynamicGap": {
+    "guardId": "FG-C010",
+    "status": "PENDING_BROWSER_E2E"
+  }
+}

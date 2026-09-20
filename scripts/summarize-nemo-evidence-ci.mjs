@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import { spawnSync } from 'node:child_process';
-import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, readdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
@@ -54,6 +54,66 @@ async function readExitCode(directory, name) {
   return Number.parseInt(raw, 10);
 }
 
+async function walkRegularFiles(root, relative = '') {
+  const directory = path.join(root, relative);
+  const entries = await readdir(directory, { withFileTypes: true });
+  const files = [];
+  for (const entry of entries) {
+    const child = relative ? path.posix.join(relative, entry.name) : entry.name;
+    if (entry.isDirectory()) {
+      files.push(...(await walkRegularFiles(root, child)));
+    } else if (entry.isFile()) {
+      files.push(child);
+    } else {
+      throw new Error(`Non-regular artifact entry: ${child}`);
+    }
+  }
+  return files.sort();
+}
+
+async function expectedArtifactFiles() {
+  const connectorRelative = 'Nemo Engine/Connector Readable/11.5.2 General RP';
+  const connectorFiles = await walkRegularFiles(path.join(ROOT, connectorRelative));
+  const fixed = [
+    'commit.txt',
+    'tree.txt',
+    'node-version.txt',
+    'dynamic-verification.json',
+    'structural-verification.json',
+    'inputs/audit/README.md',
+    'inputs/audit/fidelity-guard.json',
+    'inputs/audit/manifest.json',
+    'inputs/audit/provenance/excerpts.json',
+    'implementation/chatgpt-runtime.yml',
+    'implementation/summarize-nemo-evidence-ci.mjs',
+    'implementation/test-nemo-fidelity-verifier.mjs',
+    'implementation/verify-nemo-fidelity-dynamic.mjs',
+    'implementation/verify-nemo-fidelity.mjs',
+    'logs/connector-mirror.log',
+    'logs/dynamic.log',
+    'logs/executor.tap',
+    'logs/negative.tap',
+    'logs/reassembly.log',
+    'logs/runtime.tap',
+    'logs/structural.log',
+    'logs/summary.log',
+    'reproduction/Nemo Engine/Nemo Engine 11.5.2 - General RP.json',
+    'reproduction/Nemo Engine/tools/build-connector-readable-11.5.2.mjs',
+    'reproduction/scripts/nemo-chatgpt-executor.mjs',
+    'reproduction/scripts/nemo-chatgpt-runtime.mjs',
+    'reproduction/scripts/test-nemo-chatgpt-executor.mjs',
+    'reproduction/scripts/test-nemo-chatgpt-runtime.mjs',
+    ...COMMANDS.flatMap((name) => [
+      `status/${name}.exit`,
+      `status/${name}.logger.exit`,
+    ]),
+    ...connectorFiles.map(
+      (file) => `reproduction/${connectorRelative}/${file}`,
+    ),
+  ];
+  return [...new Set(fixed)].sort();
+}
+
 async function main() {
   const { evidenceDir } = parseArguments(process.argv.slice(2));
   requestedEvidenceDir = evidenceDir;
@@ -65,19 +125,43 @@ async function main() {
   const commandStatuses = {};
   for (const name of COMMANDS) {
     try {
-      commandStatuses[name] = await readExitCode(evidenceDir, name);
-      check(commandStatuses[name] === 0, `command.${name}.exit_zero`);
+      const producer = await readExitCode(evidenceDir, name);
+      const logger = await readExitCode(evidenceDir, `${name}.logger`);
+      commandStatuses[name] = { producer, logger };
+      check(producer === 0, `command.${name}.producer_exit_zero`);
+      check(logger === 0, `command.${name}.logger_exit_zero`);
     } catch (error) {
-      commandStatuses[name] = null;
+      commandStatuses[name] = { producer: null, logger: null };
       check(false, `command.${name}.status_readable`, error.message);
     }
   }
+
+  const actualFiles = (await walkRegularFiles(evidenceDir)).filter(
+    (file) => !['SHA256SUMS', 'ci-summary.json'].includes(file),
+  );
+  const expectedFiles = await expectedArtifactFiles();
+  check(
+    JSON.stringify(actualFiles) === JSON.stringify(expectedFiles),
+    'artifact.exact_pre_summary_file_set',
+    JSON.stringify({
+      missing: expectedFiles.filter((file) => !actualFiles.includes(file)),
+      extra: actualFiles.filter((file) => !expectedFiles.includes(file)),
+    }),
+  );
 
   const structural = JSON.parse(
     await readFile(path.join(evidenceDir, 'structural-verification.json'), 'utf8'),
   );
   const dynamic = JSON.parse(
     await readFile(path.join(evidenceDir, 'dynamic-verification.json'), 'utf8'),
+  );
+  const structuralLog = await readFile(
+    path.join(evidenceDir, 'logs', 'structural.log'),
+    'utf8',
+  );
+  const dynamicLog = await readFile(
+    path.join(evidenceDir, 'logs', 'dynamic.log'),
+    'utf8',
   );
   const reassemblyLog = await readFile(
     path.join(evidenceDir, 'logs', 'reassembly.log'),
@@ -103,12 +187,20 @@ async function main() {
     'structural.result',
   );
   check(
+    structuralLog.includes('"status": "STRUCTURAL_PROVENANCE_PASS"'),
+    'structural.log_complete',
+  );
+  check(
     dynamic.status === 'EXECUTABLE_CASES_PASS_WITH_PENDING_BROWSER_E2E' &&
       dynamic.dynamicRequired === 3 &&
       dynamic.dynamicVerified === 2 &&
       dynamic.pending?.length === 1 &&
       dynamic.pending[0]?.guardId === 'FG-C010',
     'dynamic.result_and_gap',
+  );
+  check(
+    dynamicLog.includes('"status": "EXECUTABLE_CASES_PASS_WITH_PENDING_BROWSER_E2E"'),
+    'dynamic.log_complete',
   );
   check(
     reassemblyLog.includes(`Byte-identical SHA-256: ${CANONICAL_SHA256}`),
@@ -146,9 +238,9 @@ async function main() {
     schemaVersion: 'nemo-evidence-ci-summary/v1',
     status:
       failures.length === 0
-        ? 'PIPELINE_PASS_WITH_KNOWN_BROWSER_GAP'
-        : 'PIPELINE_FAIL',
-    overallFidelity: 'PARTIAL',
+        ? 'VALIDATION_PASS_WITH_KNOWN_BROWSER_GAP'
+        : 'VALIDATION_FAIL',
+    overallFidelity: failures.length === 0 ? 'PARTIAL' : 'UNVERIFIED',
     repository: {
       headSha,
       headTree,
@@ -201,7 +293,7 @@ main().catch(async (error) => {
   const result = {
     schemaVersion: 'nemo-evidence-ci-summary/v1',
     status: 'ERROR',
-    overallFidelity: 'PARTIAL',
+    overallFidelity: 'UNVERIFIED',
     error: error.message,
   };
   const serialized = `${JSON.stringify(result, null, 2)}\n`;

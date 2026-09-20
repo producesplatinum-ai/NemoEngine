@@ -10,19 +10,19 @@ permissions:
 
 jobs:
   validate:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           fetch-depth: 0
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
-          node-version: 22
+          node-version: 22.23.2
 
       - name: Initialize evidence artifact
         run: |
@@ -34,6 +34,7 @@ jobs:
             "$RUNNER_TEMP/nemo-evidence/inputs" \
             "$RUNNER_TEMP/nemo-evidence/implementation" \
             "$RUNNER_TEMP/nemo-evidence/logs" \
+            "$RUNNER_TEMP/nemo-evidence/reproduction" \
             "$RUNNER_TEMP/nemo-evidence/status"
           cp -R audit/nemo-static-evidence "$RUNNER_TEMP/nemo-evidence/inputs/audit"
           cp scripts/verify-nemo-fidelity.mjs \
@@ -43,6 +44,15 @@ jobs:
             "$RUNNER_TEMP/nemo-evidence/implementation/"
           cp .github/workflows/chatgpt-runtime.yml \
             "$RUNNER_TEMP/nemo-evidence/implementation/"
+          cp --parents -R \
+            'Nemo Engine/Connector Readable/11.5.2 General RP' \
+            'Nemo Engine/Nemo Engine 11.5.2 - General RP.json' \
+            'Nemo Engine/tools/build-connector-readable-11.5.2.mjs' \
+            scripts/nemo-chatgpt-runtime.mjs \
+            scripts/test-nemo-chatgpt-runtime.mjs \
+            scripts/nemo-chatgpt-executor.mjs \
+            scripts/test-nemo-chatgpt-executor.mjs \
+            "$RUNNER_TEMP/nemo-evidence/reproduction/"
           git rev-parse HEAD > "$RUNNER_TEMP/nemo-evidence/commit.txt"
           git rev-parse 'HEAD^{tree}' > "$RUNNER_TEMP/nemo-evidence/tree.txt"
           node --version > "$RUNNER_TEMP/nemo-evidence/node-version.txt"
@@ -52,9 +62,11 @@ jobs:
           set +e
           node 'Nemo Engine/Connector Readable/11.5.2 General RP/reassemble.mjs' \
             2>&1 | tee "$RUNNER_TEMP/nemo-evidence/logs/reassembly.log"
-          code=${PIPESTATUS[0]}
-          printf '%s\n' "$code" > "$RUNNER_TEMP/nemo-evidence/status/reassembly.exit"
-          exit "$code"
+          codes=("${PIPESTATUS[@]}")
+          printf '%s\n' "${codes[0]}" > "$RUNNER_TEMP/nemo-evidence/status/reassembly.exit"
+          printf '%s\n' "${codes[1]}" > "$RUNNER_TEMP/nemo-evidence/status/reassembly.logger.exit"
+          if [ "${codes[0]}" -ne 0 ]; then exit "${codes[0]}"; fi
+          exit "${codes[1]}"
 
       - name: Verify connector-readable mirror
         if: ${{ always() }}
@@ -62,9 +74,11 @@ jobs:
           set +e
           node 'Nemo Engine/tools/build-connector-readable-11.5.2.mjs' --check \
             2>&1 | tee "$RUNNER_TEMP/nemo-evidence/logs/connector-mirror.log"
-          code=${PIPESTATUS[0]}
-          printf '%s\n' "$code" > "$RUNNER_TEMP/nemo-evidence/status/connector-mirror.exit"
-          exit "$code"
+          codes=("${PIPESTATUS[@]}")
+          printf '%s\n' "${codes[0]}" > "$RUNNER_TEMP/nemo-evidence/status/connector-mirror.exit"
+          printf '%s\n' "${codes[1]}" > "$RUNNER_TEMP/nemo-evidence/status/connector-mirror.logger.exit"
+          if [ "${codes[0]}" -ne 0 ]; then exit "${codes[0]}"; fi
+          exit "${codes[1]}"
 
       - name: Verify structural fidelity evidence
         if: ${{ always() }}
@@ -73,9 +87,11 @@ jobs:
           node scripts/verify-nemo-fidelity.mjs \
             --out "$RUNNER_TEMP/nemo-evidence/structural-verification.json" \
             2>&1 | tee "$RUNNER_TEMP/nemo-evidence/logs/structural.log"
-          code=${PIPESTATUS[0]}
-          printf '%s\n' "$code" > "$RUNNER_TEMP/nemo-evidence/status/structural.exit"
-          exit "$code"
+          codes=("${PIPESTATUS[@]}")
+          printf '%s\n' "${codes[0]}" > "$RUNNER_TEMP/nemo-evidence/status/structural.exit"
+          printf '%s\n' "${codes[1]}" > "$RUNNER_TEMP/nemo-evidence/status/structural.logger.exit"
+          if [ "${codes[0]}" -ne 0 ]; then exit "${codes[0]}"; fi
+          exit "${codes[1]}"
 
       - name: Verify executable fidelity cases
         if: ${{ always() }}
@@ -84,9 +100,11 @@ jobs:
           node scripts/verify-nemo-fidelity-dynamic.mjs \
             --out "$RUNNER_TEMP/nemo-evidence/dynamic-verification.json" \
             2>&1 | tee "$RUNNER_TEMP/nemo-evidence/logs/dynamic.log"
-          code=${PIPESTATUS[0]}
-          printf '%s\n' "$code" > "$RUNNER_TEMP/nemo-evidence/status/dynamic.exit"
-          exit "$code"
+          codes=("${PIPESTATUS[@]}")
+          printf '%s\n' "${codes[0]}" > "$RUNNER_TEMP/nemo-evidence/status/dynamic.exit"
+          printf '%s\n' "${codes[1]}" > "$RUNNER_TEMP/nemo-evidence/status/dynamic.logger.exit"
+          if [ "${codes[0]}" -ne 0 ]; then exit "${codes[0]}"; fi
+          exit "${codes[1]}"
 
       - name: Negative-test fidelity verifier
         if: ${{ always() }}
@@ -94,9 +112,11 @@ jobs:
           set +e
           node --test scripts/test-nemo-fidelity-verifier.mjs \
             2>&1 | tee "$RUNNER_TEMP/nemo-evidence/logs/negative.tap"
-          code=${PIPESTATUS[0]}
-          printf '%s\n' "$code" > "$RUNNER_TEMP/nemo-evidence/status/negative.exit"
-          exit "$code"
+          codes=("${PIPESTATUS[@]}")
+          printf '%s\n' "${codes[0]}" > "$RUNNER_TEMP/nemo-evidence/status/negative.exit"
+          printf '%s\n' "${codes[1]}" > "$RUNNER_TEMP/nemo-evidence/status/negative.logger.exit"
+          if [ "${codes[0]}" -ne 0 ]; then exit "${codes[0]}"; fi
+          exit "${codes[1]}"
 
       - name: Test ChatGPT runtime adapter
         if: ${{ always() }}
@@ -104,9 +124,11 @@ jobs:
           set +e
           node --test scripts/test-nemo-chatgpt-runtime.mjs \
             2>&1 | tee "$RUNNER_TEMP/nemo-evidence/logs/runtime.tap"
-          code=${PIPESTATUS[0]}
-          printf '%s\n' "$code" > "$RUNNER_TEMP/nemo-evidence/status/runtime.exit"
-          exit "$code"
+          codes=("${PIPESTATUS[@]}")
+          printf '%s\n' "${codes[0]}" > "$RUNNER_TEMP/nemo-evidence/status/runtime.exit"
+          printf '%s\n' "${codes[1]}" > "$RUNNER_TEMP/nemo-evidence/status/runtime.logger.exit"
+          if [ "${codes[0]}" -ne 0 ]; then exit "${codes[0]}"; fi
+          exit "${codes[1]}"
 
       - name: Test verified ChatGPT executor
         if: ${{ always() }}
@@ -114,16 +136,22 @@ jobs:
           set +e
           node --test scripts/test-nemo-chatgpt-executor.mjs \
             2>&1 | tee "$RUNNER_TEMP/nemo-evidence/logs/executor.tap"
-          code=${PIPESTATUS[0]}
-          printf '%s\n' "$code" > "$RUNNER_TEMP/nemo-evidence/status/executor.exit"
-          exit "$code"
+          codes=("${PIPESTATUS[@]}")
+          printf '%s\n' "${codes[0]}" > "$RUNNER_TEMP/nemo-evidence/status/executor.exit"
+          printf '%s\n' "${codes[1]}" > "$RUNNER_TEMP/nemo-evidence/status/executor.logger.exit"
+          if [ "${codes[0]}" -ne 0 ]; then exit "${codes[0]}"; fi
+          exit "${codes[1]}"
 
       - name: Summarize complete evidence run
         if: ${{ always() }}
         run: |
+          set +e
           node scripts/summarize-nemo-evidence-ci.mjs \
             --evidence-dir "$RUNNER_TEMP/nemo-evidence" \
-            2>&1 | tee "$RUNNER_TEMP/nemo-evidence/logs/summary.log"
+            > "$RUNNER_TEMP/nemo-evidence/logs/summary.log" 2>&1
+          code=$?
+          sed -n '1,240p' "$RUNNER_TEMP/nemo-evidence/logs/summary.log"
+          exit "$code"
 
       - name: Write artifact checksums
         if: ${{ always() }}
@@ -139,7 +167,7 @@ jobs:
 
       - name: Upload evidence artifact
         if: ${{ always() }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: nemo-fidelity-evidence-${{ github.sha }}
           path: ${{ runner.temp }}/nemo-evidence/

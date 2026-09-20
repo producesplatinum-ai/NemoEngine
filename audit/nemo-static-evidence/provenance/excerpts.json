@@ -1,4 +1,6 @@
 {
+  "schemaVersion": "nemo-fidelity-provenance/v1",
+  "reviewedAt": "2026-09-20T18:00:00Z",
   "repository": "producesplatinum-ai/NemoEngine",
   "ref": "b988a06eedb24b916182d0b5d545eb9a2dbabe02",
   "evidence_scope": "Selected continuous excerpts reviewed through GitHub Connector. These are transcriptions, not full raw file snapshots. Local checks authenticate the saved text and its route, not remote content by themselves.",

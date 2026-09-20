@@ -6,6 +6,8 @@ claims; they are not converted into mathematical proofs by storing excerpts.
 
 ## Contents
 
+- `manifest.json` fixes the evidence schemas, review timestamp, counts, audited
+  ref, exact guard-registry hash, and known dynamic gap.
 - `fidelity-guard.json` contains guards `FG-C002` through `FG-C018`.
 - `provenance/excerpts.json` contains 52 exact excerpts bound to repository paths,
   Git blob IDs, and (where applicable) JSON pointers.
@@ -37,13 +39,15 @@ object database and fails closed when a path-to-blob binding, worktree blob,
 excerpt, pointer, module, guard relationship, count, preset size, or canonical
 SHA-256 differs. CI uses a full checkout, records each command exit code, creates
 an aggregate result only after both production test suites finish, and uploads
-inputs, implementation snapshots, results, logs, and checksums.
+inputs, implementation snapshots, a self-contained reproduction snapshot,
+results, logs, and checksums. Producer and logger exit codes are tracked
+separately, and the aggregate requires the exact expected pre-summary file set.
 
 ## Scope boundary
 
 `STRUCTURAL_PROVENANCE_PASS` proves only the checked repository relationships and
 the C006/C007 regex controls. The CI aggregate may report
-`PIPELINE_PASS_WITH_KNOWN_BROWSER_GAP` after reassembly, mirror validation, C002 and
+`VALIDATION_PASS_WITH_KNOWN_BROWSER_GAP` after reassembly, mirror validation, C002 and
 C011 CLI checks, and both production suites pass. Overall fidelity remains
 `PARTIAL` while C010 browser E2E is pending and most semantic claims remain
 human-reviewed interpretations of the pinned evidence.
