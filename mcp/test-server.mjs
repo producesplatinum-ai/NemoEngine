@@ -1,11 +1,14 @@
 import assert from 'node:assert/strict';
+import { once } from 'node:events';
 import test from 'node:test';
 
 import {
+  buildMcpServer,
   buildRunSpec,
   MCP_ENDPOINT_PATH,
   resolveRunPaths,
   RUNS_ROOT,
+  startHttpServer,
 } from './server.mjs';
 
 test('buildRunSpec preserves omitted selection families', () => {
@@ -66,4 +69,34 @@ test('resolveRunPaths rejects path-like identifiers', () => {
 
 test('MCP endpoint defaults to /mcp and always ends with /mcp', () => {
   assert.ok(MCP_ENDPOINT_PATH.endsWith('/mcp'));
+});
+
+test('MCP server factory constructs without side effects', () => {
+  const server = buildMcpServer();
+  assert.ok(server);
+});
+
+test('HTTP server exposes health endpoint', async (t) => {
+  const httpServer = startHttpServer({ port: 0, host: '127.0.0.1' });
+  await once(httpServer, 'listening');
+
+  t.after(
+    () =>
+      new Promise((resolvePromise, rejectPromise) => {
+        httpServer.close((error) => {
+          if (error) rejectPromise(error);
+          else resolvePromise();
+        });
+      }),
+  );
+
+  const address = httpServer.address();
+  assert.ok(address && typeof address === 'object');
+
+  const response = await fetch(`http://127.0.0.1:${address.port}/healthz`);
+  assert.equal(response.status, 200);
+  assert.deepEqual(await response.json(), {
+    ok: true,
+    service: 'nemoengine-mcp',
+  });
 });
