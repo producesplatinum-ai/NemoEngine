@@ -1,10 +1,13 @@
 import assert from 'node:assert/strict';
+import { randomUUID } from 'node:crypto';
+import { access, mkdir, rm } from 'node:fs/promises';
 import { once } from 'node:events';
 import test from 'node:test';
 
 import {
   buildMcpServer,
   buildRunSpec,
+  finishManagedRun,
   MCP_ENDPOINT_PATH,
   resolveRunPaths,
   RUNS_ROOT,
@@ -65,6 +68,30 @@ test('resolveRunPaths accepts UUIDv4 and stays under managed root', () => {
 
 test('resolveRunPaths rejects path-like identifiers', () => {
   assert.throws(() => resolveRunPaths('../../tmp/escape'), /Invalid runId/);
+});
+
+test('finishManagedRun removes the managed run after verified show-output succeeds', async (t) => {
+  const runId = randomUUID();
+  const paths = resolveRunPaths(runId);
+  await mkdir(paths.run, { recursive: true, mode: 0o700 });
+
+  t.after(async () => {
+    await rm(paths.parent, { recursive: true, force: true });
+  });
+
+  const calls = [];
+  const executor = async (args) => {
+    calls.push(args);
+    if (args[0] === 'finish') return '{"phase":"complete"}\n';
+    if (args[0] === 'show-output') return 'verified sanitized output';
+    throw new Error(`unexpected executor command: ${args[0]}`);
+  };
+
+  const output = await finishManagedRun(runId, 'draft bytes', { executor });
+
+  assert.equal(output, 'verified sanitized output');
+  assert.deepEqual(calls.map((args) => args[0]), ['finish', 'show-output']);
+  await assert.rejects(access(paths.parent), { code: 'ENOENT' });
 });
 
 test('MCP endpoint defaults to /mcp and always ends with /mcp', () => {
