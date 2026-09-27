@@ -260,6 +260,47 @@ async function withRun(runId, commandArgs) {
   return runExecutor([...commandArgs, '--run-dir', paths.run]);
 }
 
+export async function finishManagedRun(
+  runId,
+  draft,
+  { executor = runExecutor } = {},
+) {
+  const paths = resolveRunPaths(runId);
+
+  try {
+    await writeFile(paths.draft, draft, {
+      encoding: 'utf8',
+      mode: 0o600,
+      flag: 'w',
+    });
+
+    await executor([
+      'finish',
+      '--run-dir',
+      paths.run,
+      '--draft',
+      paths.draft,
+    ]);
+
+    const output = await executor([
+      'show-output',
+      '--run-dir',
+      paths.run,
+    ]);
+
+    await rm(paths.parent, { recursive: true, force: false }).catch((error) => {
+      console.error(
+        `[nemoengine-mcp] completed run cleanup failed for ${runId}: ${error.message}`,
+      );
+    });
+
+    return output;
+  } catch (error) {
+    await unlink(paths.draft).catch(() => {});
+    throw error;
+  }
+}
+
 export function buildMcpServer() {
   const server = new McpServer({
     name: 'nemoengine',
@@ -344,40 +385,14 @@ export function buildMcpServer() {
     'nemo_finish',
     {
       description:
-        'Submit the final draft for executor sanitization and return only the verified sanitized user-facing output via show-output. Call only after the run reaches ready_to_draft.',
+        'Submit the final draft for executor sanitization, return only the verified sanitized user-facing output via show-output, then automatically clean up the completed managed run. Call only after the run reaches ready_to_draft.',
       inputSchema: finishSchema,
     },
     async ({ runId, draft }) => {
-      const paths = resolveRunPaths(runId);
-      let completed = false;
       try {
-        await writeFile(paths.draft, draft, {
-          encoding: 'utf8',
-          mode: 0o600,
-          flag: 'w',
-        });
-
-        await runExecutor([
-          'finish',
-          '--run-dir',
-          paths.run,
-          '--draft',
-          paths.draft,
-        ]);
-
-        const output = await runExecutor([
-          'show-output',
-          '--run-dir',
-          paths.run,
-        ]);
-        completed = true;
-        return textResult(output);
+        return textResult(await finishManagedRun(runId, draft));
       } catch (error) {
         return errorResult(error);
-      } finally {
-        if (completed) {
-          await unlink(paths.draft).catch(() => {});
-        }
       }
     },
   );
@@ -386,7 +401,7 @@ export function buildMcpServer() {
     'nemo_discard_run',
     {
       description:
-        'Delete one managed temporary NemoEngine run after completion or when a task changes and the stale run must be abandoned. This cannot address paths outside the MCP run root.',
+        'Delete one stale or incomplete managed NemoEngine run when a task changes or generation is abandoned. Completed runs are normally cleaned automatically by nemo_finish. This cannot address paths outside the MCP run root.',
       inputSchema: runIdSchema,
     },
     async ({ runId }) => {
