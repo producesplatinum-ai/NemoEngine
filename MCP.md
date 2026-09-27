@@ -75,11 +75,15 @@ The server exposes the executor lifecycle directly:
 5. `nemo_finish`
    - writes the draft outside the executor-owned run directory
    - invokes `finish`
-   - returns only `show-output`
-   - deletes the external draft after verified output is obtained
+   - returns only verified `show-output`
+   - automatically removes the completed managed run after verified output is
+     obtained; cleanup failure is logged but does not suppress verified output
+   - if `finish` or `show-output` fails, removes the external draft while
+     preserving the managed run for diagnosis
 6. `nemo_discard_run`
-   - removes a managed temporary run after completion or when a stale task must
-     be abandoned
+   - removes a stale or incomplete managed temporary run when a task changes or
+     generation is abandoned; normal completed runs do not need a separate
+     discard call
 
 The bridge never accepts a filesystem path from the MCP caller. Run directories
 are addressed only by UUIDv4 `runId` values and remain under the configured
