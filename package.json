@@ -1,0 +1,20 @@
+{
+  "name": "nemoengine-mcp",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "start": "node mcp/server.mjs",
+    "test:mcp": "node --test mcp/test-server.mjs",
+    "test:nemo": "node --test scripts/test-nemo-chatgpt-runtime.mjs scripts/test-nemo-chatgpt-executor.mjs",
+    "test": "npm run test:mcp && npm run test:nemo"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/node": "^2.1.0",
+    "@modelcontextprotocol/server": "^2.1.0",
+    "zod": "^4.2.0"
+  }
+}
