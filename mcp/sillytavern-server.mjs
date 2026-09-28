@@ -212,6 +212,28 @@ function clientFromEnv() {
   });
 }
 
+export async function checkReadiness(getClient = clientFromEnv) {
+  try {
+    const status = await getClient().status();
+    return {
+      ok: true,
+      service: 'sillytavern-mcp',
+      upstream: {
+        ok: Boolean(status?.ok),
+        csrfSessionReady: Boolean(status?.csrfSessionReady),
+        basicAuthConfigured: Boolean(status?.basicAuthConfigured),
+      },
+    };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    return {
+      ok: false,
+      service: 'sillytavern-mcp',
+      error: message,
+    };
+  }
+}
+
 function toolText(value) {
   const text =
     typeof value === 'string' ? value : JSON.stringify(value, null, 2);
@@ -364,8 +386,9 @@ export function buildMcpServer({ getClient = clientFromEnv } = {}) {
 export function startHttpServer({
   port = parsePort(process.env.PORT || String(DEFAULT_PORT)),
   host = process.env.HOST || '0.0.0.0',
+  getClient = clientFromEnv,
 } = {}) {
-  const handler = createMcpHandler(buildMcpServer, {
+  const handler = createMcpHandler(() => buildMcpServer({ getClient }), {
     onerror: (error) => {
       console.error('[sillytavern-mcp]', error.message);
     },
@@ -379,6 +402,15 @@ export function startHttpServer({
       res.statusCode = 200;
       res.setHeader('content-type', 'application/json; charset=utf-8');
       res.end(JSON.stringify({ ok: true, service: 'sillytavern-mcp' }));
+      return;
+    }
+
+    if (pathname === '/readyz') {
+      void checkReadiness(getClient).then((result) => {
+        res.statusCode = result.ok ? 200 : 503;
+        res.setHeader('content-type', 'application/json; charset=utf-8');
+        res.end(JSON.stringify(result));
+      });
       return;
     }
 
