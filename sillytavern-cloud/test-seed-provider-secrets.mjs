@@ -1,3 +1,4 @@
+// RED test: implementation intentionally absent at this stage.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
