@@ -130,13 +130,10 @@ test('client supports optional HTTP Basic Authentication for protected remote Si
   await client.listCharacters();
 });
 
-test('readiness requires enforced Basic Auth, CSRF, and characters API', async () => {
+test('readiness safely checks authenticated CSRF and characters API without deliberate auth failures', async () => {
   let listCharactersCalled = 0;
 
   const ok = await checkReadiness(() => ({
-    async authGuardEnforced() {
-      return true;
-    },
     async status() {
       return {
         ok: true,
@@ -157,7 +154,6 @@ test('readiness requires enforced Basic Auth, CSRF, and characters API', async (
     service: 'sillytavern-mcp',
     upstream: {
       ok: true,
-      authGuardEnforced: true,
       csrfSessionReady: true,
       basicAuthConfigured: true,
       charactersReadable: true,
@@ -165,29 +161,7 @@ test('readiness requires enforced Basic Auth, CSRF, and characters API', async (
     },
   });
 
-  const authFailed = await checkReadiness(() => ({
-    async authGuardEnforced() {
-      return false;
-    },
-    async status() {
-      return {
-        ok: true,
-        csrfSessionReady: true,
-        basicAuthConfigured: true,
-      };
-    },
-    async listCharacters() {
-      return [];
-    },
-  }));
-
-  assert.equal(authFailed.ok, false);
-  assert.match(authFailed.error, /Basic Auth guard is not enforced/);
-
   const apiFailed = await checkReadiness(() => ({
-    async authGuardEnforced() {
-      return true;
-    },
     async status() {
       return {
         ok: true,
