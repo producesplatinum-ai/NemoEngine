@@ -5,6 +5,11 @@ import { toNodeHandler } from '@modelcontextprotocol/node';
 import { createMcpHandler, McpServer } from '@modelcontextprotocol/server';
 import * as z from 'zod/v4';
 
+import {
+  buildProviderMcpServer,
+  providerFromEndpointPath,
+} from './ai-provider-server.mjs';
+
 const DEFAULT_PORT = 8790;
 const MAX_TOOL_TEXT = 200_000;
 
@@ -205,6 +210,23 @@ export const MCP_ENDPOINT_PATH = normalizeEndpointPath(
   process.env.SILLYTAVERN_MCP_ENDPOINT_PATH || '/mcp',
 );
 
+
+export function classifyRequestPath(
+  pathname,
+  {
+    sillyPath = MCP_ENDPOINT_PATH,
+    aiPrefix = process.env.AI_MCP_PREFIX || '',
+  } = {},
+) {
+  if (pathname === '/healthz') return { kind: 'health' };
+  if (pathname === sillyPath) return { kind: 'sillytavern' };
+
+  const providerId = providerFromEndpointPath(pathname, aiPrefix);
+  if (providerId) return { kind: 'provider', providerId };
+
+  return { kind: 'not_found' };
+}
+
 function clientFromEnv() {
   return new SillyTavernClient({
     baseUrl: process.env.SILLYTAVERN_URL || '',
@@ -393,6 +415,7 @@ export function startHttpServer({
   port = parsePort(process.env.PORT || String(DEFAULT_PORT)),
   host = process.env.HOST || '0.0.0.0',
   getClient = clientFromEnv,
+  aiPrefix = process.env.AI_MCP_PREFIX || '',
 } = {}) {
   const handler = createMcpHandler(() => buildMcpServer({ getClient }), {
     onerror: (error) => {
@@ -401,13 +424,37 @@ export function startHttpServer({
   });
   const nodeHandler = toNodeHandler(handler);
 
+  const providerHandlers = Object.fromEntries(
+    ['groq', 'openrouter', 'deepseek'].map((providerId) => {
+      const providerHandler = createMcpHandler(
+        () => buildProviderMcpServer(providerId),
+        {
+          onerror: (error) => {
+            console.error(`[sillytavern-mcp:${providerId}]`, error.message);
+          },
+        },
+      );
+      return [providerId, toNodeHandler(providerHandler)];
+    }),
+  );
+
   const httpServer = createServer((req, res) => {
     const pathname = (req.url || '/').split('?', 1)[0];
+    const route = classifyRequestPath(pathname, {
+      sillyPath: MCP_ENDPOINT_PATH,
+      aiPrefix,
+    });
 
-    if (pathname === '/healthz') {
+    if (route.kind === 'health') {
       res.statusCode = 200;
       res.setHeader('content-type', 'application/json; charset=utf-8');
-      res.end(JSON.stringify({ ok: true, service: 'sillytavern-mcp' }));
+      res.end(
+        JSON.stringify({
+          ok: true,
+          service: 'sillytavern-mcp',
+          mobileProviders: ['groq', 'openrouter', 'deepseek'],
+        }),
+      );
       return;
     }
 
@@ -420,19 +467,24 @@ export function startHttpServer({
       return;
     }
 
-    if (pathname !== MCP_ENDPOINT_PATH) {
-      res.statusCode = 404;
-      res.setHeader('content-type', 'text/plain; charset=utf-8');
-      res.end('Not found');
+    if (route.kind === 'sillytavern') {
+      void nodeHandler(req, res);
       return;
     }
 
-    void nodeHandler(req, res);
+    if (route.kind === 'provider') {
+      void providerHandlers[route.providerId](req, res);
+      return;
+    }
+
+    res.statusCode = 404;
+    res.setHeader('content-type', 'text/plain; charset=utf-8');
+    res.end('Not found');
   });
 
   httpServer.listen(port, host, () => {
     console.error(
-      `[sillytavern-mcp] listening on http://${host}:${port}${MCP_ENDPOINT_PATH}`,
+      `[sillytavern-mcp] listening on http://${host}:${port}${MCP_ENDPOINT_PATH} with mobile AI provider routes`,
     );
   });
 
