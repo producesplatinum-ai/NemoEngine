@@ -4,6 +4,7 @@ import test from 'node:test';
 import {
   SillyTavernClient,
   checkReadiness,
+  classifyRequestPath,
   normalizeBaseUrl,
 } from './sillytavern-server.mjs';
 
@@ -177,4 +178,35 @@ test('readiness safely checks authenticated CSRF and characters API without deli
   assert.equal(apiFailed.ok, false);
   assert.match(apiFailed.error, /characters API unavailable/);
   assert.equal('baseUrl' in apiFailed, false);
+});
+
+
+test('combined mobile gateway preserves SillyTavern and routes provider MCP endpoints', () => {
+  const sillyPath = '/st-secret/mcp';
+  const aiPrefix = '/ai-secret';
+
+  assert.deepEqual(
+    classifyRequestPath('/healthz', { sillyPath, aiPrefix }),
+    { kind: 'health' },
+  );
+  assert.deepEqual(
+    classifyRequestPath(sillyPath, { sillyPath, aiPrefix }),
+    { kind: 'sillytavern' },
+  );
+  assert.deepEqual(
+    classifyRequestPath('/ai-secret/groq/mcp', { sillyPath, aiPrefix }),
+    { kind: 'provider', providerId: 'groq' },
+  );
+  assert.deepEqual(
+    classifyRequestPath('/ai-secret/openrouter/mcp', { sillyPath, aiPrefix }),
+    { kind: 'provider', providerId: 'openrouter' },
+  );
+  assert.deepEqual(
+    classifyRequestPath('/ai-secret/deepseek/mcp', { sillyPath, aiPrefix }),
+    { kind: 'provider', providerId: 'deepseek' },
+  );
+  assert.deepEqual(
+    classifyRequestPath('/ai-secret/unknown/mcp', { sillyPath, aiPrefix }),
+    { kind: 'not_found' },
+  );
 });
