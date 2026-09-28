@@ -78,6 +78,17 @@ export class SillyTavernClient {
     };
   }
 
+  async authGuardEnforced() {
+    const response = await this.fetchImpl(`${this.baseUrl}/csrf-token`, {
+      method: 'GET',
+      headers: {
+        accept: 'application/json',
+      },
+    });
+
+    return response.status === 401;
+  }
+
   async bootstrapSession() {
     if (this.csrfToken) return;
 
@@ -215,6 +226,11 @@ function clientFromEnv() {
 export async function checkReadiness(getClient = clientFromEnv) {
   try {
     const client = getClient();
+    const authGuardEnforced = await client.authGuardEnforced();
+    if (!authGuardEnforced) {
+      throw new Error('SillyTavern Basic Auth guard is not enforced.');
+    }
+
     const status = await client.status();
     const characters = await client.listCharacters();
 
@@ -223,6 +239,7 @@ export async function checkReadiness(getClient = clientFromEnv) {
       service: 'sillytavern-mcp',
       upstream: {
         ok: Boolean(status?.ok),
+        authGuardEnforced: true,
         csrfSessionReady: Boolean(status?.csrfSessionReady),
         basicAuthConfigured: Boolean(status?.basicAuthConfigured),
         charactersReadable: Array.isArray(characters),
