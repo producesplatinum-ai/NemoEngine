@@ -130,7 +130,9 @@ test('client supports optional HTTP Basic Authentication for protected remote Si
   await client.listCharacters();
 });
 
-test('readiness requires a real SillyTavern CSRF session', async () => {
+test('readiness requires CSRF plus a real read-only characters API call', async () => {
+  let listCharactersCalled = 0;
+
   const ok = await checkReadiness(() => ({
     async status() {
       return {
@@ -140,8 +142,13 @@ test('readiness requires a real SillyTavern CSRF session', async () => {
         basicAuthConfigured: true,
       };
     },
+    async listCharacters() {
+      listCharactersCalled += 1;
+      return [{ name: 'Darya', avatar: 'Darya.png' }];
+    },
   }));
 
+  assert.equal(listCharactersCalled, 1);
   assert.deepEqual(ok, {
     ok: true,
     service: 'sillytavern-mcp',
@@ -149,17 +156,26 @@ test('readiness requires a real SillyTavern CSRF session', async () => {
       ok: true,
       csrfSessionReady: true,
       basicAuthConfigured: true,
+      charactersReadable: true,
+      characterCount: 1,
     },
   });
 
   const failed = await checkReadiness(() => ({
     async status() {
-      throw new Error('upstream unavailable');
+      return {
+        ok: true,
+        csrfSessionReady: true,
+        basicAuthConfigured: true,
+      };
+    },
+    async listCharacters() {
+      throw new Error('characters API unavailable');
     },
   }));
 
   assert.equal(failed.ok, false);
   assert.equal(failed.service, 'sillytavern-mcp');
-  assert.match(failed.error, /upstream unavailable/);
+  assert.match(failed.error, /characters API unavailable/);
   assert.equal('baseUrl' in failed, false);
 });
