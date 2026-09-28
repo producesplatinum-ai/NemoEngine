@@ -130,10 +130,13 @@ test('client supports optional HTTP Basic Authentication for protected remote Si
   await client.listCharacters();
 });
 
-test('readiness requires CSRF plus a real read-only characters API call', async () => {
+test('readiness requires enforced Basic Auth, CSRF, and characters API', async () => {
   let listCharactersCalled = 0;
 
   const ok = await checkReadiness(() => ({
+    async authGuardEnforced() {
+      return true;
+    },
     async status() {
       return {
         ok: true,
@@ -154,6 +157,7 @@ test('readiness requires CSRF plus a real read-only characters API call', async 
     service: 'sillytavern-mcp',
     upstream: {
       ok: true,
+      authGuardEnforced: true,
       csrfSessionReady: true,
       basicAuthConfigured: true,
       charactersReadable: true,
@@ -161,7 +165,29 @@ test('readiness requires CSRF plus a real read-only characters API call', async 
     },
   });
 
-  const failed = await checkReadiness(() => ({
+  const authFailed = await checkReadiness(() => ({
+    async authGuardEnforced() {
+      return false;
+    },
+    async status() {
+      return {
+        ok: true,
+        csrfSessionReady: true,
+        basicAuthConfigured: true,
+      };
+    },
+    async listCharacters() {
+      return [];
+    },
+  }));
+
+  assert.equal(authFailed.ok, false);
+  assert.match(authFailed.error, /Basic Auth guard is not enforced/);
+
+  const apiFailed = await checkReadiness(() => ({
+    async authGuardEnforced() {
+      return true;
+    },
     async status() {
       return {
         ok: true,
@@ -174,8 +200,7 @@ test('readiness requires CSRF plus a real read-only characters API call', async 
     },
   }));
 
-  assert.equal(failed.ok, false);
-  assert.equal(failed.service, 'sillytavern-mcp');
-  assert.match(failed.error, /characters API unavailable/);
-  assert.equal('baseUrl' in failed, false);
+  assert.equal(apiFailed.ok, false);
+  assert.match(apiFailed.error, /characters API unavailable/);
+  assert.equal('baseUrl' in apiFailed, false);
 });
