@@ -4,6 +4,8 @@ USER root
 WORKDIR /home/node/app
 
 COPY railway-entrypoint.sh /usr/local/bin/railway-sillytavern-entrypoint
+COPY test-seed-provider-secrets.mjs /tmp/test-seed-provider-secrets.mjs
+RUN node --test /tmp/test-seed-provider-secrets.mjs
 RUN chmod +x /usr/local/bin/railway-sillytavern-entrypoint \
     && rm -rf config data plugins backups public/scripts/extensions/third-party \
     && ln -s /persistent/config config \
