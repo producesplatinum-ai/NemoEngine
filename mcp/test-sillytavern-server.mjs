@@ -3,6 +3,7 @@ import test from 'node:test';
 
 import {
   SillyTavernClient,
+  checkReadiness,
   normalizeBaseUrl,
 } from './sillytavern-server.mjs';
 
@@ -127,4 +128,38 @@ test('client supports optional HTTP Basic Authentication for protected remote Si
   });
 
   await client.listCharacters();
+});
+
+test('readiness requires a real SillyTavern CSRF session', async () => {
+  const ok = await checkReadiness(() => ({
+    async status() {
+      return {
+        ok: true,
+        baseUrl: 'http://sillytavern.railway.internal:8000',
+        csrfSessionReady: true,
+        basicAuthConfigured: true,
+      };
+    },
+  }));
+
+  assert.deepEqual(ok, {
+    ok: true,
+    service: 'sillytavern-mcp',
+    upstream: {
+      ok: true,
+      csrfSessionReady: true,
+      basicAuthConfigured: true,
+    },
+  });
+
+  const failed = await checkReadiness(() => ({
+    async status() {
+      throw new Error('upstream unavailable');
+    },
+  }));
+
+  assert.equal(failed.ok, false);
+  assert.equal(failed.service, 'sillytavern-mcp');
+  assert.match(failed.error, /upstream unavailable/);
+  assert.equal('baseUrl' in failed, false);
 });
