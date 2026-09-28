@@ -214,7 +214,10 @@ function clientFromEnv() {
 
 export async function checkReadiness(getClient = clientFromEnv) {
   try {
-    const status = await getClient().status();
+    const client = getClient();
+    const status = await client.status();
+    const characters = await client.listCharacters();
+
     return {
       ok: true,
       service: 'sillytavern-mcp',
@@ -222,6 +225,8 @@ export async function checkReadiness(getClient = clientFromEnv) {
         ok: Boolean(status?.ok),
         csrfSessionReady: Boolean(status?.csrfSessionReady),
         basicAuthConfigured: Boolean(status?.basicAuthConfigured),
+        charactersReadable: Array.isArray(characters),
+        characterCount: Array.isArray(characters) ? characters.length : 0,
       },
     };
   } catch (error) {
