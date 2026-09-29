@@ -444,3 +444,56 @@ test('Nemo profile install rejects missing profile id', async () => {
     /profileId is required/,
   );
 });
+
+
+test('classifies exhaustive exact Nemo catalog routes and supports all install', async () => {
+  const basePath = '/st-secret/mobile';
+  assert.deepEqual(
+    classifyMobileRestRequest('/st-secret/mobile/nemo-exact-catalog', basePath),
+    { kind: 'nemo_exact_catalog' },
+  );
+  assert.deepEqual(
+    classifyMobileRestRequest('/st-secret/mobile/nemo-exact-install', basePath),
+    { kind: 'nemo_exact_install' },
+  );
+
+  const client = {
+    listExactNemoCatalog() {
+      return [{ id: 'canonical-11.5.2-general-rp' }];
+    },
+    async installExactNemoCatalogEntry(entryId) {
+      return { ok: true, entryId, verified: true };
+    },
+    async installAllExactNemoCatalog() {
+      return { ok: true, installed: 99, verified: 99 };
+    },
+  };
+
+  assert.deepEqual(
+    await executeMobileRestRoute({ kind: 'nemo_exact_catalog' }, client),
+    [{ id: 'canonical-11.5.2-general-rp' }],
+  );
+  assert.deepEqual(
+    await executeMobileRestRoute(
+      { kind: 'nemo_exact_install' },
+      client,
+      { entryId: 'canonical-11.5.2-general-rp' },
+    ),
+    { ok: true, entryId: 'canonical-11.5.2-general-rp', verified: true },
+  );
+  assert.deepEqual(
+    await executeMobileRestRoute(
+      { kind: 'nemo_exact_install' },
+      client,
+      { entryId: 'all' },
+    ),
+    { ok: true, installed: 99, verified: 99 },
+  );
+});
+
+test('exact Nemo install rejects missing entry id', async () => {
+  await assert.rejects(
+    () => executeMobileRestRoute({ kind: 'nemo_exact_install' }, {}, {}),
+    /entryId is required/,
+  );
+});
