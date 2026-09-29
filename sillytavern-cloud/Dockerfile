@@ -6,6 +6,7 @@ WORKDIR /home/node/app
 COPY railway-entrypoint.sh /usr/local/bin/railway-sillytavern-entrypoint
 COPY seed-provider-secrets.mjs /usr/local/bin/seed-provider-secrets.mjs
 COPY seed-connection-profiles.mjs /usr/local/bin/seed-connection-profiles.mjs
+COPY seed-nemoengine.mjs /usr/local/bin/seed-nemoengine.mjs
 COPY test-seed-provider-secrets.mjs /tmp/test-seed-provider-secrets.mjs
 COPY test-seed-connection-profiles.mjs /tmp/test-seed-connection-profiles.mjs
 COPY test-seed-nemoengine.mjs /tmp/test-seed-nemoengine.mjs
