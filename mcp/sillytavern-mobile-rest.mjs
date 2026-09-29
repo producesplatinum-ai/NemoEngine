@@ -40,6 +40,9 @@ export function classifyMobileRestRequest(requestTarget, basePath) {
   }
   if (pathname === `${normalizedBase}/turn`) return { kind: 'turn' };
   if (pathname === `${normalizedBase}/generate`) return { kind: 'generate' };
+  if (pathname === `${normalizedBase}/client-generation-status`) {
+    return { kind: 'client_generation_status' };
+  }
   if (pathname === `${normalizedBase}/chat`) {
     return {
       kind: 'chat',
@@ -72,6 +75,8 @@ export async function executeMobileRestRoute(route, client, body = {}) {
       return client.getWorldInfo(route.name);
     case 'recent_chats':
       return client.recentChats();
+    case 'client_generation_status':
+      return client.getNemoClientGenerationStatus();
     case 'turn': {
       const avatarUrl = typeof body?.avatarUrl === 'string' ? body.avatarUrl.trim() : '';
       const fileName = typeof body?.fileName === 'string' ? body.fileName.trim() : '';
