@@ -18,6 +18,11 @@ import {
   executeMobileRestRoute,
 } from './sillytavern-mobile-rest.mjs';
 
+import {
+  buildDaryaNemoPreset,
+  listDaryaNemoProfiles,
+} from './darya-nemo-profile-library.mjs';
+
 const DEFAULT_PORT = 8790;
 const MAX_TOOL_TEXT = 200_000;
 
@@ -336,6 +341,37 @@ export class SillyTavernClient {
     return {
       ok: true,
       name: String(result?.name || normalizedName),
+    };
+  }
+
+  listDaryaNemoProfiles() {
+    return listDaryaNemoProfiles();
+  }
+
+  async installDaryaNemoProfile(profileId) {
+    const profile = listDaryaNemoProfiles().find((item) => item.id === profileId);
+    if (!profile) throw new Error(`Unknown Darya Nemo profile: ${profileId}`);
+    const preset = await buildDaryaNemoPreset(profileId);
+    const saved = await this.saveOpenAiPreset({ name: profile.name, preset });
+    return {
+      ok: true,
+      profileId,
+      name: saved.name,
+      activePrompts: preset.prompt_order[0].order.filter((entry) => entry.enabled).length,
+      fetishes: profile.fetishes,
+      vex: profile.vex,
+    };
+  }
+
+  async installAllDaryaNemoProfiles() {
+    const results = [];
+    for (const profile of listDaryaNemoProfiles()) {
+      results.push(await this.installDaryaNemoProfile(profile.id));
+    }
+    return {
+      ok: true,
+      installed: results.length,
+      profiles: results,
     };
   }
 
@@ -922,6 +958,7 @@ export function parseMobileWriteBody(contentType, text) {
     if (params.has('cardJson')) parsed.cardJson = params.get('cardJson') || '';
     if (params.has('name')) parsed.name = params.get('name') || '';
     if (params.has('presetJson')) parsed.presetJson = params.get('presetJson') || '';
+    if (params.has('profileId')) parsed.profileId = params.get('profileId') || '';
     return parsed;
   }
 
@@ -934,6 +971,24 @@ function escapeHtmlAttribute(value) {
     .replaceAll('"', '&quot;')
     .replaceAll('<', '&lt;')
     .replaceAll('>', '&gt;');
+}
+
+export function mobileNemoProfileInstallFormHtml(actionPath) {
+  const action = escapeHtmlAttribute(actionPath);
+  return `<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SillyTavern Mobile Nemo Profile Install</title>
+</head>
+<body>
+<form method="post" action="${action}">
+<label>profileId <input name="profileId" autocomplete="off" required></label>
+<button type="submit">Install Nemo profile</button>
+</form>
+</body>
+</html>`;
 }
 
 export function mobilePresetSaveFormHtml(actionPath) {
@@ -1474,7 +1529,8 @@ export function startHttpServer({
         mobileRoute.kind === 'turn' ||
         mobileRoute.kind === 'generate' ||
         mobileRoute.kind === 'character_create' ||
-        mobileRoute.kind === 'preset_save';
+        mobileRoute.kind === 'preset_save' ||
+        mobileRoute.kind === 'nemo_profile_install';
 
       if (mobileWriteRoute && req.method === 'GET') {
         res.statusCode = 200;
@@ -1495,9 +1551,13 @@ export function startHttpServer({
                 ? mobilePresetSaveFormHtml(
                     `${MOBILE_REST_BASE_PATH}/preset-save`,
                   )
-                : mobileGenerateFormHtml(
-                    `${MOBILE_REST_BASE_PATH}/generate`,
-                  ),
+                : mobileRoute.kind === 'nemo_profile_install'
+                  ? mobileNemoProfileInstallFormHtml(
+                      `${MOBILE_REST_BASE_PATH}/nemo-profile-install`,
+                    )
+                  : mobileGenerateFormHtml(
+                      `${MOBILE_REST_BASE_PATH}/generate`,
+                    ),
         );
         return;
       }
