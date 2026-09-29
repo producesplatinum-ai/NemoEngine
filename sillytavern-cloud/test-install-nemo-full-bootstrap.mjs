@@ -49,7 +49,7 @@ test('installs a client-side Nemo bootstrap extension with the full import/runti
 
   assert.equal(manifest.display_name, 'Nemo Full Bootstrap');
   assert.equal(manifest.loading_order, 1100);
-  assert.match(script, /Nemo Engine 11\.5\.2 - Ready RU RP/);
+  assert.match(script, /Nemo Engine 11\.5\.2 - Ready RU Gooner RP/);
   assert.match(script, /OAI_PRESET_IMPORT_READY/);
   assert.match(script, /NemoRecipeRuntime/);
   assert.match(script, /NemoColdPrompts/);
