@@ -18,6 +18,7 @@ import {
   mergeDaryaWorldLink,
   verifyLocalDaryaSource,
   getDaryaCardBasePng,
+  seedDarya,
 } from './seed-darya.mjs';
 
 const revision = '36e967df9f7524ca862bf380087f0ea0494daaad';
@@ -368,8 +369,8 @@ test('mergeDaryaWorldLink can mark an existing card as fully mirrored without ov
 });
 
 
-test('getDaryaCardBasePng decodes a local avatar from bytes without network fetch', async () => {
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'darya-avatar-bytes-'));
+test('getDaryaCardBasePng preserves an existing PNG card without decoding the mirrored JPEG', async () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'darya-avatar-envelope-'));
   const sourceDir = path.join(root, 'source');
   const avatarPath = path.join(
     sourceDir,
@@ -377,19 +378,22 @@ test('getDaryaCardBasePng decodes a local avatar from bytes without network fetc
     'darya-face',
     'primary-static.jpeg',
   );
+  const existingCharacterPath = path.join(root, 'Darya.png');
   fs.mkdirSync(path.dirname(avatarPath), { recursive: true });
+
+  // The mirrored visual source may be JPEG; the card update must not decode it.
+  fs.writeFileSync(avatarPath, Buffer.from('canonical-jpeg-bytes'));
 
   const onePixelPng = Buffer.from(
     'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=',
     'base64',
   );
-  fs.writeFileSync(avatarPath, onePixelPng);
+  fs.writeFileSync(existingCharacterPath, onePixelPng);
 
-  const png = await getDaryaCardBasePng(sourceDir);
+  const png = await getDaryaCardBasePng(sourceDir, existingCharacterPath);
   assert.equal(Buffer.isBuffer(png), true);
-  assert.equal(png.subarray(0, 8).toString('hex'), '89504e470d0a1a0a');
+  assert.equal(png.equals(onePixelPng), true);
 });
-
 
 test('seedDarya builds a card from a local avatar without network fetch', async () => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'darya-local-avatar-'));
