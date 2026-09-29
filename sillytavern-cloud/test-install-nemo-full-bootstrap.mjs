@@ -95,8 +95,8 @@ test('client generation diagnostic distinguishes generated from already-present 
   const script = fs.readFileSync(path.join(sourceDir, 'index.js'), 'utf8');
 
   assert.match(script, /generatedNewAssistant/);
-  assert.match(script, /outcome:\s*'generated'/);
   assert.match(script, /outcome:\s*'already_present'/);
   assert.match(script, /generatedNewAssistant:\s*false/);
-  assert.match(script, /generatedNewAssistant:\s*true/);
+  assert.match(script, /generatedNewAssistant:\s*assistantMessagePresent\s*&&\s*chat\.length\s*>\s*beforeCount/);
+  assert.match(script, /\?\s*'generated'\s*:\s*'no_new_assistant'/);
 });
