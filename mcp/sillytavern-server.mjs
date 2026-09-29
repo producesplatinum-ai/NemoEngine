@@ -489,7 +489,68 @@ function delay(ms) {
   return new Promise((resolveDelay) => setTimeout(resolveDelay, ms));
 }
 
-function readJsonRequestBody(req, maxBytes = 64 * 1024) {
+export function parseMobileWriteBody(contentType, text) {
+  const normalizedType = String(contentType || '')
+    .split(';', 1)[0]
+    .trim()
+    .toLowerCase();
+  const bodyText = String(text || '').trim();
+
+  if (!bodyText) return {};
+
+  if (normalizedType === 'application/json') {
+    try {
+      const value = JSON.parse(bodyText);
+      if (!value || typeof value !== 'object' || Array.isArray(value)) {
+        throw new Error('Invalid JSON body.');
+      }
+      return value;
+    } catch {
+      throw new Error('Invalid JSON body.');
+    }
+  }
+
+  if (normalizedType === 'application/x-www-form-urlencoded') {
+    const params = new URLSearchParams(bodyText);
+    return {
+      avatarUrl: params.get('avatarUrl') || '',
+      fileName: params.get('fileName') || '',
+      userText: params.get('userText') || '',
+    };
+  }
+
+  throw new Error('Unsupported content type.');
+}
+
+function escapeHtmlAttribute(value) {
+  return String(value)
+    .replaceAll('&', '&amp;')
+    .replaceAll('"', '&quot;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;');
+}
+
+export function mobileTurnFormHtml(actionPath) {
+  const action = escapeHtmlAttribute(actionPath);
+  return `<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SillyTavern Mobile Turn</title>
+</head>
+<body>
+<form method="post" action="${action}">
+<label>avatarUrl <input name="avatarUrl" autocomplete="off" required></label>
+<label>fileName <input name="fileName" autocomplete="off" required></label>
+<label>userText <textarea name="userText" required></textarea></label>
+<button type="submit">Send one turn</button>
+</form>
+</body>
+</html>`;
+}
+
+function readMobileWriteRequestBody(req, maxBytes = 64 * 1024) {
   return new Promise((resolveBody, rejectBody) => {
     const chunks = [];
     let size = 0;
@@ -510,20 +571,13 @@ function readJsonRequestBody(req, maxBytes = 64 * 1024) {
         return;
       }
 
-      const text = Buffer.concat(chunks).toString('utf8').trim();
-      if (!text) {
-        resolveBody({});
-        return;
-      }
-
       try {
-        const value = JSON.parse(text);
-        if (!value || typeof value !== 'object' || Array.isArray(value)) {
-          throw new Error('Invalid JSON body.');
-        }
-        resolveBody(value);
-      } catch {
-        rejectBody(new Error('Invalid JSON body.'));
+        const text = Buffer.concat(chunks).toString('utf8');
+        resolveBody(
+          parseMobileWriteBody(req.headers?.['content-type'] || '', text),
+        );
+      } catch (error) {
+        rejectBody(error);
       }
     });
 
@@ -827,14 +881,32 @@ export function startHttpServer({
     );
 
     if (mobileRoute.kind !== 'not_found') {
+      if (mobileRoute.kind === 'turn' && req.method === 'GET') {
+        res.statusCode = 200;
+        res.setHeader('content-type', 'text/html; charset=utf-8');
+        res.setHeader('cache-control', 'no-store');
+        res.setHeader(
+          'content-security-policy',
+          "default-src 'none'; style-src 'unsafe-inline'; form-action 'self'; base-uri 'none'",
+        );
+        res.end(mobileTurnFormHtml(`${MOBILE_REST_BASE_PATH}/turn`));
+        return;
+      }
+
       const expectedMethod = mobileRoute.kind === 'turn' ? 'POST' : 'GET';
       if (req.method !== expectedMethod) {
         res.statusCode = 405;
-        res.setHeader('allow', expectedMethod);
+        res.setHeader(
+          'allow',
+          mobileRoute.kind === 'turn' ? 'GET, POST' : expectedMethod,
+        );
         res.setHeader('content-type', 'application/json; charset=utf-8');
         res.end(JSON.stringify({
           ok: false,
-          error: `${expectedMethod} required.`,
+          error:
+            mobileRoute.kind === 'turn'
+              ? 'GET or POST required.'
+              : `${expectedMethod} required.`,
         }));
         return;
       }
@@ -842,7 +914,7 @@ export function startHttpServer({
       const runMobileRoute = async () => {
         const body =
           expectedMethod === 'POST'
-            ? await readJsonRequestBody(req)
+            ? await readMobileWriteRequestBody(req)
             : {};
         return executeMobileRestRoute(mobileRoute, getClient(), body);
       };
@@ -861,6 +933,7 @@ export function startHttpServer({
             message.includes(' are required.') ||
             message.includes('must not be empty.') ||
             message === 'Invalid JSON body.' ||
+            message === 'Unsupported content type.' ||
             message === 'Request body too large.';
           res.statusCode = badRequest ? 400 : 503;
           res.setHeader('content-type', 'application/json; charset=utf-8');
