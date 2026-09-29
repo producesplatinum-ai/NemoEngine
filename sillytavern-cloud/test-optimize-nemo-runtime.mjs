@@ -13,7 +13,8 @@ function write(file, content) {
 }
 
 function fixtureExtension(root) {
-  write(path.join(root, 'package.json'), JSON.stringify({ type: 'module' }));\n  write(path.join(root, 'manifest.json'), JSON.stringify({ display_name: 'NemoPresetExt', version: '6.0.6' }));
+  write(path.join(root, 'package.json'), JSON.stringify({ type: 'module' }));
+  write(path.join(root, 'manifest.json'), JSON.stringify({ display_name: 'NemoPresetExt', version: '6.0.6' }));
 
   write(path.join(root, 'features/recipe-runtime/format.js'), `
 export const runtimeOf = preset => preset.extensions?.nemoRecipeRuntime ?? null;
