@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import { SillyTavernClient } from './sillytavern-server.mjs';
+import { executeMobileRestRoute } from './sillytavern-mobile-rest.mjs';
 import { runOneShot } from './sillytavern-one-shot.mjs';
 
 function jsonResponse(value, status = 200) {
@@ -154,4 +155,56 @@ test('generateAssistantMessage deduplicates nonce without provider call or secon
   assert.equal(result.deduplicated, true);
   assert.equal(result.message, 'EXISTING_ASSISTANT');
   assert.equal(result.messageCount, 3);
+});
+
+
+test('mobile REST forwards nonce to explicit turn and generate client calls', async () => {
+  const turnCalls = [];
+  const generateCalls = [];
+  const client = {
+    async appendUserMessage(input) {
+      turnCalls.push(input);
+      return { ok: true, saved: true };
+    },
+    async generateAssistantMessage(input) {
+      generateCalls.push(input);
+      return { ok: true, saved: true, message: 'OK' };
+    },
+  };
+
+  await executeMobileRestRoute(
+    { kind: 'turn' },
+    client,
+    {
+      nonce: 'nonce-rest-turn',
+      avatarUrl: 'Darya.png',
+      fileName: 'Darya Native Story F1',
+      userText: 'TURN',
+    },
+  );
+  await executeMobileRestRoute(
+    { kind: 'generate' },
+    client,
+    {
+      nonce: 'nonce-rest-generate',
+      avatarUrl: 'Darya.png',
+      fileName: 'Darya Native Story F1',
+      source: 'deepseek',
+      model: 'deepseek-flash',
+    },
+  );
+
+  assert.deepEqual(turnCalls, [{
+    nonce: 'nonce-rest-turn',
+    avatarUrl: 'Darya.png',
+    fileName: 'Darya Native Story F1',
+    userText: 'TURN',
+  }]);
+  assert.deepEqual(generateCalls, [{
+    nonce: 'nonce-rest-generate',
+    avatarUrl: 'Darya.png',
+    fileName: 'Darya Native Story F1',
+    source: 'deepseek',
+    model: 'deepseek-flash',
+  }]);
 });
