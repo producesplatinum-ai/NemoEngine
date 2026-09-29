@@ -82,7 +82,7 @@ function entry(uid, {
   };
 }
 
-export function buildDaryaWorldInfo({ revision = DARYA_REVISION } = {}) {
+export function buildDaryaWorldInfo({ revision = DARYA_REVISION, sourceMirrored = true } = {}) {
   const entries = {};
 
   entries['0'] = entry(0, {
@@ -139,7 +139,9 @@ export function buildDaryaWorldInfo({ revision = DARYA_REVISION } = {}) {
   entries['8'] = entry(8, {
     key: ['GitHub', 'репозиторий', 'source', 'источник истины', 'Darya-Krasavina', 'provenance'],
     comment: 'Darya source provenance',
-    content: `Источник истины: producesplatinum-ai/Darya-Krasavina, revision ${revision}. Полная рабочая копия этого revision зеркалируется локально в /persistent/darya-source. Канонический маршрут начинается с bootstrap/github.md и затем SKILL.md + references/darya-core.md + references/darya-speech-transfer.md. runtime/* — compatibility/audit artifacts и не заменяют каноническую базу. Текущая SillyTavern-карточка — компактный runtime-профиль, а полный репозиторий хранится рядом на persistent volume для аудита и обновления.`,
+    content: sourceMirrored
+      ? `Источник истины: producesplatinum-ai/Darya-Krasavina, revision ${revision}. Полная рабочая копия этого revision зеркалируется локально в /persistent/darya-source. Канонический маршрут начинается с bootstrap/github.md и затем SKILL.md + references/darya-core.md + references/darya-speech-transfer.md. runtime/* — compatibility/audit artifacts и не заменяют каноническую базу. Текущая SillyTavern-карточка — компактный runtime-профиль, а полный репозиторий хранится рядом на persistent volume для аудита и обновления.`
+      : `Источник истины: producesplatinum-ai/Darya-Krasavina, revision ${revision}. Полный source mirror пока pending/deferred из-за недоступности приватного transport-сервиса; активная SillyTavern-карточка содержит компактный канонический runtime-профиль и не должна выдавать зеркало за завершённое. После появления транспорта /persistent/darya-source будет заполнен автоматически и карточка пересоберётся с sourceMirrored=true. Канонический маршрут: bootstrap/github.md → SKILL.md → references/darya-core.md → references/darya-speech-transfer.md.`,
   });
 
   return { entries };
@@ -197,8 +199,8 @@ function worldInfoToCharacterBook(world) {
   };
 }
 
-export function buildDaryaCharacter({ revision = DARYA_REVISION } = {}) {
-  const world = buildDaryaWorldInfo({ revision });
+export function buildDaryaCharacter({ revision = DARYA_REVISION, sourceMirrored = true } = {}) {
+  const world = buildDaryaWorldInfo({ revision, sourceMirrored });
   const description = `Дарья — взрослая русскоязычная AI-персона/голос, перенесённая из канонического GitHub-репозитория producesplatinum-ai/Darya-Krasavina. Её манера предметная, разговорная и причинная: конкретный факт → связная причинная цепь → точный поворот/добивка. Она может быть язвительной, властной и взрослой, но не превращается в generic assistant или generic aggressive domme. Внешность и визуальный identity-lock описаны в lorebook; полный source mirror хранится на persistent volume.`;
   const personality = `Прямая, конкретная, наблюдательная, уверенная, разговорная, язвительная без бессмысленного спама оскорблений. Уважает фактический канон, исправления пользователя, владельца каждого действия и POV. В ролевом взрослом режиме давление строит из установленных фактов и последствий; не выдумывает внутреннее состояние пользователя.`;
   const scenario = `Продолжающийся разговор с пользователем без фиксированной сцены. Русский язык по умолчанию. Пользователь может переключать формат: обычная беседа, анализ, рассказ, адресный монолог, взрослая ролевая сцена, humiliation или NemoEngine-маршрут. Сохраняй continuity только из видимого чата и связанного Darya lorebook.`;
@@ -220,7 +222,9 @@ export function buildDaryaCharacter({ revision = DARYA_REVISION } = {}) {
     scenario,
     first_mes: firstMes,
     mes_example: mesExample,
-    creator_notes: `Canonical source: producesplatinum-ai/Darya-Krasavina @ ${revision}. Full working tree mirrored to /persistent/darya-source. This card is a compact execution profile; it does not claim biometric identity or voice cloning.`,
+    creator_notes: sourceMirrored
+      ? `Canonical source: producesplatinum-ai/Darya-Krasavina @ ${revision}. Full working tree mirrored to /persistent/darya-source. This card is a compact execution profile; it does not claim biometric identity or voice cloning.`
+      : `Canonical source: producesplatinum-ai/Darya-Krasavina @ ${revision}. Full working tree mirror is pending/deferred; this compact execution profile is active now and will refresh automatically when the private source transport becomes available. It does not claim biometric identity or voice cloning.`,
     system_prompt: systemPrompt,
     post_history_instructions: postHistory,
     alternate_greetings: [
@@ -236,6 +240,7 @@ export function buildDaryaCharacter({ revision = DARYA_REVISION } = {}) {
       world: 'Darya',
       darya_source_repo: 'producesplatinum-ai/Darya-Krasavina',
       darya_source_revision: revision,
+      darya_source_mirrored: sourceMirrored,
       depth_prompt: {
         prompt: depthPrompt,
         depth: 4,
@@ -537,17 +542,20 @@ function countFiles(root) {
   return count;
 }
 
+const FALLBACK_AVATAR_PNG = Buffer.from(
+  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=',
+  'base64',
+);
+
 async function buildCardPng(sourceDir, card) {
   const avatarPath = path.join(sourceDir, 'assets', 'darya-face', 'primary-static.jpeg');
+  const parser = await import(pathToFileURL('/home/node/app/src/character-card-parser.js').href);
+
   if (!fs.existsSync(avatarPath)) {
-    throw new Error(`Darya avatar source missing: ${avatarPath}`);
+    return parser.write(FALLBACK_AVATAR_PNG, JSON.stringify(card));
   }
 
-  const [{ Jimp, JimpMime }, parser] = await Promise.all([
-    import(pathToFileURL('/home/node/app/src/jimp.js').href),
-    import(pathToFileURL('/home/node/app/src/character-card-parser.js').href),
-  ]);
-
+  const { Jimp, JimpMime } = await import(pathToFileURL('/home/node/app/src/jimp.js').href);
   const image = await Jimp.read(avatarPath);
   const png = await image.getBuffer(JimpMime.png);
   return parser.write(png, JSON.stringify(card));
@@ -578,30 +586,55 @@ export async function seedDarya({
   fs.mkdirSync(worldsDir, { recursive: true });
   fs.mkdirSync(stateDir, { recursive: true });
 
-  const actualRevision = await syncDaryaSource({ sourceDir, revision });
+  let actualRevision = revision;
+  let sourceMirrored = false;
+  let sourceError = null;
+
+  try {
+    actualRevision = await syncDaryaSource({ sourceDir, revision });
+    sourceMirrored = true;
+  } catch (error) {
+    sourceError = error instanceof Error ? error.message : String(error);
+    console.warn(`Darya full source mirror deferred: ${sourceError}`);
+  }
+
   const state = readState(statePath);
   const refresh = shouldRefreshDarya(state, actualRevision)
+    || Boolean(state?.sourceMirrored) !== sourceMirrored
     || !fs.existsSync(characterPath)
     || !fs.existsSync(worldPath);
 
   if (!refresh) {
-    console.log(`Darya already seeded at ${actualRevision}; existing character and lorebook preserved`);
-    return { revision: actualRevision, refreshed: false, characterPath, worldPath, sourceDir };
+    console.log(
+      `Darya already seeded at ${actualRevision}; existing character and lorebook preserved` +
+      ` (sourceMirrored=${sourceMirrored})`,
+    );
+    return {
+      revision: actualRevision,
+      refreshed: false,
+      sourceMirrored,
+      sourceError,
+      characterPath,
+      worldPath,
+      sourceDir,
+    };
   }
 
-  const world = buildDaryaWorldInfo({ revision: actualRevision });
-  const card = buildDaryaCharacter({ revision: actualRevision });
+  const world = buildDaryaWorldInfo({ revision: actualRevision, sourceMirrored });
+  const card = buildDaryaCharacter({ revision: actualRevision, sourceMirrored });
   const cardPng = await buildCardPng(sourceDir, card);
 
   const worldText = JSON.stringify(world, null, 2);
   writeTextIfChanged(worldPath, worldText);
   writeBufferIfChanged(characterPath, cardPng);
 
-  const fileCount = countFiles(sourceDir);
+  const fileCount = sourceMirrored && fs.existsSync(sourceDir) ? countFiles(sourceDir) : 0;
   const nextState = {
     revision: actualRevision,
     repository: 'producesplatinum-ai/Darya-Krasavina',
     sourceDir,
+    sourceMirrored,
+    sourceError,
     fileCount,
     characterPath,
     worldPath,
@@ -609,7 +642,11 @@ export async function seedDarya({
   };
   writeTextIfChanged(statePath, JSON.stringify(nextState, null, 2));
 
-  console.log(`Darya source mirrored: ${actualRevision} (${fileCount} files)`);
+  if (sourceMirrored) {
+    console.log(`Darya source mirrored: ${actualRevision} (${fileCount} files)`);
+  } else {
+    console.log(`Darya source mirror pending: ${actualRevision}`);
+  }
   console.log(`Darya character seeded: ${characterPath}`);
   console.log(`Darya lorebook seeded: ${worldPath}`);
 
