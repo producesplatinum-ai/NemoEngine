@@ -728,26 +728,21 @@ export function resolveDaryaAvatarPath({
   return fallbackAvatarPath;
 }
 
-export async function getDaryaCardBasePng(sourceDir, existingCharacterPath = '') {
-  const sourceAvatarPath = path.join(
-    sourceDir,
-    'assets',
-    'darya-face',
-    'primary-static.jpeg',
-  );
-
-  if (fs.existsSync(sourceAvatarPath)) {
-    const { Jimp, JimpMime } = await import(pathToFileURL('/home/node/app/src/jimp.js').href);
-    const sourceBytes = fs.readFileSync(sourceAvatarPath);
-    const image = await Jimp.read(sourceBytes);
-    return image.getBuffer(JimpMime.png);
-  }
-
+export async function getDaryaCardBasePng(
+  sourceDir,
+  existingCharacterPath = '',
+) {
   if (existingCharacterPath && fs.existsSync(existingCharacterPath)) {
     return fs.readFileSync(existingCharacterPath);
   }
 
-  const fallbackAvatarPath = resolveDaryaAvatarPath({ sourceDir });
+  // Keep the canonical JPEG in the mirrored source tree. Character-card metadata
+  // requires a PNG envelope; use SillyTavern's local fallback PNG rather than
+  // invoking network-backed Jimp/WASM codecs during startup.
+  const fallbackAvatarPath = '/home/node/app/public/img/ai4.png';
+  if (!fs.existsSync(fallbackAvatarPath)) {
+    throw new Error(`SillyTavern fallback avatar is missing: ${fallbackAvatarPath}`);
+  }
   return fs.readFileSync(fallbackAvatarPath);
 }
 
@@ -772,15 +767,7 @@ async function patchExistingDaryaCard(
 
   const existingJson = JSON.stringify(existing);
   const patchedJson = JSON.stringify(patched);
-  const sourceAvatarPath = path.join(
-    sourceDir,
-    'assets',
-    'darya-face',
-    'primary-static.jpeg',
-  );
-  const shouldRefreshImage = fs.existsSync(sourceAvatarPath);
-
-  if (existingJson === patchedJson && !shouldRefreshImage) {
+  if (existingJson === patchedJson) {
     return false;
   }
 
