@@ -257,8 +257,22 @@ export class SillyTavernClient {
   }
 
   async getNemoRuntimeStatus() {
-    const report = await this.getJson('/user/files/nemo-runtime-report.json');
-    return sanitizeNemoRuntimeReport(report);
+    try {
+      const report = await this.getJson('/user/files/nemo-runtime-report.json');
+      return sanitizeNemoRuntimeReport(report);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      if (!message.includes('/user/files/nemo-runtime-report.json') || !message.includes('HTTP 404')) {
+        throw error;
+      }
+
+      const settings = await this.post('/api/settings/get', {});
+      const report = settings?.extension_settings?.NemoFullRuntime;
+      if (!report || typeof report !== 'object' || Array.isArray(report)) {
+        throw new Error('Nemo runtime report is unavailable in both user files and settings.');
+      }
+      return sanitizeNemoRuntimeReport(report);
+    }
   }
 }
 
