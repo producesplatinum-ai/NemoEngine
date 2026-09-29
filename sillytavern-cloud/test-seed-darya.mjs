@@ -224,6 +224,8 @@ test('buildDaryaCharacter marks a deferred source mirror without falsely claimin
   assert.equal(card.data.extensions.darya_source_mirrored, false);
   assert.match(card.data.creator_notes, /pending|deferred|ожида/i);
   assert.doesNotMatch(card.data.creator_notes, /Full working tree mirrored/);
+  assert.doesNotMatch(card.data.description, /полный source mirror хранится/i);
+  assert.match(card.data.description, /pending|deferred|ожида/i);
 });
 
 test('buildDaryaWorldInfo records deferred source-mirror state explicitly', () => {
