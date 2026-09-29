@@ -32,6 +32,7 @@ export function classifyMobileRestRequest(requestTarget, basePath) {
   if (pathname === `${normalizedBase}/nemo-profiles`) return { kind: 'nemo_profiles' };
   if (pathname === `${normalizedBase}/nemo-exact-catalog`) return { kind: 'nemo_exact_catalog' };
   if (pathname === `${normalizedBase}/nemo-exact-install`) return { kind: 'nemo_exact_install' };
+  if (pathname === `${normalizedBase}/nemo-exact-activate`) return { kind: 'nemo_exact_activate' };
   if (pathname === `${normalizedBase}/nemo-profile-install`) return { kind: 'nemo_profile_install' };
   if (pathname === `${normalizedBase}/preset-save`) return { kind: 'preset_save' };
   if (pathname === `${normalizedBase}/character-create`) return { kind: 'character_create' };
@@ -86,6 +87,11 @@ export async function executeMobileRestRoute(route, client, body = {}) {
       if (!entryId) throw new Error('entryId is required.');
       if (entryId === 'all') return client.installAllExactNemoCatalog();
       return client.installExactNemoCatalogEntry(entryId);
+    }
+    case 'nemo_exact_activate': {
+      const entryId = typeof body?.entryId === 'string' ? body.entryId.trim() : '';
+      if (!entryId) throw new Error('entryId is required.');
+      return client.activateExactNemoCatalogEntry(entryId);
     }
     case 'nemo_profile_install': {
       const profileId = typeof body?.profileId === 'string' ? body.profileId.trim() : '';
