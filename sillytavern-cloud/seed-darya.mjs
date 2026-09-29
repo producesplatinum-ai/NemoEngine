@@ -728,7 +728,7 @@ export function resolveDaryaAvatarPath({
   return fallbackAvatarPath;
 }
 
-async function getDaryaCardBasePng(sourceDir, existingCharacterPath = '') {
+export async function getDaryaCardBasePng(sourceDir, existingCharacterPath = '') {
   const sourceAvatarPath = path.join(
     sourceDir,
     'assets',
@@ -738,7 +738,8 @@ async function getDaryaCardBasePng(sourceDir, existingCharacterPath = '') {
 
   if (fs.existsSync(sourceAvatarPath)) {
     const { Jimp, JimpMime } = await import(pathToFileURL('/home/node/app/src/jimp.js').href);
-    const image = await Jimp.read(sourceAvatarPath);
+    const sourceBytes = fs.readFileSync(sourceAvatarPath);
+    const image = await Jimp.read(sourceBytes);
     return image.getBuffer(JimpMime.png);
   }
 
