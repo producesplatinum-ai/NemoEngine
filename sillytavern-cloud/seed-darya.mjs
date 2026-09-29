@@ -199,13 +199,23 @@ function worldInfoToCharacterBook(world) {
   };
 }
 
-export function mergeDaryaWorldLink(card, world) {
+export function mergeDaryaWorldLink(
+  card,
+  world,
+  { revision, sourceMirrored } = {},
+) {
   const patched = JSON.parse(JSON.stringify(card || {}));
   patched.spec ??= 'chara_card_v3';
   patched.spec_version ??= '3.0';
   patched.data ??= {};
   patched.data.extensions ??= {};
   patched.data.extensions.world = 'Darya';
+  if (revision) {
+    patched.data.extensions.darya_source_revision = revision;
+  }
+  if (typeof sourceMirrored === 'boolean') {
+    patched.data.extensions.darya_source_mirrored = sourceMirrored;
+  }
   patched.data.character_book = worldInfoToCharacterBook(world);
   return patched;
 }
@@ -479,6 +489,64 @@ export async function syncDaryaSourceFromHttp({
   }
 }
 
+export function verifyLocalDaryaSource({
+  sourceDir = DEFAULT_SOURCE_DIR,
+  revision = DARYA_REVISION,
+} = {}) {
+  const manifestPath = path.join(sourceDir, 'SOURCE_MANIFEST.sha256');
+  if (!fs.existsSync(manifestPath)) {
+    return { ok: false, revision, reason: 'SOURCE_MANIFEST.sha256 is missing' };
+  }
+
+  let lines;
+  try {
+    lines = fs.readFileSync(manifestPath, 'utf8').split(/\r?\n/).filter(Boolean);
+  } catch (error) {
+    return {
+      ok: false,
+      revision,
+      reason: `SOURCE_MANIFEST.sha256 could not be read: ${error instanceof Error ? error.message : String(error)}`,
+    };
+  }
+
+  const entries = [];
+  for (const line of lines) {
+    const match = line.match(/^([0-9a-f]{64})  \.\/(.+)$/);
+    if (!match) {
+      return { ok: false, revision, reason: `Invalid manifest line: ${line.slice(0, 120)}` };
+    }
+    const relativePath = validateSnapshotRelativePath(match[2]);
+    entries.push({ sha256: match[1], relativePath });
+  }
+
+  if (!entries.length) {
+    return { ok: false, revision, reason: 'SOURCE_MANIFEST.sha256 is empty' };
+  }
+
+  for (const entry of entries) {
+    const target = path.join(sourceDir, ...entry.relativePath.split('/'));
+    if (!fs.existsSync(target) || !fs.statSync(target).isFile()) {
+      return { ok: false, revision, reason: `Missing file: ${entry.relativePath}` };
+    }
+
+    const actual = sha256Buffer(fs.readFileSync(target));
+    if (actual !== entry.sha256) {
+      return {
+        ok: false,
+        revision,
+        reason: `SHA256 mismatch for ${entry.relativePath}: expected ${entry.sha256}, got ${actual}`,
+      };
+    }
+  }
+
+  return {
+    ok: true,
+    revision,
+    manifestEntries: entries.length,
+    fileCount: entries.length + 1,
+  };
+}
+
 function runGit(args, cwd) {
   const result = spawnSync('git', args, {
     cwd,
@@ -497,6 +565,11 @@ export async function syncDaryaSource({
   sourceDir = DEFAULT_SOURCE_DIR,
   revision = DARYA_REVISION,
 } = {}) {
+  const local = verifyLocalDaryaSource({ sourceDir, revision });
+  if (local.ok) {
+    return revision;
+  }
+
   const baseUrl = process.env.DARYA_SOURCE_BASE_URL || '';
   const token = process.env.DARYA_SOURCE_TOKEN || '';
   if (baseUrl) {
@@ -598,13 +671,18 @@ async function buildCardPng(sourceDir, card) {
   return parser.write(basePng, JSON.stringify(card));
 }
 
-async function patchExistingDaryaCard(characterPath, sourceDir, world) {
+async function patchExistingDaryaCard(
+  characterPath,
+  sourceDir,
+  world,
+  { revision, sourceMirrored } = {},
+) {
   if (!fs.existsSync(characterPath)) return false;
 
   const parser = await import(pathToFileURL('/home/node/app/src/character-card-parser.js').href);
   const raw = await parser.parse(characterPath, 'png');
   const existing = JSON.parse(raw);
-  const patched = mergeDaryaWorldLink(existing, world);
+  const patched = mergeDaryaWorldLink(existing, world, { revision, sourceMirrored });
 
   const existingJson = JSON.stringify(existing);
   const patchedJson = JSON.stringify(patched);
@@ -675,7 +753,12 @@ export async function seedDarya({
 
   let characterChanged = false;
   if (fs.existsSync(characterPath)) {
-    characterChanged = await patchExistingDaryaCard(characterPath, sourceDir, world);
+    characterChanged = await patchExistingDaryaCard(
+      characterPath,
+      sourceDir,
+      world,
+      { revision: actualRevision, sourceMirrored },
+    );
   } else {
     const card = buildDaryaCharacter({ revision: actualRevision, sourceMirrored });
     const cardPng = await buildCardPng(sourceDir, card);
