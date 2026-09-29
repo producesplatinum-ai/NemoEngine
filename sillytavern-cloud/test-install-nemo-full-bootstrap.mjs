@@ -21,7 +21,7 @@ test('installs a client-side Nemo bootstrap extension with the full import/runti
     loading_order: 1100,
   }, null, 2));
   fs.writeFileSync(path.join(source, 'index.js'), [
-    "const ACTIVE_PRESET = 'Nemo Engine 11.5.2 - Ready RU RP';",
+    "const ACTIVE_PRESET = 'Nemo Engine 11.5.2 - Ready RU Gooner RP';",
     "event_types.OAI_PRESET_IMPORT_READY",
     "globalThis.NemoRecipeRuntime",
     "globalThis.NemoColdPrompts",
