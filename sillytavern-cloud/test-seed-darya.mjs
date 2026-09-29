@@ -478,7 +478,7 @@ test('getDaryaCardBasePng preserves an existing PNG card without decoding the mi
   assert.equal(png.equals(onePixelPng), true);
 });
 
-test('seedDarya builds a card from a local avatar without network fetch', async () => {
+test('seedDarya builds a card from a local avatar without network fetch', async (t) => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'darya-local-avatar-'));
   const sourceDir = path.join(root, 'darya-source');
   const userDataDir = path.join(root, 'user-data');
@@ -486,6 +486,24 @@ test('seedDarya builds a card from a local avatar without network fetch', async 
     'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=',
     'base64',
   );
+  const parserPath = path.join(root, 'character-card-parser.mjs');
+  const fallbackAvatarPath = path.join(root, 'fallback.png');
+  fs.writeFileSync(
+    parserPath,
+    `export function write(basePng) { return Buffer.from(basePng); }\nexport async function parse() { return '{}'; }\n`,
+  );
+  fs.writeFileSync(fallbackAvatarPath, tinyPng);
+
+  const oldParserPath = process.env.DARYA_CARD_PARSER_PATH;
+  const oldFallbackPath = process.env.DARYA_FALLBACK_AVATAR_PATH;
+  process.env.DARYA_CARD_PARSER_PATH = parserPath;
+  process.env.DARYA_FALLBACK_AVATAR_PATH = fallbackAvatarPath;
+  t.after(() => {
+    if (oldParserPath === undefined) delete process.env.DARYA_CARD_PARSER_PATH;
+    else process.env.DARYA_CARD_PARSER_PATH = oldParserPath;
+    if (oldFallbackPath === undefined) delete process.env.DARYA_FALLBACK_AVATAR_PATH;
+    else process.env.DARYA_FALLBACK_AVATAR_PATH = oldFallbackPath;
+  });
 
   fs.mkdirSync(path.join(sourceDir, 'assets', 'darya-face'), { recursive: true });
   const files = new Map([
