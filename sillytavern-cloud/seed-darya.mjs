@@ -298,6 +298,154 @@ function sha256Buffer(bytes) {
   return createHash('sha256').update(bytes).digest('hex');
 }
 
+function listLocalMirrorFiles(root) {
+  const files = [];
+  const walk = (dir) => {
+    for (const item of fs.readdirSync(dir, { withFileTypes: true })) {
+      if (item.name === '.git') continue;
+      const absolute = path.join(dir, item.name);
+      if (item.isDirectory()) {
+        walk(absolute);
+        continue;
+      }
+      if (!item.isFile()) continue;
+      files.push(path.relative(root, absolute).split(path.sep).join('/'));
+    }
+  };
+  if (fs.existsSync(root)) walk(root);
+  files.sort();
+  return files;
+}
+
+export function verifyLocalDaryaSource({
+  sourceDir = DEFAULT_SOURCE_DIR,
+  revision = DARYA_REVISION,
+  expectedManifestSha256 = '',
+} = {}) {
+  try {
+    if (!sourceDir || !fs.existsSync(sourceDir)) {
+      return { ok: false, revision, reason: 'local mirror directory is missing' };
+    }
+
+    const manifestPath = path.join(sourceDir, 'SOURCE_MANIFEST.sha256');
+    if (!fs.existsSync(manifestPath)) {
+      return { ok: false, revision, reason: 'SOURCE_MANIFEST.sha256 is missing' };
+    }
+
+    const manifestBytes = fs.readFileSync(manifestPath);
+    const manifestSha256 = sha256Buffer(manifestBytes);
+    if (
+      expectedManifestSha256 &&
+      manifestSha256 !== String(expectedManifestSha256).toLowerCase()
+    ) {
+      return {
+        ok: false,
+        revision,
+        reason:
+          `manifest SHA256 mismatch: expected ${expectedManifestSha256}, got ${manifestSha256}`,
+        manifestSha256,
+      };
+    }
+
+    const manifestText = manifestBytes.toString('utf8');
+    const entries = [];
+    const seen = new Set();
+
+    for (const rawLine of manifestText.split(/\r?\n/)) {
+      if (!rawLine.trim()) continue;
+      const match = rawLine.match(/^([0-9a-f]{64})  \.\/(.+)$/);
+      if (!match) {
+        return {
+          ok: false,
+          revision,
+          reason: `invalid manifest line: ${rawLine.slice(0, 160)}`,
+          manifestSha256,
+        };
+      }
+
+      const expectedSha = match[1];
+      const relativePath = validateSnapshotRelativePath(match[2]);
+      if (seen.has(relativePath)) {
+        return {
+          ok: false,
+          revision,
+          reason: `duplicate manifest path: ${relativePath}`,
+          manifestSha256,
+        };
+      }
+      seen.add(relativePath);
+      entries.push({ relativePath, expectedSha });
+    }
+
+    if (!entries.length) {
+      return { ok: false, revision, reason: 'manifest is empty', manifestSha256 };
+    }
+
+    for (const { relativePath, expectedSha } of entries) {
+      const target = path.join(sourceDir, ...relativePath.split('/'));
+      if (!fs.existsSync(target) || !fs.statSync(target).isFile()) {
+        return {
+          ok: false,
+          revision,
+          reason: `missing manifest file: ${relativePath}`,
+          manifestSha256,
+        };
+      }
+      const actualSha = sha256Buffer(fs.readFileSync(target));
+      if (actualSha !== expectedSha) {
+        return {
+          ok: false,
+          revision,
+          reason:
+            `SHA256 mismatch for ${relativePath}: expected ${expectedSha}, got ${actualSha}`,
+          manifestSha256,
+        };
+      }
+    }
+
+    const expectedFiles = new Set([
+      ...entries.map((entry) => entry.relativePath),
+      'SOURCE_MANIFEST.sha256',
+    ]);
+    const actualFiles = listLocalMirrorFiles(sourceDir);
+    const extras = actualFiles.filter((file) => !expectedFiles.has(file));
+    if (extras.length) {
+      return {
+        ok: false,
+        revision,
+        reason: `unexpected mirror file: ${extras[0]}`,
+        manifestSha256,
+        extras,
+      };
+    }
+
+    const missing = [...expectedFiles].filter((file) => !actualFiles.includes(file));
+    if (missing.length) {
+      return {
+        ok: false,
+        revision,
+        reason: `missing mirror file: ${missing[0]}`,
+        manifestSha256,
+        missing,
+      };
+    }
+
+    return {
+      ok: true,
+      revision,
+      manifestSha256,
+      manifestEntries: entries.length,
+      fileCount: actualFiles.length,
+    };
+  } catch (error) {
+    return {
+      ok: false,
+      revision,
+      reason: error instanceof Error ? error.message : String(error),
+    };
+  }
+}
+
 function validateSnapshotRelativePath(value) {
   if (!value || typeof value !== 'string') {
     throw new Error('Darya snapshot path is required');
@@ -732,12 +880,33 @@ export async function seedDarya({
   let sourceMirrored = false;
   let sourceError = null;
 
-  try {
-    actualRevision = await syncDaryaSource({ sourceDir, revision });
+  const expectedManifestSha256 =
+    process.env.DARYA_SOURCE_MANIFEST_SHA256 ||
+    (revision === '36e967df9f7524ca862bf380087f0ea0494daaad'
+      ? '5f37b85f0ff1777048110db03af12883c5b06404518f3321ef9a3a2e12c0787b'
+      : '');
+  const localMirror = verifyLocalDaryaSource({
+    sourceDir,
+    revision,
+    expectedManifestSha256,
+  });
+
+  if (localMirror.ok) {
     sourceMirrored = true;
-  } catch (error) {
-    sourceError = error instanceof Error ? error.message : String(error);
-    console.warn(`Darya full source mirror deferred: ${sourceError}`);
+    sourceError = null;
+    console.log(
+      `Darya local source mirror verified: ${revision} (${localMirror.fileCount} files)`,
+    );
+  } else {
+    try {
+      actualRevision = await syncDaryaSource({ sourceDir, revision });
+      sourceMirrored = true;
+    } catch (error) {
+      sourceError = error instanceof Error ? error.message : String(error);
+      console.warn(
+        `Darya full source mirror deferred: ${sourceError}; local verification: ${localMirror.reason}`,
+      );
+    }
   }
 
   const cardRevision = process.env.DARYA_CARD_REV || 'card-v2';
