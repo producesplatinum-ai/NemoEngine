@@ -314,3 +314,59 @@ test('character create rejects missing or invalid card JSON', async () => {
     /cardJson must be valid JSON/,
   );
 });
+
+
+test('mobile character create classifies route and dispatches a narrow card payload', async () => {
+  const basePath = '/st-secret/mobile';
+  assert.deepEqual(
+    classifyMobileRestRequest('/st-secret/mobile/character-create', basePath),
+    { kind: 'character_create' },
+  );
+
+  const calls = [];
+  const client = {
+    async createCharacter(input) {
+      calls.push(input);
+      return { ok: true, avatarUrl: 'Darya.png', name: input.name };
+    },
+  };
+
+  const body = {
+    name: 'Darya',
+    description: 'Direct, irritated, evidence-led voice.',
+    personality: 'Sharp and grounded.',
+    scenario: 'Private adult roleplay.',
+    firstMes: 'Ну?',
+    mesExample: '{{char}}: Конкретнее.',
+    creatorNotes: 'Imported from Darya-Krasavina.',
+    systemPrompt: 'Stay in Darya voice.',
+    postHistoryInstructions: 'Preserve current scene facts.',
+    tags: 'Darya,NemoEngine',
+    creator: 'producesplatinum-ai',
+    characterVersion: '1.0.0',
+    fileName: 'Darya',
+  };
+
+  const result = await executeMobileRestRoute(
+    { kind: 'character_create' },
+    client,
+    body,
+  );
+
+  assert.equal(result.ok, true);
+  assert.equal(result.avatarUrl, 'Darya.png');
+  assert.deepEqual(calls, [body]);
+});
+
+test('mobile character create rejects missing name before calling upstream', async () => {
+  const client = {
+    createCharacter() {
+      throw new Error('should not be called');
+    },
+  };
+
+  await assert.rejects(
+    () => executeMobileRestRoute({ kind: 'character_create' }, client, {}),
+    /name is required/,
+  );
+});
