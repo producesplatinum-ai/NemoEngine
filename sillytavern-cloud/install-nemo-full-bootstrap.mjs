@@ -3,9 +3,25 @@ import path from 'node:path';
 
 const userDataDir = process.env.SILLYTAVERN_USER_DATA_DIR || '/persistent/data/default-user';
 const sourceDir = process.env.NEMO_BOOTSTRAP_SOURCE_DIR || '/usr/local/share/nemo-full-bootstrap';
+const fallbackSourceDir =
+  process.env.NEMO_BOOTSTRAP_FALLBACK_SOURCE_DIR || '/usr/local/share/nemo-full-bootstrap';
 const targetDir = path.join(userDataDir, 'extensions', 'NemoFullBootstrap');
 
-if (!fs.existsSync(path.join(sourceDir, 'manifest.json')) || !fs.existsSync(path.join(sourceDir, 'index.js'))) {
+function hasBootstrapSource(dir) {
+  return (
+    fs.existsSync(path.join(dir, 'manifest.json')) &&
+    fs.existsSync(path.join(dir, 'index.js'))
+  );
+}
+
+if (!hasBootstrapSource(sourceDir) && sourceDir !== fallbackSourceDir && hasBootstrapSource(fallbackSourceDir)) {
+  fs.rmSync(sourceDir, { recursive: true, force: true });
+  fs.mkdirSync(path.dirname(sourceDir), { recursive: true });
+  fs.cpSync(fallbackSourceDir, sourceDir, { recursive: true, force: true });
+  console.log('Nemo Full Bootstrap source recovered from bundled fallback');
+}
+
+if (!hasBootstrapSource(sourceDir)) {
   throw new Error('Nemo Full Bootstrap source files are missing.');
 }
 
