@@ -560,11 +560,22 @@ export function resolveDaryaAvatarPath({
 }
 
 async function buildCardPng(sourceDir, card) {
-  const avatarPath = resolveDaryaAvatarPath({ sourceDir });
+  const sourceAvatarPath = path.join(
+    sourceDir,
+    'assets',
+    'darya-face',
+    'primary-static.jpeg',
+  );
   const parser = await import(pathToFileURL('/home/node/app/src/character-card-parser.js').href);
-  const { Jimp, JimpMime } = await import(pathToFileURL('/home/node/app/src/jimp.js').href);
 
-  const image = await Jimp.read(avatarPath);
+  if (!fs.existsSync(sourceAvatarPath)) {
+    const fallbackAvatarPath = resolveDaryaAvatarPath({ sourceDir });
+    const fallbackPng = fs.readFileSync(fallbackAvatarPath);
+    return parser.write(fallbackPng, JSON.stringify(card));
+  }
+
+  const { Jimp, JimpMime } = await import(pathToFileURL('/home/node/app/src/jimp.js').href);
+  const image = await Jimp.read(sourceAvatarPath);
   const png = await image.getBuffer(JimpMime.png);
   return parser.write(png, JSON.stringify(card));
 }
