@@ -22,11 +22,10 @@ export function sanitizeRelativePath(value) {
   return normalized;
 }
 
-export function isAuthorized(header, token) {
+export function isAuthorized(suppliedToken, token) {
   if (typeof token !== 'string' || token.length < 16) return false;
-  if (typeof header !== 'string' || !header.startsWith('Bearer ')) return false;
-  const supplied = header.slice('Bearer '.length);
-  const a = Buffer.from(supplied);
+  if (typeof suppliedToken !== 'string' || suppliedToken.length < 16) return false;
+  const a = Buffer.from(suppliedToken);
   const b = Buffer.from(token);
   if (a.length !== b.length) return false;
   return timingSafeEqual(a, b);
@@ -68,7 +67,7 @@ export function writeUploadedFile({
 
 function authorize(req, res) {
   const token = process.env.DARYA_IMPORT_TOKEN || '';
-  if (!isAuthorized(req.headers.authorization || '', token)) {
+  if (!isAuthorized(String(req.headers['x-darya-import-token'] || ''), token)) {
     res.status(401).json({ ok: false, error: 'unauthorized' });
     return false;
   }
