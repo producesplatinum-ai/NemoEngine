@@ -747,7 +747,7 @@ export class SillyTavernClient {
     });
   }
 
-  async appendUserMessage({ avatarUrl, fileName, userText }) {
+  async appendUserMessage({ avatarUrl, fileName, userText, nonce = '' }) {
     const character = await this.getCharacter(avatarUrl);
     const fallbackName = String(avatarUrl).replace(/\.png$/i, '');
     const characterName = String(
@@ -756,6 +756,28 @@ export class SillyTavernClient {
 
     const existing = await this.getChat({ avatarUrl, fileName });
     const chat = Array.isArray(existing) ? existing.slice() : [];
+    const normalizedNonce = String(nonce || '').trim();
+    if (normalizedNonce) {
+      const duplicate = chat.find(
+        (entry) =>
+          entry &&
+          typeof entry === 'object' &&
+          !Array.isArray(entry) &&
+          entry?.extra?.one_shot_nonce === normalizedNonce &&
+          entry?.extra?.one_shot_op === 'turn',
+      );
+      if (duplicate) {
+        return {
+          ok: true,
+          saved: true,
+          deduplicated: true,
+          avatarUrl,
+          fileName,
+          characterName,
+          messageCount: chat.length,
+        };
+      }
+    }
     const first = chat[0];
     const hasHeader =
       first &&
@@ -782,7 +804,9 @@ export class SillyTavernClient {
       is_system: false,
       send_date: new Date().toISOString(),
       mes: String(userText),
-      extra: {},
+      extra: normalizedNonce
+        ? { one_shot_nonce: normalizedNonce, one_shot_op: 'turn' }
+        : {},
     });
 
     await this.post('/api/chats/save', {
@@ -802,7 +826,7 @@ export class SillyTavernClient {
     };
   }
 
-  async generateAssistantMessage({ avatarUrl, fileName, source, model }) {
+  async generateAssistantMessage({ avatarUrl, fileName, source, model, nonce = '' }) {
     const character = await this.getCharacter(avatarUrl);
     const fallbackName = String(avatarUrl).replace(/\\.png$/i, '');
     const characterName = String(
@@ -811,6 +835,33 @@ export class SillyTavernClient {
 
     const existing = await this.getChat({ avatarUrl, fileName });
     const chat = Array.isArray(existing) ? existing.slice() : [];
+    const normalizedNonce = String(nonce || '').trim();
+    if (normalizedNonce) {
+      const duplicate = chat.find(
+        (entry) =>
+          entry &&
+          typeof entry === 'object' &&
+          !Array.isArray(entry) &&
+          entry?.extra?.one_shot_nonce === normalizedNonce &&
+          entry?.extra?.one_shot_op === 'generate' &&
+          typeof entry.mes === 'string' &&
+          entry.mes.trim(),
+      );
+      if (duplicate) {
+        return {
+          ok: true,
+          saved: true,
+          deduplicated: true,
+          avatarUrl,
+          fileName,
+          characterName,
+          source,
+          model,
+          message: String(duplicate.mes),
+          messageCount: chat.length,
+        };
+      }
+    }
     const conversation = chat.filter(
       (entry) => entry && typeof entry === 'object' && typeof entry.mes === 'string' && entry.mes.trim(),
     );
@@ -868,7 +919,9 @@ export class SillyTavernClient {
       is_system: false,
       send_date: new Date().toISOString(),
       mes: message,
-      extra: {},
+      extra: normalizedNonce
+        ? { one_shot_nonce: normalizedNonce, one_shot_op: 'generate' }
+        : {},
     });
 
     await this.post('/api/chats/save', {

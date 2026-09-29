@@ -161,8 +161,14 @@ export async function executeMobileRestRoute(route, client, body = {}) {
         throw new Error('avatarUrl, fileName, and userText are required.');
       }
       const userText = String(body.userText);
+      const nonce = typeof body?.nonce === 'string' ? body.nonce.trim() : '';
       if (!userText.trim()) throw new Error('userText must not be empty.');
-      return client.appendUserMessage({ avatarUrl, fileName, userText });
+      return client.appendUserMessage({
+        ...(nonce ? { nonce } : {}),
+        avatarUrl,
+        fileName,
+        userText,
+      });
     }
     case 'generate': {
       const avatarUrl = typeof body?.avatarUrl === 'string' ? body.avatarUrl.trim() : '';
@@ -178,7 +184,14 @@ export async function executeMobileRestRoute(route, client, body = {}) {
       if (!['deepseek', 'groq', 'openrouter'].includes(source)) {
         throw new Error('Unsupported generation source.');
       }
-      return client.generateAssistantMessage({ avatarUrl, fileName, source, model });
+      const nonce = typeof body?.nonce === 'string' ? body.nonce.trim() : '';
+      return client.generateAssistantMessage({
+        ...(nonce ? { nonce } : {}),
+        avatarUrl,
+        fileName,
+        source,
+        model,
+      });
     }
     case 'chat':
       if (!route.avatarUrl || !route.fileName) {
