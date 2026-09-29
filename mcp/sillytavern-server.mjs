@@ -315,6 +315,30 @@ export class SillyTavernClient {
     return this.post('/api/characters/all', {});
   }
 
+  async listOpenAiPresets() {
+    const settings = await this.post('/api/settings/get', {});
+    return Array.isArray(settings?.openai_setting_names)
+      ? settings.openai_setting_names
+      : [];
+  }
+
+  async saveOpenAiPreset({ name, preset }) {
+    const normalizedName = String(name || '').trim();
+    if (!normalizedName) throw new Error('Preset name is required.');
+    if (!preset || typeof preset !== 'object' || Array.isArray(preset)) {
+      throw new Error('Preset must be an object.');
+    }
+    const result = await this.post('/api/presets/save', {
+      apiId: 'openai',
+      name: normalizedName,
+      preset,
+    });
+    return {
+      ok: true,
+      name: String(result?.name || normalizedName),
+    };
+  }
+
   getCharacter(avatarUrl) {
     return this.post('/api/characters/get', { avatar_url: avatarUrl });
   }
@@ -896,6 +920,8 @@ export function parseMobileWriteBody(contentType, text) {
     if (params.has('model')) parsed.model = params.get('model') || '';
     if (params.has('marker')) parsed.marker = params.get('marker') || '';
     if (params.has('cardJson')) parsed.cardJson = params.get('cardJson') || '';
+    if (params.has('name')) parsed.name = params.get('name') || '';
+    if (params.has('presetJson')) parsed.presetJson = params.get('presetJson') || '';
     return parsed;
   }
 
@@ -908,6 +934,25 @@ function escapeHtmlAttribute(value) {
     .replaceAll('"', '&quot;')
     .replaceAll('<', '&lt;')
     .replaceAll('>', '&gt;');
+}
+
+export function mobilePresetSaveFormHtml(actionPath) {
+  const action = escapeHtmlAttribute(actionPath);
+  return `<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SillyTavern Mobile Preset Save</title>
+</head>
+<body>
+<form method="post" action="${action}">
+<label>name <input name="name" autocomplete="off" required></label>
+<label>presetJson <textarea name="presetJson" required></textarea></label>
+<button type="submit">Save preset</button>
+</form>
+</body>
+</html>`;
 }
 
 export function mobileCharacterCreateFormHtml(actionPath) {
@@ -1428,7 +1473,8 @@ export function startHttpServer({
       const mobileWriteRoute =
         mobileRoute.kind === 'turn' ||
         mobileRoute.kind === 'generate' ||
-        mobileRoute.kind === 'character_create';
+        mobileRoute.kind === 'character_create' ||
+        mobileRoute.kind === 'preset_save';
 
       if (mobileWriteRoute && req.method === 'GET') {
         res.statusCode = 200;
@@ -1445,9 +1491,13 @@ export function startHttpServer({
               ? mobileCharacterCreateFormHtml(
                   `${MOBILE_REST_BASE_PATH}/character-create`,
                 )
-              : mobileGenerateFormHtml(
-                  `${MOBILE_REST_BASE_PATH}/generate`,
-                ),
+              : mobileRoute.kind === 'preset_save'
+                ? mobilePresetSaveFormHtml(
+                    `${MOBILE_REST_BASE_PATH}/preset-save`,
+                  )
+                : mobileGenerateFormHtml(
+                    `${MOBILE_REST_BASE_PATH}/generate`,
+                  ),
         );
         return;
       }
@@ -1486,6 +1536,7 @@ export function startHttpServer({
             message.includes(' are required.') ||
             message.includes('must not be empty.') ||
             message === 'cardJson must be valid JSON.' ||
+            message === 'presetJson must be valid JSON.' ||
             message === 'Unsupported generation source.' ||
             message === 'Invalid JSON body.' ||
             message === 'Unsupported content type.' ||
