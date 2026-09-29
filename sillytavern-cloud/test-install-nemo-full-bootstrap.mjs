@@ -56,3 +56,16 @@ test('installs a client-side Nemo bootstrap extension with the full import/runti
   assert.match(script, /NemoVexRuntime/);
   assert.match(script, /NemoPromptRendering/);
 });
+
+
+test('production Nemo Full Bootstrap persists client runtime preflight report', () => {
+  const sourceDir = process.env.NEMO_BOOTSTRAP_PRODUCTION_SOURCE || '/usr/local/share/nemo-full-bootstrap';
+  const scriptPath = path.join(sourceDir, 'index.js');
+  assert.equal(fs.existsSync(scriptPath), true, 'production bootstrap source missing');
+  const script = fs.readFileSync(scriptPath, 'utf8');
+
+  assert.match(script, /nemo-client-runtime-report\.json/);
+  assert.match(script, /\/api\/files\/upload/);
+  assert.match(script, /persistClientReport/);
+  assert.match(script, /getRequestHeaders/);
+});
