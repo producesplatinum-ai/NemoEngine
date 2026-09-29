@@ -17,6 +17,7 @@ import {
   sanitizeNemoRuntimeReport,
   sanitizeNemoClientRuntimeReport,
 } from './sillytavern-server.mjs';
+import { classifyMobileRestRequest, executeMobileRestRoute } from './sillytavern-mobile-rest.mjs';
 
 function makeJsonResponse(body, { status = 200, setCookies = [] } = {}) {
   return {
@@ -667,6 +668,8 @@ test('client generation report sanitizer keeps only verification fields', () => 
       beforeCount: 2,
       afterCount: 3,
       assistantMessagePresent: true,
+      generatedNewAssistant: false,
+      outcome: '',
       bootstrapImportedAt: '2026-09-29T03:23:08.190Z',
       error: '',
       secretShouldNotLeak: 'nope',
