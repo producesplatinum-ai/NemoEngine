@@ -249,6 +249,54 @@ test('client reads and sanitizes the persisted Nemo runtime report without expos
   assert.equal(calls.length, 2);
 });
 
+test('client falls back to settings NemoFullRuntime when persisted report file is unavailable', async () => {
+  const calls = [];
+  const runtime = {
+    ok: true,
+    preset: 'Nemo Engine 11.5.2 - Ready RU RP',
+    promptCount: 445,
+    regexCount: 97,
+    recipe: { applicable: false, active: false, validated: true },
+    vex: { applicable: false, active: false, validated: true },
+    cold: { applicable: true, active: true, validated: true, count: 445 },
+    sidecars: { recipe: 0, vex: 0, cold: 445 },
+    rendering: { stage: '5B.3/5', enabled: true, clientRuntime: 'NemoPresetExt' },
+    secretShouldNotLeak: 'nope',
+  };
+
+  const fetchImpl = async (url, options = {}) => {
+    calls.push({ url: String(url), options });
+    if (String(url).endsWith('/csrf-token')) {
+      return makeJsonResponse(
+        { token: 'csrf-fallback' },
+        { setCookies: ['connect.sid=fallback-session; Path=/; HttpOnly'] },
+      );
+    }
+    if (String(url).endsWith('/user/files/nemo-runtime-report.json')) {
+      return makeJsonResponse({ error: 'Not Found' }, { status: 404 });
+    }
+    assert.equal(String(url), 'https://st.example.test/api/settings/get');
+    assert.equal(options.method, 'POST');
+    return makeJsonResponse({
+      extension_settings: {
+        NemoFullRuntime: runtime,
+      },
+      api_key: 'must-not-leak',
+    });
+  };
+
+  const client = new SillyTavernClient({
+    baseUrl: 'https://st.example.test',
+    username: 'user',
+    password: 'pass',
+    fetchImpl,
+  });
+
+  const report = await client.getNemoRuntimeStatus();
+  assert.deepEqual(report, sanitizeNemoRuntimeReport(runtime));
+  assert.equal(calls.length, 3);
+});
+
 test('Nemo runtime sanitizer keeps only the public verification contract', () => {
   assert.deepEqual(
     sanitizeNemoRuntimeReport({
