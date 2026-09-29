@@ -467,3 +467,46 @@ test('Nemo client runtime sanitizer keeps only the verification contract', () =>
     },
   );
 });
+
+
+test('client appends and persists a user message without replacing an existing chat contract', async () => {
+  let saveBody = null;
+  const fetchImpl = async (url, options = {}) => {
+    const path = new URL(String(url)).pathname;
+    if (path === '/csrf-token') return makeJsonResponse({ token: 'csrf-turn' });
+    if (path === '/api/characters/get') {
+      assert.deepEqual(JSON.parse(options.body), { avatar_url: 'Seraphina.png' });
+      return makeJsonResponse({ name: 'Seraphina' });
+    }
+    if (path === '/api/chats/get') {
+      return makeJsonResponse({});
+    }
+    if (path === '/api/chats/save') {
+      saveBody = JSON.parse(options.body);
+      return makeJsonResponse({ result: 'ok' });
+    }
+    throw new Error(`unexpected URL: ${url}`);
+  };
+
+  const client = new SillyTavernClient({
+    baseUrl: 'https://st.example.test',
+    fetchImpl,
+  });
+
+  const result = await client.appendUserMessage({
+    avatarUrl: 'Seraphina.png',
+    fileName: 'Nemo mobile test',
+    userText: 'NEMO_ST_MOBILE_WRITE_0929',
+  });
+
+  assert.equal(result.ok, true);
+  assert.equal(result.saved, true);
+  assert.equal(result.characterName, 'Seraphina');
+  assert.equal(result.messageCount, 2);
+  assert.equal(saveBody.avatar_url, 'Seraphina.png');
+  assert.equal(saveBody.file_name, 'Nemo mobile test');
+  assert.equal(saveBody.ch_name, 'Seraphina');
+  assert.equal(saveBody.chat.length, 2);
+  assert.equal(saveBody.chat[1].is_user, true);
+  assert.equal(saveBody.chat[1].mes, 'NEMO_ST_MOBILE_WRITE_0929');
+});
