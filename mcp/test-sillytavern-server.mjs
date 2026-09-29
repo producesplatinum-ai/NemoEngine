@@ -760,3 +760,31 @@ test('client generation report exposes whether a new assistant was actually gene
     },
   );
 });
+
+
+test('client-generation-status carries expected marker through the mobile route', async () => {
+  const route = classifyMobileRestRequest(
+    '/st-secret/mobile/client-generation-status?marker=SAFE_MARKER',
+    '/st-secret/mobile',
+  );
+  assert.deepEqual(route, {
+    kind: 'client_generation_status',
+    marker: 'SAFE_MARKER',
+  });
+
+  let received = null;
+  const client = {
+    async getNemoClientGenerationStatus(marker) {
+      received = marker;
+      return { available: false, stale: true, expectedMarker: marker, reportMarker: 'OLD' };
+    },
+  };
+  const result = await executeMobileRestRoute(route, client);
+  assert.equal(received, 'SAFE_MARKER');
+  assert.deepEqual(result, {
+    available: false,
+    stale: true,
+    expectedMarker: 'SAFE_MARKER',
+    reportMarker: 'OLD',
+  });
+});
