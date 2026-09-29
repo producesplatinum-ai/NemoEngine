@@ -29,6 +29,8 @@ export function classifyMobileRestRequest(requestTarget, basePath) {
   if (pathname === `${normalizedBase}/status`) return { kind: 'status' };
   if (pathname === `${normalizedBase}/characters`) return { kind: 'characters' };
   if (pathname === `${normalizedBase}/presets`) return { kind: 'presets' };
+  if (pathname === `${normalizedBase}/nemo-profiles`) return { kind: 'nemo_profiles' };
+  if (pathname === `${normalizedBase}/nemo-profile-install`) return { kind: 'nemo_profile_install' };
   if (pathname === `${normalizedBase}/preset-save`) return { kind: 'preset_save' };
   if (pathname === `${normalizedBase}/character-create`) return { kind: 'character_create' };
   if (pathname === `${normalizedBase}/character`) {
@@ -73,6 +75,14 @@ export async function executeMobileRestRoute(route, client, body = {}) {
       return client.listCharacters();
     case 'presets':
       return client.listOpenAiPresets();
+    case 'nemo_profiles':
+      return client.listDaryaNemoProfiles();
+    case 'nemo_profile_install': {
+      const profileId = typeof body?.profileId === 'string' ? body.profileId.trim() : '';
+      if (!profileId) throw new Error('profileId is required.');
+      if (profileId === 'all') return client.installAllDaryaNemoProfiles();
+      return client.installDaryaNemoProfile(profileId);
+    }
     case 'preset_save': {
       const name = typeof body?.name === 'string' ? body.name.trim() : '';
       const presetJson = typeof body?.presetJson === 'string' ? body.presetJson.trim() : '';
