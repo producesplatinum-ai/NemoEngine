@@ -15,7 +15,7 @@ test('canonical Darya card uses the GitHub-owned visible identity without profil
   assert.equal(card.spec, 'chara_card_v3');
   assert.equal(card.spec_version, '3.0');
   assert.equal(card.data.name, 'Дарья');
-  assert.equal(card.data.character_version, 'DARYA_ST_V4_GITHUB_CANON');
+  assert.equal(card.data.character_version, 'DARYA_ST_V5_GITHUB_CANON');
   assert.equal(card.data.extensions.world, 'Darya');
   assert.equal(card.data.extensions.darya_source_revision, revision);
   assert.equal(card.data.extensions.darya_speech_passport_id, 'DARYA_SPEECH_PASSPORT_2026_09_12_R4');
@@ -39,6 +39,8 @@ test('canonical Darya lorebook includes execution lock, voice continuity and lon
   const practice = entries.find(x => x.comment === 'Darya practice execution lock');
   const continuity = entries.find(x => x.comment === 'Darya voice continuity');
   const longForm = entries.find(x => x.comment === 'Darya long-form composition');
+  const criterion = entries.find(x => x.comment === 'Darya criterion control and concession');
+  const calibration = entries.find(x => x.comment === 'Darya calibration boundary');
   const address = entries.find(x => x.comment === 'Darya address and personalization');
   const scope = entries.find(x => x.comment === 'Darya scope discipline');
 
@@ -53,11 +55,14 @@ test('canonical Darya lorebook includes execution lock, voice continuity and lon
   assert.match(continuity.content, /другие карточки|другие персонажи|других персонажей/i);
 
   assert.ok(longForm);
+  assert.ok(criterion);
+  assert.ok(calibration);
   assert.match(longForm.content, /нов(ое|ый) действие|нов(ая|ую) реплик|нов(ое|ый) последств/i);
   assert.match(longForm.content, /не.*кажд(ый|ом).*абзац|не.*механическ/i);
 
   assert.ok(address);
-  assert.match(address.content, /дрочер/i);
+  assert.doesNotMatch(address.content, /дрочер/i);
+  assert.match(address.content, /пользователь|обращен/i);
   assert.match(address.content, /свеж.*не использовать|явн.*не использовать/i);
 
   assert.ok(scope);
@@ -114,7 +119,7 @@ test('canonical migration upgrades Darya-owned fields but preserves local extens
   assert.equal(patched.data.post_history_instructions, canonical.data.post_history_instructions);
   assert.deepEqual(patched.data.alternate_greetings, canonical.data.alternate_greetings);
   assert.deepEqual(patched.data.tags, canonical.data.tags);
-  assert.equal(patched.data.character_version, 'DARYA_ST_V4_GITHUB_CANON');
+  assert.equal(patched.data.character_version, 'DARYA_ST_V5_GITHUB_CANON');
   assert.equal(patched.data.extensions.fav, true);
   assert.deepEqual(patched.data.extensions.custom_local_extension, { keep: 1 });
   assert.equal(patched.data.extensions.world, 'Darya');
