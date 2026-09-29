@@ -1616,6 +1616,67 @@ function errorResult(error) {
   return textResult(`SillyTavern MCP error: ${message}`, { isError: true });
 }
 
+export function registerSillyTavernWriteTools(
+  server,
+  { getClient = clientFromEnv } = {},
+) {
+  server.registerTool(
+    'sillytavern_append_turn',
+    {
+      description:
+        'Append exactly one explicit user-authored turn to an existing SillyTavern chat and persist it. This mutates chat history; use only when the user explicitly asks to write/send/continue in SillyTavern. The tool never retries a failed write.',
+      inputSchema: z.object({
+        avatarUrl: z.string().min(1).max(500),
+        fileName: z.string().min(1).max(1_000),
+        userText: z.string().min(1).max(200_000),
+      }),
+    },
+    async ({ avatarUrl, fileName, userText }) => {
+      try {
+        return textResult(
+          await getClient().appendUserMessage({
+            avatarUrl,
+            fileName,
+            userText,
+          }),
+        );
+      } catch (error) {
+        return errorResult(error);
+      }
+    },
+  );
+
+  server.registerTool(
+    'sillytavern_generate_reply',
+    {
+      description:
+        'Generate and persist exactly one assistant reply for an existing SillyTavern chat through the selected configured server-side provider. This mutates chat history and never retries. Server-side generation is not proof of NemoEngine client-side generation or parity.',
+      inputSchema: z.object({
+        avatarUrl: z.string().min(1).max(500),
+        fileName: z.string().min(1).max(1_000),
+        source: z.enum(['deepseek', 'groq', 'openrouter']),
+        model: z.string().min(1).max(500),
+      }),
+    },
+    async ({ avatarUrl, fileName, source, model }) => {
+      try {
+        return textResult(
+          await getClient().generateAssistantMessage({
+            avatarUrl,
+            fileName,
+            source,
+            model,
+          }),
+        );
+      } catch (error) {
+        return errorResult(error);
+      }
+    },
+  );
+
+  return server;
+}
+
 export function buildMcpServer({ getClient = clientFromEnv } = {}) {
   const server = new McpServer({
     name: 'sillytavern',
@@ -1774,6 +1835,8 @@ export function buildMcpServer({ getClient = clientFromEnv } = {}) {
       }
     },
   );
+
+  registerSillyTavernWriteTools(server, { getClient });
 
   return server;
 }
