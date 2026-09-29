@@ -2,8 +2,23 @@ import { characters, chat, eventSource, event_types, Generate, getRequestHeaders
 import { extension_settings } from '../../../extensions.js';
 import { oai_settings, openai_setting_names, openai_settings } from '../../../openai.js';
 
-const ACTIVE_PRESET = 'Nemo Engine 11.5.2 - Ready RU Gooner RP';
-const BOOTSTRAP_VERSION = '1.1.0';
+const GOONER_PRESET = 'Nemo Engine 11.5.2 - Ready RU Gooner RP';
+const PSYCHOLOGY_PRESET = 'Nemo Engine 11.5.2 - Ready RU Psychology Humiliation JOI RP';
+const SENSORY_PRESET = 'Nemo Engine 11.5.2 - Ready RU Sensory Psychology Humiliation JOI RP';
+const LUSTFUL_PRESET = 'Nemo Engine 11.5.2 - Ready RU Lustful Psychology Humiliation JOI RP';
+const SUPPORTED_PRESETS = new Set([
+  GOONER_PRESET,
+  PSYCHOLOGY_PRESET,
+  SENSORY_PRESET,
+  LUSTFUL_PRESET,
+]);
+const FALLBACK_PRESET = GOONER_PRESET;
+const BOOTSTRAP_VERSION = '1.2.0';
+
+function activePresetName() {
+  const selected = String(oai_settings?.preset_settings_openai || '').trim();
+  return SUPPORTED_PRESETS.has(selected) ? selected : FALLBACK_PRESET;
+}
 const STATUS_NS = 'NemoFullBootstrap';
 
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
@@ -48,10 +63,10 @@ async function waitFor(predicate, timeoutMs = 60000, stepMs = 250) {
 }
 
 function getPresetIndex() {
-  if (!openai_setting_names || !Object.prototype.hasOwnProperty.call(openai_setting_names, ACTIVE_PRESET)) {
+  if (!openai_setting_names || !Object.prototype.hasOwnProperty.call(openai_setting_names, activePresetName())) {
     return null;
   }
-  const index = Number(openai_setting_names[ACTIVE_PRESET]);
+  const index = Number(openai_setting_names[activePresetName()]);
   return Number.isInteger(index) ? index : null;
 }
 
@@ -80,7 +95,7 @@ function updateInMemoryPreset(index, transformed) {
   Object.assign(current, clone(transformed));
   openai_settings[index] = current;
 
-  oai_settings.preset_settings_openai = ACTIVE_PRESET;
+  oai_settings.preset_settings_openai = activePresetName();
   saveSettingsDebounced();
 
   const select = document.querySelector('#settings_preset_openai');
@@ -100,7 +115,7 @@ async function savePreset(transformed) {
     headers: getRequestHeaders(),
     body: JSON.stringify({
       apiId: 'openai',
-      name: ACTIVE_PRESET,
+      name: activePresetName(),
       preset: transformed,
     }),
   });
@@ -191,7 +206,7 @@ async function runClientGenerationDiagnostic(request, bootstrapReport) {
     ok: false,
     requestId: request.requestId,
     generatedAt: new Date().toISOString(),
-    preset: ACTIVE_PRESET,
+    preset: activePresetName(),
     avatarUrl: request.avatarUrl,
     fileName: request.fileName,
     marker: request.marker,
@@ -398,7 +413,7 @@ async function bootstrap() {
     enableFullRuntimeFlags();
 
     const index = getPresetIndex();
-    if (index === null) throw new Error(`Preset "${ACTIVE_PRESET}" is not installed.`);
+    if (index === null) throw new Error(`Preset "${activePresetName()}" is not installed.`);
 
     const transformed = clone(openai_settings[index]);
     if (!Array.isArray(transformed?.prompts) || !Array.isArray(transformed?.prompt_order)) {
@@ -407,7 +422,7 @@ async function bootstrap() {
 
     await eventSource.emit(event_types.OAI_PRESET_IMPORT_READY, {
       data: transformed,
-      presetName: ACTIVE_PRESET,
+      presetName: activePresetName(),
     });
 
     await savePreset(transformed);
@@ -430,7 +445,7 @@ async function bootstrap() {
     const report = {
       ok: preflight.available ? preflight.ok : true,
       bootstrapVersion: BOOTSTRAP_VERSION,
-      preset: ACTIVE_PRESET,
+      preset: activePresetName(),
       importedAt: new Date().toISOString(),
       transform,
       preflight,
@@ -453,7 +468,7 @@ async function bootstrap() {
     const report = {
       ok: false,
       bootstrapVersion: BOOTSTRAP_VERSION,
-      preset: ACTIVE_PRESET,
+      preset: activePresetName(),
       importedAt: new Date().toISOString(),
       error: String(error?.message || error),
     };
