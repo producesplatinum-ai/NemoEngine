@@ -570,7 +570,7 @@ export function startHttpServer({
         .catch((error) => {
           const message = error instanceof Error ? error.message : String(error);
           console.error('[sillytavern-mcp:nemo-runtime-status]', message);
-          res.statusCode = 503;
+          res.statusCode = 200;
           res.setHeader('content-type', 'application/json; charset=utf-8');
           res.end(JSON.stringify({
             ok: false,
