@@ -34,7 +34,8 @@ function makeFixture() {
 
   fs.mkdirSync(path.join(userDataDir, 'backups'), { recursive: true });
   fs.mkdirSync(sourceDir, { recursive: true });
-  fs.mkdirSync(extSource, { recursive: true });
+  fs.mkdirSync(path.join(extSource, 'assets'), { recursive: true });
+  fs.mkdirSync(path.join(extSource, 'features', 'preset-installer'), { recursive: true });
 
   fs.writeFileSync(path.join(userDataDir, 'settings.json'), JSON.stringify({
     marker: 'keep-me',
@@ -52,6 +53,12 @@ function makeFixture() {
       preset_allowed_regex: {
         openai: ['Existing Preset'],
       },
+      NemoPresetExt: {
+        enableRecipeRuntime: false,
+        enableColdPromptStorage: false,
+        enableVexRuntime: false,
+        enableIncrementalPromptRendering: false,
+      },
     },
   }, null, 2));
 
@@ -68,6 +75,11 @@ function makeFixture() {
   }, null, 2));
   fs.writeFileSync(path.join(extSource, 'content.js'), 'globalThis.NemoPresetExtFixture = true;');
   fs.writeFileSync(path.join(extSource, 'styles.css'), '/* fixture */');
+  fs.writeFileSync(path.join(extSource, 'assets', 'nemo-engine-latest.json'), JSON.stringify(fakePreset('Nemo Engine v11.3')));
+  fs.writeFileSync(
+    path.join(extSource, 'features', 'preset-installer', 'runtime.js'),
+    "const PRESET_VERSION = '11.3';\nconst PRESET_NAME = `Nemo Engine v${PRESET_VERSION}`;\n",
+  );
 
   return { root, userDataDir, sourceDir, extSource };
 }
@@ -85,7 +97,7 @@ function runSeeder(fixture) {
   });
 }
 
-test('installs the complete NemoEngine 11.5.2 preset set, enables embedded regex, and installs NemoPresetExt', () => {
+test('installs NemoEngine 11.5.2, enables full NemoPresetExt runtime, and overlays its installer with Ready RU', () => {
   const fixture = makeFixture();
 
   const result = runSeeder(fixture);
@@ -113,19 +125,37 @@ test('installs the complete NemoEngine 11.5.2 preset set, enables embedded regex
     assert.equal(allowed.includes(name), true, `regex not allowed for ${name}`);
   }
 
+  const nemoSettings = settings.extension_settings.NemoPresetExt;
+  assert.equal(nemoSettings.enableRecipeRuntime, true);
+  assert.equal(nemoSettings.enableColdPromptStorage, true);
+  assert.equal(nemoSettings.enableVexRuntime, true);
+  assert.equal(nemoSettings.enableIncrementalPromptRendering, true);
+  assert.equal(nemoSettings.enablePromptManager, true);
+  assert.equal(nemoSettings.enableNemoEngineInstaller, true);
+
   assert.equal(
     fs.existsSync(path.join(fixture.userDataDir, 'backups', 'settings.before-nemoengine.json')),
     true,
   );
 
-  const manifestPath = path.join(fixture.userDataDir, 'extensions', 'NemoPresetExt', 'manifest.json');
-  assert.equal(fs.existsSync(manifestPath), true);
-  const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+  const extDir = path.join(fixture.userDataDir, 'extensions', 'NemoPresetExt');
+  const manifest = JSON.parse(fs.readFileSync(path.join(extDir, 'manifest.json'), 'utf8'));
   assert.equal(manifest.display_name, 'NemoPresetExt');
   assert.equal(manifest.version, '6.0.6');
 
+  const bundled = JSON.parse(fs.readFileSync(path.join(extDir, 'assets', 'nemo-engine-latest.json'), 'utf8'));
+  assert.equal(bundled.name, 'Nemo Engine 11.5.2 - Ready RU RP');
+  assert.equal(bundled.prompts.length, 458);
+  assert.equal(bundled.extensions.regex_scripts.length, 97);
+
+  const installerRuntime = fs.readFileSync(path.join(extDir, 'features', 'preset-installer', 'runtime.js'), 'utf8');
+  assert.match(installerRuntime, /const PRESET_VERSION = '11\.5\.2';/);
+  assert.match(installerRuntime, /const PRESET_NAME = 'Nemo Engine 11\.5\.2 - Ready RU RP';/);
+  assert.doesNotMatch(installerRuntime, /Nemo Engine v\$\{PRESET_VERSION\}/);
+
   assert.match(result.stdout, /NemoEngine presets synced/);
   assert.match(result.stdout, /NemoPresetExt ready/);
+  assert.match(result.stdout, /NemoPresetExt installer overlay: 11\.5\.2 Ready RU RP/);
   assert.match(result.stdout, /NemoEngine active preset: Nemo Engine 11\.5\.2 - Ready RU RP/);
   assert.match(result.stdout, /NemoEngine preset regex allowed/);
 });
