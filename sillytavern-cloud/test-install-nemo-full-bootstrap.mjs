@@ -100,3 +100,43 @@ test('client generation diagnostic distinguishes generated from already-present 
   assert.match(script, /generatedNewAssistant:\s*assistantMessagePresent\s*&&\s*chat\.length\s*>\s*beforeCount/);
   assert.match(script, /\?\s*'generated'\s*:\s*'no_new_assistant'/);
 });
+
+
+test('recovers a missing configured bootstrap source from a bundled fallback source', () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'nemo-bootstrap-recovery-'));
+  const configuredSource = path.join(root, 'persistent-router');
+  const fallbackSource = path.join(root, 'image-source');
+  const user = path.join(root, 'user');
+
+  fs.mkdirSync(fallbackSource, { recursive: true });
+  fs.mkdirSync(user, { recursive: true });
+  fs.writeFileSync(path.join(fallbackSource, 'manifest.json'), JSON.stringify({
+    display_name: 'Nemo Full Bootstrap',
+    version: '1.0.0',
+    js: 'index.js',
+    loading_order: 1100,
+  }, null, 2));
+  fs.writeFileSync(path.join(fallbackSource, 'index.js'), 'fallback bootstrap\n');
+
+  const run = spawnSync(process.execPath, [installer], {
+    env: {
+      ...process.env,
+      SILLYTAVERN_USER_DATA_DIR: user,
+      NEMO_BOOTSTRAP_SOURCE_DIR: configuredSource,
+      NEMO_BOOTSTRAP_FALLBACK_SOURCE_DIR: fallbackSource,
+    },
+    encoding: 'utf8',
+  });
+
+  assert.equal(run.status, 0, run.stderr);
+  assert.equal(fs.existsSync(path.join(configuredSource, 'manifest.json')), true);
+  assert.equal(fs.existsSync(path.join(configuredSource, 'index.js')), true);
+  assert.equal(
+    fs.readFileSync(path.join(configuredSource, 'index.js'), 'utf8'),
+    'fallback bootstrap\n',
+  );
+  assert.equal(
+    fs.readFileSync(path.join(user, 'extensions', 'NemoFullBootstrap', 'index.js'), 'utf8'),
+    'fallback bootstrap\n',
+  );
+});
