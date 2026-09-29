@@ -28,6 +28,8 @@ export function classifyMobileRestRequest(requestTarget, basePath) {
 
   if (pathname === `${normalizedBase}/status`) return { kind: 'status' };
   if (pathname === `${normalizedBase}/characters`) return { kind: 'characters' };
+  if (pathname === `${normalizedBase}/presets`) return { kind: 'presets' };
+  if (pathname === `${normalizedBase}/preset-save`) return { kind: 'preset_save' };
   if (pathname === `${normalizedBase}/character-create`) return { kind: 'character_create' };
   if (pathname === `${normalizedBase}/character`) {
     return { kind: 'character', avatarUrl: one(url.searchParams, 'avatarUrl') };
@@ -69,6 +71,24 @@ export async function executeMobileRestRoute(route, client, body = {}) {
     }
     case 'characters':
       return client.listCharacters();
+    case 'presets':
+      return client.listOpenAiPresets();
+    case 'preset_save': {
+      const name = typeof body?.name === 'string' ? body.name.trim() : '';
+      const presetJson = typeof body?.presetJson === 'string' ? body.presetJson.trim() : '';
+      if (!name || !presetJson) throw new Error('name and presetJson are required.');
+
+      let preset;
+      try {
+        preset = JSON.parse(presetJson);
+      } catch {
+        throw new Error('presetJson must be valid JSON.');
+      }
+      if (!preset || typeof preset !== 'object' || Array.isArray(preset)) {
+        throw new Error('presetJson must be valid JSON.');
+      }
+      return client.saveOpenAiPreset({ name, preset });
+    }
     case 'character':
       if (!route.avatarUrl) throw new Error('avatarUrl is required.');
       return client.getCharacter(route.avatarUrl);
