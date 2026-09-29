@@ -2,18 +2,16 @@ import { characters, chat, eventSource, event_types, Generate, getRequestHeaders
 import { extension_settings } from '../../../extensions.js';
 import { oai_settings, openai_setting_names, openai_settings } from '../../../openai.js';
 
+const READY_RU_PRESET = 'Nemo Engine 11.5.2 - Ready RU RP';
 const GOONER_PRESET = 'Nemo Engine 11.5.2 - Ready RU Gooner RP';
 const PSYCHOLOGY_PRESET = 'Nemo Engine 11.5.2 - Ready RU Psychology Humiliation JOI RP';
-const SENSORY_PRESET = 'Nemo Engine 11.5.2 - Ready RU Sensory Psychology Humiliation JOI RP';
-const LUSTFUL_PRESET = 'Nemo Engine 11.5.2 - Ready RU Lustful Psychology Humiliation JOI RP';
 const SUPPORTED_PRESETS = new Set([
+  READY_RU_PRESET,
   GOONER_PRESET,
   PSYCHOLOGY_PRESET,
-  SENSORY_PRESET,
-  LUSTFUL_PRESET,
 ]);
-const FALLBACK_PRESET = GOONER_PRESET;
-const BOOTSTRAP_VERSION = '1.2.0';
+const FALLBACK_PRESET = READY_RU_PRESET;
+const BOOTSTRAP_VERSION = '1.3.0';
 
 function activePresetName() {
   const selected = String(oai_settings?.preset_settings_openai || '').trim();
