@@ -15,6 +15,7 @@ import {
   syncDaryaSourceFromHttp,
   writeTextIfChanged,
   resolveDaryaAvatarPath,
+  mergeDaryaWorldLink,
 } from './seed-darya.mjs';
 
 const revision = '36e967df9f7524ca862bf380087f0ea0494daaad';
@@ -259,4 +260,42 @@ test('resolveDaryaAvatarPath falls back to SillyTavern default avatar when priva
   });
 
   assert.equal(resolved, fallback);
+});
+
+
+test('mergeDaryaWorldLink preserves an existing Darya card while linking the Darya lorebook', () => {
+  const existing = {
+    spec: 'chara_card_v3',
+    spec_version: '3.0',
+    data: {
+      name: 'Дарья',
+      description: 'KEEP_DESCRIPTION',
+      personality: 'KEEP_PERSONALITY',
+      system_prompt: 'KEEP_SYSTEM_PROMPT',
+      post_history_instructions: 'KEEP_POST_HISTORY',
+      character_version: 'DARYA_ST_V1',
+      extensions: {
+        talkativeness: 0.72,
+        fav: false,
+        world: '',
+        depth_prompt: { prompt: 'KEEP_DEPTH', depth: 4, role: 'system' },
+      },
+      character_book: { name: 'Old', entries: [{ id: 999, content: 'OLD' }] },
+    },
+  };
+  const world = buildDaryaWorldInfo({ revision, sourceMirrored: false });
+
+  const patched = mergeDaryaWorldLink(existing, world);
+
+  assert.equal(patched.data.name, 'Дарья');
+  assert.equal(patched.data.description, 'KEEP_DESCRIPTION');
+  assert.equal(patched.data.personality, 'KEEP_PERSONALITY');
+  assert.equal(patched.data.system_prompt, 'KEEP_SYSTEM_PROMPT');
+  assert.equal(patched.data.post_history_instructions, 'KEEP_POST_HISTORY');
+  assert.equal(patched.data.character_version, 'DARYA_ST_V1');
+  assert.equal(patched.data.extensions.talkativeness, 0.72);
+  assert.equal(patched.data.extensions.depth_prompt.prompt, 'KEEP_DEPTH');
+  assert.equal(patched.data.extensions.world, 'Darya');
+  assert.equal(patched.data.character_book.name, 'Darya');
+  assert.equal(patched.data.character_book.entries.length, 9);
 });
