@@ -47,6 +47,10 @@ test('classifies read-only mobile REST routes and preserves query inputs', () =>
     { kind: 'recent_chats' },
   );
   assert.deepEqual(
+    classifyMobileRestRequest('/st-secret/mobile/turn', basePath),
+    { kind: 'turn' },
+  );
+  assert.deepEqual(
     classifyMobileRestRequest(
       '/st-secret/mobile/chat?avatarUrl=Darya.png&fileName=Chat%201',
       basePath,
@@ -164,5 +168,42 @@ test('rejects missing identifiers instead of broadening a read', async () => {
         client,
       ),
     /avatarUrl and fileName are required/,
+  );
+});
+
+
+test('executes mobile turn only with explicit payload', async () => {
+  const calls = [];
+  const client = {
+    async appendUserMessage(input) {
+      calls.push(input);
+      return { ok: true, ...input };
+    },
+  };
+
+  const body = {
+    avatarUrl: 'Seraphina.png',
+    fileName: 'Nemo mobile test',
+    userText: 'NEMO_ST_MOBILE_WRITE_0929',
+  };
+  const result = await executeMobileRestRoute({ kind: 'turn' }, client, body);
+
+  assert.equal(result.ok, true);
+  assert.deepEqual(calls, [body]);
+});
+
+test('mobile turn rejects missing or empty write inputs', async () => {
+  const client = { appendUserMessage() { throw new Error('should not be called'); } };
+  await assert.rejects(
+    () => executeMobileRestRoute({ kind: 'turn' }, client, {}),
+    /avatarUrl, fileName, and userText are required/,
+  );
+  await assert.rejects(
+    () => executeMobileRestRoute(
+      { kind: 'turn' },
+      client,
+      { avatarUrl: 'Seraphina.png', fileName: 'Test', userText: '   ' },
+    ),
+    /userText must not be empty/,
   );
 });
