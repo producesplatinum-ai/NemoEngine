@@ -71,3 +71,20 @@ test('production Nemo Full Bootstrap persists client runtime preflight report', 
   assert.match(script, /persistedReport/);
   assert.match(script, /persistence:\s*persistence/);
 });
+
+
+test('production Nemo Full Bootstrap supports guarded one-shot client generation diagnostic', () => {
+  const sourceDir = process.env.NEMO_BOOTSTRAP_PRODUCTION_SOURCE || '/usr/local/share/nemo-full-bootstrap';
+  const scriptPath = path.join(sourceDir, 'index.js');
+  assert.equal(fs.existsSync(scriptPath), true, 'production bootstrap source missing');
+  const script = fs.readFileSync(scriptPath, 'utf8');
+
+  assert.match(script, /nemo-client-generation-report\.json/);
+  assert.match(script, /Generate\('normal'\)/);
+  assert.match(script, /selectCharacterById/);
+  assert.match(script, /openCharacterChat/);
+  assert.match(script, /history\.replaceState/);
+  assert.match(script, /nemoClientGenerate/);
+  assert.match(script, /requestId/);
+  assert.match(script, /marker/);
+});
