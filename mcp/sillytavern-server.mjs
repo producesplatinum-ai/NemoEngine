@@ -428,6 +428,71 @@ export class SillyTavernClient {
     };
   }
 
+  async deleteOpenAiPreset({ name, fallbackName = '' }) {
+    const normalizedName = String(name || '').trim();
+    const normalizedFallback = String(fallbackName || '').trim();
+    if (!normalizedName) throw new Error('Preset name is required.');
+
+    const bundle = await this.post('/api/settings/get', {});
+    const rawSettings = bundle?.settings;
+    const settings =
+      typeof rawSettings === 'string'
+        ? JSON.parse(rawSettings)
+        : rawSettings && typeof rawSettings === 'object'
+          ? rawSettings
+          : {};
+
+    const activeName = String(
+      settings?.oai_settings?.preset_settings_openai || '',
+    ).trim();
+
+    let fallbackApplied = '';
+    if (activeName === normalizedName) {
+      if (!normalizedFallback) {
+        throw new Error('fallbackName is required when deleting the active preset.');
+      }
+
+      const names = Array.isArray(bundle?.openai_setting_names)
+        ? bundle.openai_setting_names
+        : [];
+      const values = Array.isArray(bundle?.openai_settings)
+        ? bundle.openai_settings
+        : [];
+      const index = names.indexOf(normalizedFallback);
+      if (index < 0 || index >= values.length) {
+        throw new Error('Fallback preset was not found.');
+      }
+
+      const rawPreset = values[index];
+      let preset = rawPreset;
+      if (typeof rawPreset === 'string') {
+        preset = JSON.parse(rawPreset);
+      }
+      if (!preset || typeof preset !== 'object' || Array.isArray(preset)) {
+        throw new Error('Fallback preset is invalid.');
+      }
+
+      const nextSettings = applyOpenAiPresetToSettings(
+        settings,
+        preset,
+        normalizedFallback,
+      );
+      await this.post('/api/settings/save', nextSettings);
+      fallbackApplied = normalizedFallback;
+    }
+
+    await this.post('/api/presets/delete', {
+      apiId: 'openai',
+      name: normalizedName,
+    });
+
+    return {
+      ok: true,
+      deleted: normalizedName,
+      fallbackApplied,
+    };
+  }
+
   listDaryaNemoProfiles() {
     return listDaryaNemoProfiles();
   }
@@ -1184,6 +1249,7 @@ export function parseMobileWriteBody(contentType, text) {
     if (params.has('marker')) parsed.marker = params.get('marker') || '';
     if (params.has('cardJson')) parsed.cardJson = params.get('cardJson') || '';
     if (params.has('name')) parsed.name = params.get('name') || '';
+    if (params.has('fallbackName')) parsed.fallbackName = params.get('fallbackName') || '';
     if (params.has('presetJson')) parsed.presetJson = params.get('presetJson') || '';
     if (params.has('profileId')) parsed.profileId = params.get('profileId') || '';
     if (params.has('entryId')) parsed.entryId = params.get('entryId') || '';
@@ -1276,6 +1342,25 @@ export function mobileNemoProfileInstallFormHtml(actionPath) {
 <form method="post" action="${action}">
 <label>profileId <input name="profileId" autocomplete="off" required></label>
 <button type="submit">Install Nemo profile</button>
+</form>
+</body>
+</html>`;
+}
+
+export function mobilePresetDeleteFormHtml(actionPath) {
+  const action = escapeHtmlAttribute(actionPath);
+  return `<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SillyTavern Mobile Preset Delete</title>
+</head>
+<body>
+<form method="post" action="${action}">
+<label>name <input name="name" autocomplete="off" required></label>
+<label>fallbackName <input name="fallbackName" autocomplete="off"></label>
+<button type="submit">Delete preset</button>
 </form>
 </body>
 </html>`;
@@ -1873,6 +1958,7 @@ export function startHttpServer({
         mobileRoute.kind === 'generate' ||
         mobileRoute.kind === 'character_create' ||
         mobileRoute.kind === 'preset_save' ||
+        mobileRoute.kind === 'preset_delete' ||
         mobileRoute.kind === 'nemo_profile_install' ||
         mobileRoute.kind === 'nemo_exact_install' ||
         mobileRoute.kind === 'nemo_exact_activate';
@@ -1896,7 +1982,11 @@ export function startHttpServer({
                 ? mobilePresetSaveFormHtml(
                     `${MOBILE_REST_BASE_PATH}/preset-save`,
                   )
-                : mobileRoute.kind === 'nemo_profile_install'
+                : mobileRoute.kind === 'preset_delete'
+                  ? mobilePresetDeleteFormHtml(
+                      `${MOBILE_REST_BASE_PATH}/preset-delete`,
+                    )
+                  : mobileRoute.kind === 'nemo_profile_install'
                   ? mobileNemoProfileInstallFormHtml(
                       `${MOBILE_REST_BASE_PATH}/nemo-profile-install`,
                     )
