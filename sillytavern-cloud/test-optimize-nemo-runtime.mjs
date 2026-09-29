@@ -100,13 +100,14 @@ export class PromptBodyStore {
 `);
 }
 
-test('offline optimizer creates Nemo runtime descriptors and preserves the selected provider profile', () => {
+test('offline optimizer stores Nemo runtime artifacts in SillyTavern user/files and preserves the selected provider profile', () => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'nemo-offline-'));
   const user = path.join(root, 'default-user');
   const ext = path.join(user, 'extensions', 'NemoPresetExt');
   const presetDir = path.join(user, 'OpenAI Settings');
+  const filesDir = path.join(user, 'user', 'files');
   fs.mkdirSync(presetDir, { recursive: true });
-  fs.mkdirSync(path.join(user, 'files'), { recursive: true });
+  fs.mkdirSync(filesDir, { recursive: true });
   fixtureExtension(ext);
 
   const presetName = 'Nemo Engine 11.5.2 - Ready RU RP';
@@ -165,15 +166,17 @@ test('offline optimizer creates Nemo runtime descriptors and preserves the selec
   assert.equal(settings.extension_settings.NemoPresetExt.enableVexRuntime, true);
   assert.equal(settings.extension_settings.NemoPresetExt.enableIncrementalPromptRendering, true);
 
-  const report = JSON.parse(fs.readFileSync(path.join(user, 'files', 'nemo-runtime-report.json'), 'utf8'));
+  const report = JSON.parse(fs.readFileSync(path.join(filesDir, 'nemo-runtime-report.json'), 'utf8'));
   assert.equal(report.ok, true);
   assert.equal(report.recipe.active, true);
   assert.equal(report.vex.active, true);
   assert.equal(report.cold.count, 1);
   assert.equal(report.preset, presetName);
 
-  assert.equal(fs.existsSync(path.join(user, 'files', 'nemo-recipes-fixture.json')), true);
-  assert.equal(fs.existsSync(path.join(user, 'files', 'nemo-vex-source-fixture.json')), true);
-  assert.equal(fs.readdirSync(path.join(user, 'files')).some(name => name.startsWith('nemo-prompts-')), true);
+  assert.equal(fs.existsSync(path.join(filesDir, 'nemo-recipes-fixture.json')), true);
+  assert.equal(fs.existsSync(path.join(filesDir, 'nemo-vex-source-fixture.json')), true);
+  assert.equal(fs.readdirSync(filesDir).some(name => name.startsWith('nemo-prompts-')), true);
   assert.equal(fs.existsSync(path.join(user, 'backups', 'nemo-runtime', presetName + '.portable.json')), true);
+
+  assert.equal(fs.existsSync(path.join(user, 'files', 'nemo-runtime-report.json')), false);
 });
