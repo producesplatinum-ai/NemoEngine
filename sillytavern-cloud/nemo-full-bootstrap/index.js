@@ -98,7 +98,9 @@ function encodeUtf8Base64(text) {
 
 async function persistClientReport(report) {
   const name = 'nemo-client-runtime-report.json';
-  const payload = JSON.stringify(report, null, 2);
+  const persistence = { ok: true, path: '/files/' + name };
+  const persistedReport = { ...report, persistence: persistence };
+  const payload = JSON.stringify(persistedReport, null, 2);
   const response = await fetch('/api/files/upload', {
     method: 'POST',
     headers: getRequestHeaders(),
@@ -110,7 +112,7 @@ async function persistClientReport(report) {
   if (!response.ok) {
     throw new Error(`Client runtime report upload failed (${response.status}).`);
   }
-  return { ok: true, path: '/files/' + name };
+  return persistence;
 }
 
 async function runPreflight() {
