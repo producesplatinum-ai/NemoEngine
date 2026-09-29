@@ -10,6 +10,12 @@ import {
   providerFromEndpointPath,
 } from './ai-provider-server.mjs';
 
+import {
+  classifyMobileRestRequest,
+  deriveMobileRestBasePath,
+  executeMobileRestRoute,
+} from './sillytavern-mobile-rest.mjs';
+
 const DEFAULT_PORT = 8790;
 const MAX_TOOL_TEXT = 200_000;
 
@@ -394,6 +400,9 @@ export const MCP_ENDPOINT_PATH = normalizeEndpointPath(
   process.env.SILLYTAVERN_MCP_ENDPOINT_PATH || '/mcp',
 );
 
+export const MOBILE_REST_BASE_PATH =
+  deriveMobileRestBasePath(MCP_ENDPOINT_PATH);
+
 
 export function classifyRequestPath(
   pathname,
@@ -709,11 +718,45 @@ export function startHttpServer({
   );
 
   const httpServer = createServer((req, res) => {
-    const pathname = (req.url || '/').split('?', 1)[0];
+    const requestTarget = req.url || '/';
+    const pathname = requestTarget.split('?', 1)[0];
     const route = classifyRequestPath(pathname, {
       sillyPath: MCP_ENDPOINT_PATH,
       aiPrefix,
     });
+    const mobileRoute = classifyMobileRestRequest(
+      requestTarget,
+      MOBILE_REST_BASE_PATH,
+    );
+
+    if (mobileRoute.kind !== 'not_found') {
+      if (req.method !== 'GET') {
+        res.statusCode = 405;
+        res.setHeader('allow', 'GET');
+        res.setHeader('content-type', 'application/json; charset=utf-8');
+        res.end(JSON.stringify({ ok: false, error: 'GET required.' }));
+        return;
+      }
+
+      void executeMobileRestRoute(mobileRoute, getClient())
+        .then((result) => {
+          res.statusCode = 200;
+          res.setHeader('content-type', 'application/json; charset=utf-8');
+          res.setHeader('cache-control', 'no-store');
+          res.end(JSON.stringify(result));
+        })
+        .catch((error) => {
+          const message = error instanceof Error ? error.message : String(error);
+          const badRequest =
+            message.includes(' is required.') ||
+            message.includes(' are required.');
+          res.statusCode = badRequest ? 400 : 503;
+          res.setHeader('content-type', 'application/json; charset=utf-8');
+          res.setHeader('cache-control', 'no-store');
+          res.end(JSON.stringify({ ok: false, error: message }));
+        });
+      return;
+    }
 
     if (route.kind === 'health') {
       res.statusCode = 200;
