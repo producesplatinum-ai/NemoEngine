@@ -296,7 +296,7 @@ export class SillyTavernClient {
       messages: [{ role: 'user', content: `Reply exactly: ${expected}` }],
       model,
       temperature: 0,
-      max_tokens: 24,
+      max_tokens: 128,
       stream: false,
       presence_penalty: 0,
       frequency_penalty: 0,
