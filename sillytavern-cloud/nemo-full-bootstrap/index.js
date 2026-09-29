@@ -2,7 +2,7 @@ import { eventSource, event_types, getRequestHeaders, saveSettingsDebounced } fr
 import { extension_settings } from '../../../extensions.js';
 import { oai_settings, openai_setting_names, openai_settings } from '../../../openai.js';
 
-const ACTIVE_PRESET = 'Nemo Engine 11.5.2 - Ready RU RP';
+const ACTIVE_PRESET = 'Nemo Engine 11.5.2 - Ready RU Gooner RP';
 const BOOTSTRAP_VERSION = '1.1.0';
 const STATUS_NS = 'NemoFullBootstrap';
 
