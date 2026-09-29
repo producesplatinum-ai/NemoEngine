@@ -35,6 +35,7 @@ export function classifyMobileRestRequest(requestTarget, basePath) {
   if (pathname === `${normalizedBase}/nemo-exact-activate`) return { kind: 'nemo_exact_activate' };
   if (pathname === `${normalizedBase}/nemo-profile-install`) return { kind: 'nemo_profile_install' };
   if (pathname === `${normalizedBase}/preset-save`) return { kind: 'preset_save' };
+  if (pathname === `${normalizedBase}/preset-delete`) return { kind: 'preset_delete' };
   if (pathname === `${normalizedBase}/character-create`) return { kind: 'character_create' };
   if (pathname === `${normalizedBase}/character`) {
     return { kind: 'character', avatarUrl: one(url.searchParams, 'avatarUrl') };
@@ -114,6 +115,13 @@ export async function executeMobileRestRoute(route, client, body = {}) {
         throw new Error('presetJson must be valid JSON.');
       }
       return client.saveOpenAiPreset({ name, preset });
+    }
+    case 'preset_delete': {
+      const name = typeof body?.name === 'string' ? body.name.trim() : '';
+      const fallbackName =
+        typeof body?.fallbackName === 'string' ? body.fallbackName.trim() : '';
+      if (!name) throw new Error('name is required.');
+      return client.deleteOpenAiPreset({ name, fallbackName });
     }
     case 'character':
       if (!route.avatarUrl) throw new Error('avatarUrl is required.');
