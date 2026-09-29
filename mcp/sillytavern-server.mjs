@@ -19,11 +19,6 @@ import {
 } from './sillytavern-mobile-rest.mjs';
 
 import {
-  buildDaryaNemoPreset,
-  listDaryaNemoProfiles,
-} from './darya-nemo-profile-library.mjs';
-
-import {
   buildExactNemoPreset,
   listExactNemoCatalog,
   semanticSha256,
@@ -490,37 +485,6 @@ export class SillyTavernClient {
       ok: true,
       deleted: normalizedName,
       fallbackApplied,
-    };
-  }
-
-  listDaryaNemoProfiles() {
-    return listDaryaNemoProfiles();
-  }
-
-  async installDaryaNemoProfile(profileId) {
-    const profile = listDaryaNemoProfiles().find((item) => item.id === profileId);
-    if (!profile) throw new Error(`Unknown Darya Nemo profile: ${profileId}`);
-    const preset = await buildDaryaNemoPreset(profileId);
-    const saved = await this.saveOpenAiPreset({ name: profile.name, preset });
-    return {
-      ok: true,
-      profileId,
-      name: saved.name,
-      activePrompts: preset.prompt_order[0].order.filter((entry) => entry.enabled).length,
-      fetishes: profile.fetishes,
-      vex: profile.vex,
-    };
-  }
-
-  async installAllDaryaNemoProfiles() {
-    const results = [];
-    for (const profile of listDaryaNemoProfiles()) {
-      results.push(await this.installDaryaNemoProfile(profile.id));
-    }
-    return {
-      ok: true,
-      installed: results.length,
-      profiles: results,
     };
   }
 
