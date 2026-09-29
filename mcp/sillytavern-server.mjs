@@ -473,19 +473,32 @@ export class SillyTavernClient {
   }
 
   async getNemoClientRuntimeStatus() {
+    let fileError = null;
     try {
       const report = await this.getJson('/user/files/nemo-client-runtime-report.json');
       return sanitizeNemoClientRuntimeReport(report);
     } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      if (
-        message.includes('/user/files/nemo-client-runtime-report.json') &&
-        message.includes('HTTP 404')
-      ) {
-        return null;
-      }
-      throw error;
+      fileError = error;
     }
+
+    try {
+      const settings = await this.post('/api/settings/get', {});
+      const report = settings?.extension_settings?.NemoFullBootstrap;
+      if (report && typeof report === 'object' && !Array.isArray(report)) {
+        return sanitizeNemoClientRuntimeReport(report);
+      }
+    } catch {
+      // Prefer the original file error below so diagnostics point to the primary source.
+    }
+
+    const message = fileError instanceof Error ? fileError.message : String(fileError || '');
+    if (
+      message.includes('/user/files/nemo-client-runtime-report.json') &&
+      message.includes('HTTP 404')
+    ) {
+      return null;
+    }
+    throw fileError;
   }
 
   async getNemoFullStatus() {
