@@ -28,6 +28,7 @@ export function classifyMobileRestRequest(requestTarget, basePath) {
 
   if (pathname === `${normalizedBase}/status`) return { kind: 'status' };
   if (pathname === `${normalizedBase}/characters`) return { kind: 'characters' };
+  if (pathname === `${normalizedBase}/character-create`) return { kind: 'character_create' };
   if (pathname === `${normalizedBase}/character`) {
     return { kind: 'character', avatarUrl: one(url.searchParams, 'avatarUrl') };
   }
@@ -71,6 +72,25 @@ export async function executeMobileRestRoute(route, client, body = {}) {
     case 'character':
       if (!route.avatarUrl) throw new Error('avatarUrl is required.');
       return client.getCharacter(route.avatarUrl);
+    case 'character_create': {
+      const cardJson =
+        typeof body?.cardJson === 'string' ? body.cardJson.trim() : '';
+      const fileName =
+        typeof body?.fileName === 'string' ? body.fileName.trim() : '';
+      if (!cardJson) throw new Error('cardJson is required.');
+
+      let card;
+      try {
+        card = JSON.parse(cardJson);
+      } catch {
+        throw new Error('cardJson must be valid JSON.');
+      }
+      if (!card || typeof card !== 'object' || Array.isArray(card)) {
+        throw new Error('cardJson must be valid JSON.');
+      }
+
+      return client.createCharacter({ card, fileName });
+    }
     case 'world_info':
       return client.listWorldInfo();
     case 'world_info_entry':
