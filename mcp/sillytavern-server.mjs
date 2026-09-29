@@ -290,6 +290,36 @@ export class SillyTavernClient {
     });
   }
 
+  async generateChatCompletion({ source, model, expected }) {
+    const payload = await this.post('/api/backends/chat-completions/generate', {
+      chat_completion_source: source,
+      messages: [{ role: 'user', content: `Reply exactly: ${expected}` }],
+      model,
+      temperature: 0,
+      max_tokens: 24,
+      stream: false,
+      presence_penalty: 0,
+      frequency_penalty: 0,
+      top_p: 1,
+      stop: [],
+      seed: 0,
+      logprobs: 0,
+      include_reasoning: false,
+    });
+
+    const response = String(payload?.choices?.[0]?.message?.content || '').trim();
+    if (!response) {
+      throw new Error(`SillyTavern ${source} smoke test returned no message content.`);
+    }
+
+    return {
+      source,
+      model,
+      ok: response.includes(expected),
+      response: response.slice(0, 200),
+    };
+  }
+
   async getNemoClientRuntimeStatus() {
     try {
       const report = await this.getJson('/user/files/nemo-client-runtime-report.json');
@@ -389,6 +419,58 @@ function clientFromEnv() {
     username: process.env.SILLYTAVERN_BASIC_AUTH_USERNAME || '',
     password: process.env.SILLYTAVERN_BASIC_AUTH_PASSWORD || '',
   });
+}
+
+function delay(ms) {
+  return new Promise((resolveDelay) => setTimeout(resolveDelay, ms));
+}
+
+export async function runProviderSmoke({
+  getClient = clientFromEnv,
+  retryDelayMs = 2_000,
+  maxReadinessAttempts = 20,
+} = {}) {
+  const client = getClient();
+  let ready = false;
+  let lastError = null;
+
+  for (let attempt = 0; attempt < maxReadinessAttempts; attempt += 1) {
+    try {
+      const status = await client.status();
+      if (status?.ok) {
+        ready = true;
+        break;
+      }
+    } catch (error) {
+      lastError = error;
+    }
+
+    if (attempt + 1 < maxReadinessAttempts && retryDelayMs > 0) {
+      await delay(retryDelayMs);
+    }
+  }
+
+  if (!ready) {
+    const detail = lastError instanceof Error ? `: ${lastError.message}` : '';
+    throw new Error(`SillyTavern was not ready for provider smoke test${detail}`);
+  }
+
+  const checks = [
+    { source: 'deepseek', model: 'deepseek-flash', expected: 'DEEPSEEK_OK' },
+    { source: 'groq', model: 'openai/gpt-oss-120b', expected: 'GROQ_OK' },
+    { source: 'openrouter', model: 'openrouter/auto', expected: 'OPENROUTER_OK' },
+  ];
+
+  const providers = [];
+  for (const check of checks) {
+    const result = await client.generateChatCompletion(check);
+    providers.push(result);
+  }
+
+  return {
+    ok: providers.every((item) => item.ok),
+    providers,
+  };
 }
 
 export async function checkReadiness(getClient = clientFromEnv) {
@@ -711,6 +793,20 @@ export function startHttpServer({
     console.error(
       `[sillytavern-mcp] listening on http://${host}:${port}${MCP_ENDPOINT_PATH} with mobile AI provider routes`,
     );
+
+    if (process.env.RUN_PROVIDER_SMOKE === '1') {
+      void runProviderSmoke({ getClient })
+        .then((result) => {
+          console.error('[sillytavern-mcp:provider-smoke]', JSON.stringify(result));
+        })
+        .catch((error) => {
+          const message = error instanceof Error ? error.message : String(error);
+          console.error(
+            '[sillytavern-mcp:provider-smoke]',
+            JSON.stringify({ ok: false, error: message }),
+          );
+        });
+    }
   });
 
   return httpServer;
