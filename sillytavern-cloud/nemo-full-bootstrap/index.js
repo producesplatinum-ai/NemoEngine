@@ -3,7 +3,7 @@ import { extension_settings } from '../../../extensions.js';
 import { oai_settings, openai_setting_names, openai_settings } from '../../../openai.js';
 
 const ACTIVE_PRESET = 'Nemo Engine 11.5.2 - Ready RU RP';
-const BOOTSTRAP_VERSION = '1.0.0';
+const BOOTSTRAP_VERSION = '1.1.0';
 const STATUS_NS = 'NemoFullBootstrap';
 
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
@@ -84,6 +84,33 @@ async function savePreset(transformed) {
   });
   if (!response.ok) throw new Error(`Preset save failed (${response.status}).`);
   return response.json().catch(() => ({}));
+}
+
+function encodeUtf8Base64(text) {
+  const bytes = new TextEncoder().encode(text);
+  let binary = '';
+  const chunk = 0x8000;
+  for (let i = 0; i < bytes.length; i += chunk) {
+    binary += String.fromCharCode(...bytes.subarray(i, i + chunk));
+  }
+  return btoa(binary);
+}
+
+async function persistClientReport(report) {
+  const name = 'nemo-client-runtime-report.json';
+  const payload = JSON.stringify(report, null, 2);
+  const response = await fetch('/api/files/upload', {
+    method: 'POST',
+    headers: getRequestHeaders(),
+    body: JSON.stringify({
+      name,
+      data: encodeUtf8Base64(payload),
+    }),
+  });
+  if (!response.ok) {
+    throw new Error(`Client runtime report upload failed (${response.status}).`);
+  }
+  return { ok: true, path: '/files/' + name };
 }
 
 async function runPreflight() {
@@ -204,6 +231,12 @@ async function bootstrap() {
       rendering: stat('NemoPromptRendering'),
     };
 
+    try {
+      report.persistence = await persistClientReport(report);
+    } catch (error) {
+      report.persistence = { ok: false, error: String(error?.message || error) };
+    }
+
     publishStatus(report);
     console.info('[Nemo Full Bootstrap]', report);
   } catch (error) {
@@ -214,6 +247,12 @@ async function bootstrap() {
       importedAt: new Date().toISOString(),
       error: String(error?.message || error),
     };
+    try {
+      report.persistence = await persistClientReport(report);
+    } catch (persistError) {
+      report.persistence = { ok: false, error: String(persistError?.message || persistError) };
+    }
+
     publishStatus(report);
     console.error('[Nemo Full Bootstrap]', error);
   }
