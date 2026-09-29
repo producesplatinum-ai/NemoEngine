@@ -25,5 +25,6 @@ jobs:
           NEMO_BOOTSTRAP_PRODUCTION_SOURCE: ${{ github.workspace }}/sillytavern-cloud/nemo-full-bootstrap
         run: |
           node --test \
+            sillytavern-cloud/test-seed-darya.mjs \
             sillytavern-cloud/test-seed-nemoengine.mjs \
             sillytavern-cloud/test-install-nemo-full-bootstrap.mjs
