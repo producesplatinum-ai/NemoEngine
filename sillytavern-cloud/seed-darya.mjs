@@ -1,4 +1,5 @@
 import fs from 'node:fs';
+import { createHash } from 'node:crypto';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -264,6 +265,202 @@ export function buildDaryaCharacter({ revision = DARYA_REVISION } = {}) {
   };
 }
 
+
+function sha256Buffer(bytes) {
+  return createHash('sha256').update(bytes).digest('hex');
+}
+
+function validateSnapshotRelativePath(value) {
+  if (!value || typeof value !== 'string') {
+    throw new Error('Darya snapshot path is required');
+  }
+  if (
+    value.startsWith('/') ||
+    value.includes('\\') ||
+    value.includes('\0') ||
+    value.split('/').includes('..') ||
+    value.split('/').includes('.')
+  ) {
+    throw new Error(`Invalid Darya snapshot path: ${value}`);
+  }
+  return value;
+}
+
+function replaceDirectoryAtomically(tempDir, sourceDir) {
+  const backupDir = `${sourceDir}.previous-${process.pid}`;
+  fs.rmSync(backupDir, { recursive: true, force: true });
+
+  if (fs.existsSync(sourceDir)) {
+    fs.renameSync(sourceDir, backupDir);
+  }
+
+  try {
+    fs.renameSync(tempDir, sourceDir);
+    fs.rmSync(backupDir, { recursive: true, force: true });
+  } catch (error) {
+    fs.rmSync(sourceDir, { recursive: true, force: true });
+    if (fs.existsSync(backupDir)) fs.renameSync(backupDir, sourceDir);
+    throw error;
+  }
+}
+
+export function syncBundledDaryaSource({
+  bundledSourceDir,
+  sourceDir = DEFAULT_SOURCE_DIR,
+  revision = DARYA_REVISION,
+} = {}) {
+  if (!bundledSourceDir || !fs.existsSync(bundledSourceDir)) {
+    throw new Error('Bundled Darya source directory is unavailable');
+  }
+
+  const parent = path.dirname(sourceDir);
+  fs.mkdirSync(parent, { recursive: true });
+  const tempDir = `${sourceDir}.sync-${process.pid}`;
+  fs.rmSync(tempDir, { recursive: true, force: true });
+  fs.cpSync(bundledSourceDir, tempDir, { recursive: true, force: true });
+  fs.rmSync(path.join(tempDir, '.git'), { recursive: true, force: true });
+
+  if (!fs.existsSync(path.join(tempDir, 'SKILL.md'))) {
+    fs.rmSync(tempDir, { recursive: true, force: true });
+    throw new Error('Bundled Darya snapshot is missing SKILL.md');
+  }
+  if (!fs.existsSync(path.join(tempDir, 'assets', 'darya-face', 'primary-static.jpeg'))) {
+    fs.rmSync(tempDir, { recursive: true, force: true });
+    throw new Error('Bundled Darya snapshot is missing primary avatar');
+  }
+
+  replaceDirectoryAtomically(tempDir, sourceDir);
+  return revision;
+}
+
+async function fetchWithTimeout(url, options = {}, timeoutMs = 120_000) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(url, { ...options, signal: controller.signal });
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+export async function syncDaryaSourceFromHttp({
+  sourceDir = DEFAULT_SOURCE_DIR,
+  revision = DARYA_REVISION,
+  baseUrl,
+  token = '',
+  concurrency = 6,
+} = {}) {
+  if (!baseUrl) throw new Error('DARYA source base URL is required');
+
+  const normalizedBase = baseUrl.replace(/\/+$/, '');
+  const headers = token ? { authorization: `Bearer ${token}` } : {};
+  const manifestResponse = await fetchWithTimeout(
+    `${normalizedBase}/source-manifest`,
+    { headers },
+  );
+  if (!manifestResponse.ok) {
+    throw new Error(`Darya source manifest request failed: HTTP ${manifestResponse.status}`);
+  }
+
+  const manifest = await manifestResponse.json();
+  if (manifest?.schemaVersion !== 'darya-source-manifest/v1' || !Array.isArray(manifest.files)) {
+    throw new Error('Darya source manifest is structurally invalid');
+  }
+  if (manifest.revision !== revision) {
+    throw new Error(
+      `Darya source revision mismatch: expected ${revision}, got ${manifest.revision || 'missing'}`,
+    );
+  }
+  if (manifest.files.length < 1) {
+    throw new Error('Darya source manifest is empty');
+  }
+
+  const totalBytes = manifest.files.reduce((sum, item) => sum + Number(item?.size || 0), 0);
+  if (!Number.isSafeInteger(totalBytes) || totalBytes <= 0 || totalBytes > 400 * 1024 * 1024) {
+    throw new Error(`Darya source manifest size is invalid: ${totalBytes}`);
+  }
+
+  const parent = path.dirname(sourceDir);
+  fs.mkdirSync(parent, { recursive: true });
+  const tempDir = `${sourceDir}.sync-${process.pid}`;
+  fs.rmSync(tempDir, { recursive: true, force: true });
+  fs.mkdirSync(tempDir, { recursive: true });
+
+  const queue = [...manifest.files];
+  let failure = null;
+
+  async function worker() {
+    while (!failure) {
+      const item = queue.shift();
+      if (!item) return;
+
+      try {
+        const relativePath = validateSnapshotRelativePath(item.path);
+        const expectedSize = Number(item.size);
+        const expectedSha = String(item.sha256 || '');
+        if (!Number.isSafeInteger(expectedSize) || expectedSize < 0 || !/^[0-9a-f]{64}$/.test(expectedSha)) {
+          throw new Error(`Invalid Darya source manifest item: ${relativePath}`);
+        }
+
+        const response = await fetchWithTimeout(
+          `${normalizedBase}/source-file?path=${encodeURIComponent(relativePath)}`,
+          { headers },
+        );
+        if (!response.ok) {
+          throw new Error(`Darya source file request failed for ${relativePath}: HTTP ${response.status}`);
+        }
+
+        const bytes = Buffer.from(await response.arrayBuffer());
+        if (bytes.length !== expectedSize) {
+          throw new Error(
+            `Darya source size mismatch for ${relativePath}: expected ${expectedSize}, got ${bytes.length}`,
+          );
+        }
+
+        const actualSha = sha256Buffer(bytes);
+        if (actualSha !== expectedSha) {
+          throw new Error(
+            `Darya source SHA256 mismatch for ${relativePath}: expected ${expectedSha}, got ${actualSha}`,
+          );
+        }
+
+        const headerSha = response.headers.get('x-darya-source-sha256');
+        if (headerSha && headerSha !== actualSha) {
+          throw new Error(
+            `Darya source response digest mismatch for ${relativePath}: header ${headerSha}, actual ${actualSha}`,
+          );
+        }
+
+        const target = path.join(tempDir, ...relativePath.split('/'));
+        fs.mkdirSync(path.dirname(target), { recursive: true });
+        fs.writeFileSync(target, bytes, { mode: 0o600 });
+      } catch (error) {
+        failure = error;
+        return;
+      }
+    }
+  }
+
+  try {
+    const workerCount = Math.max(1, Math.min(Number(concurrency) || 1, 12));
+    await Promise.all(Array.from({ length: workerCount }, () => worker()));
+    if (failure) throw failure;
+
+    if (!fs.existsSync(path.join(tempDir, 'SKILL.md'))) {
+      throw new Error('Darya HTTP snapshot is missing SKILL.md');
+    }
+    if (!fs.existsSync(path.join(tempDir, 'assets', 'darya-face', 'primary-static.jpeg'))) {
+      throw new Error('Darya HTTP snapshot is missing primary avatar');
+    }
+
+    replaceDirectoryAtomically(tempDir, sourceDir);
+    return revision;
+  } catch (error) {
+    fs.rmSync(tempDir, { recursive: true, force: true });
+    throw error;
+  }
+}
+
 function runGit(args, cwd) {
   const result = spawnSync('git', args, {
     cwd,
@@ -278,10 +475,30 @@ function runGit(args, cwd) {
   return (result.stdout || '').trim();
 }
 
-export function syncDaryaSource({
+export async function syncDaryaSource({
   sourceDir = DEFAULT_SOURCE_DIR,
   revision = DARYA_REVISION,
 } = {}) {
+  const baseUrl = process.env.DARYA_SOURCE_BASE_URL || '';
+  const token = process.env.DARYA_SOURCE_TOKEN || '';
+  if (baseUrl) {
+    return syncDaryaSourceFromHttp({
+      sourceDir,
+      revision,
+      baseUrl,
+      token,
+    });
+  }
+
+  const bundledSourceDir = process.env.DARYA_BUNDLED_SOURCE_DIR || '';
+  if (bundledSourceDir) {
+    return syncBundledDaryaSource({
+      bundledSourceDir,
+      sourceDir,
+      revision,
+    });
+  }
+
   const parent = path.dirname(sourceDir);
   fs.mkdirSync(parent, { recursive: true });
 
@@ -361,7 +578,7 @@ export async function seedDarya({
   fs.mkdirSync(worldsDir, { recursive: true });
   fs.mkdirSync(stateDir, { recursive: true });
 
-  const actualRevision = syncDaryaSource({ sourceDir, revision });
+  const actualRevision = await syncDaryaSource({ sourceDir, revision });
   const state = readState(statePath);
   const refresh = shouldRefreshDarya(state, actualRevision)
     || !fs.existsSync(characterPath)
