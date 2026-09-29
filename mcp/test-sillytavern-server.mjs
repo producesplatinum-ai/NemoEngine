@@ -554,3 +554,37 @@ test('bootstrap proxy cookie is capability-bound, short-lived, and not accepted 
   assert.equal(hasBootstrapProxyCookie(pair, '/other-secret/mcp'), false);
   assert.equal(hasBootstrapProxyCookie('', '/st-secret/mcp'), false);
 });
+
+
+test('client runtime status falls back to NemoFullBootstrap settings when persisted report file is unreadable', async () => {
+  const runtime = {
+    ok: true,
+    bootstrapVersion: '1.1.0',
+    preset: 'Nemo Engine 11.5.2 - Ready RU RP',
+    importedAt: '2026-09-29T03:14:34.000Z',
+    transform: { coldPromptCount: 445, promptCount: 458, regexCount: 97, recipeRuntime: false, vexRuntime: false },
+    preflight: { available: true, ok: true, aborted: false },
+    recipe: null,
+    cold: { hydrated: 445 },
+    vex: null,
+    rendering: { enabled: true },
+    persistence: { ok: true, path: '/files/nemo-client-runtime-report.json' },
+  };
+
+  const fetchImpl = async (url, options = {}) => {
+    const path = new URL(String(url)).pathname;
+    if (path === '/csrf-token') return makeJsonResponse({ token: 'csrf-client-fallback' });
+    if (path === '/user/files/nemo-client-runtime-report.json') {
+      return makeJsonResponse({ error: 'temporary read failure' }, { status: 500 });
+    }
+    if (path === '/api/settings/get') {
+      assert.equal(options.method, 'POST');
+      return makeJsonResponse({ extension_settings: { NemoFullBootstrap: runtime } });
+    }
+    throw new Error('unexpected URL: ' + url);
+  };
+
+  const client = new SillyTavernClient({ baseUrl: 'https://st.example.test', fetchImpl });
+  const report = await client.getNemoClientRuntimeStatus();
+  assert.deepEqual(report, sanitizeNemoClientRuntimeReport(runtime));
+});
