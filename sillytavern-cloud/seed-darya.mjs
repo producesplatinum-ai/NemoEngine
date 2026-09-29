@@ -199,6 +199,17 @@ function worldInfoToCharacterBook(world) {
   };
 }
 
+export function mergeDaryaWorldLink(card, world) {
+  const patched = JSON.parse(JSON.stringify(card || {}));
+  patched.spec ??= 'chara_card_v3';
+  patched.spec_version ??= '3.0';
+  patched.data ??= {};
+  patched.data.extensions ??= {};
+  patched.data.extensions.world = 'Darya';
+  patched.data.character_book = worldInfoToCharacterBook(world);
+  return patched;
+}
+
 export function buildDaryaCharacter({ revision = DARYA_REVISION, sourceMirrored = true } = {}) {
   const world = buildDaryaWorldInfo({ revision, sourceMirrored });
   const description = sourceMirrored
@@ -559,25 +570,59 @@ export function resolveDaryaAvatarPath({
   return fallbackAvatarPath;
 }
 
-async function buildCardPng(sourceDir, card) {
+async function getDaryaCardBasePng(sourceDir, existingCharacterPath = '') {
   const sourceAvatarPath = path.join(
     sourceDir,
     'assets',
     'darya-face',
     'primary-static.jpeg',
   );
-  const parser = await import(pathToFileURL('/home/node/app/src/character-card-parser.js').href);
 
-  if (!fs.existsSync(sourceAvatarPath)) {
-    const fallbackAvatarPath = resolveDaryaAvatarPath({ sourceDir });
-    const fallbackPng = fs.readFileSync(fallbackAvatarPath);
-    return parser.write(fallbackPng, JSON.stringify(card));
+  if (fs.existsSync(sourceAvatarPath)) {
+    const { Jimp, JimpMime } = await import(pathToFileURL('/home/node/app/src/jimp.js').href);
+    const image = await Jimp.read(sourceAvatarPath);
+    return image.getBuffer(JimpMime.png);
   }
 
-  const { Jimp, JimpMime } = await import(pathToFileURL('/home/node/app/src/jimp.js').href);
-  const image = await Jimp.read(sourceAvatarPath);
-  const png = await image.getBuffer(JimpMime.png);
-  return parser.write(png, JSON.stringify(card));
+  if (existingCharacterPath && fs.existsSync(existingCharacterPath)) {
+    return fs.readFileSync(existingCharacterPath);
+  }
+
+  const fallbackAvatarPath = resolveDaryaAvatarPath({ sourceDir });
+  return fs.readFileSync(fallbackAvatarPath);
+}
+
+async function buildCardPng(sourceDir, card) {
+  const parser = await import(pathToFileURL('/home/node/app/src/character-card-parser.js').href);
+  const basePng = await getDaryaCardBasePng(sourceDir);
+  return parser.write(basePng, JSON.stringify(card));
+}
+
+async function patchExistingDaryaCard(characterPath, sourceDir, world) {
+  if (!fs.existsSync(characterPath)) return false;
+
+  const parser = await import(pathToFileURL('/home/node/app/src/character-card-parser.js').href);
+  const raw = await parser.parse(characterPath, 'png');
+  const existing = JSON.parse(raw);
+  const patched = mergeDaryaWorldLink(existing, world);
+
+  const existingJson = JSON.stringify(existing);
+  const patchedJson = JSON.stringify(patched);
+  const sourceAvatarPath = path.join(
+    sourceDir,
+    'assets',
+    'darya-face',
+    'primary-static.jpeg',
+  );
+  const shouldRefreshImage = fs.existsSync(sourceAvatarPath);
+
+  if (existingJson === patchedJson && !shouldRefreshImage) {
+    return false;
+  }
+
+  const basePng = await getDaryaCardBasePng(sourceDir, characterPath);
+  const output = parser.write(basePng, patchedJson);
+  return writeBufferIfChanged(characterPath, output);
 }
 
 function readState(statePath) {
@@ -624,7 +669,20 @@ export async function seedDarya({
     || !fs.existsSync(characterPath)
     || !fs.existsSync(worldPath);
 
-  if (!refresh) {
+  const world = buildDaryaWorldInfo({ revision: actualRevision, sourceMirrored });
+  const worldText = JSON.stringify(world, null, 2);
+  const worldChanged = writeTextIfChanged(worldPath, worldText);
+
+  let characterChanged = false;
+  if (fs.existsSync(characterPath)) {
+    characterChanged = await patchExistingDaryaCard(characterPath, sourceDir, world);
+  } else {
+    const card = buildDaryaCharacter({ revision: actualRevision, sourceMirrored });
+    const cardPng = await buildCardPng(sourceDir, card);
+    characterChanged = writeBufferIfChanged(characterPath, cardPng);
+  }
+
+  if (!refresh && !worldChanged && !characterChanged) {
     console.log(
       `Darya already seeded at ${actualRevision}; existing character and lorebook preserved` +
       ` (sourceMirrored=${sourceMirrored})`,
@@ -639,14 +697,6 @@ export async function seedDarya({
       sourceDir,
     };
   }
-
-  const world = buildDaryaWorldInfo({ revision: actualRevision, sourceMirrored });
-  const card = buildDaryaCharacter({ revision: actualRevision, sourceMirrored });
-  const cardPng = await buildCardPng(sourceDir, card);
-
-  const worldText = JSON.stringify(world, null, 2);
-  writeTextIfChanged(worldPath, worldText);
-  writeBufferIfChanged(characterPath, cardPng);
 
   const fileCount = sourceMirrored && fs.existsSync(sourceDir) ? countFiles(sourceDir) : 0;
   const nextState = {
