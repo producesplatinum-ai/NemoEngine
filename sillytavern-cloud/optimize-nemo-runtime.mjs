@@ -4,7 +4,7 @@ import { pathToFileURL } from 'node:url';
 
 const userDataDir = process.env.SILLYTAVERN_USER_DATA_DIR || '/persistent/data/default-user';
 const extensionDir = process.env.NEMO_PRESET_EXT_DIR || path.join(userDataDir, 'extensions', 'NemoPresetExt');
-const activePreset = process.env.NEMO_ACTIVE_PRESET || 'Nemo Engine 11.5.2 - Ready RU RP';
+const activePreset = process.env.NEMO_ACTIVE_PRESET || 'Nemo Engine 11.5.2 - Ready RU Gooner RP';
 
 const presetPath = path.join(userDataDir, 'OpenAI Settings', activePreset + '.json');
 const settingsPath = path.join(userDataDir, 'settings.json');
