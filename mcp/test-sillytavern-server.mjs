@@ -8,6 +8,7 @@ import {
   normalizeBaseUrl,
   resolveSillyTavernBaseUrl,
   sanitizeNemoRuntimeReport,
+  sanitizeNemoClientRuntimeReport,
 } from './sillytavern-server.mjs';
 
 function makeJsonResponse(body, { status = 200, setCookies = [] } = {}) {
@@ -339,6 +340,10 @@ test('combined mobile gateway preserves SillyTavern and routes provider MCP endp
     { kind: 'nemo_status' },
   );
   assert.deepEqual(
+    classifyRequestPath('/nemo-full-status', { sillyPath, aiPrefix }),
+    { kind: 'nemo_full_status' },
+  );
+  assert.deepEqual(
     classifyRequestPath(sillyPath, { sillyPath, aiPrefix }),
     { kind: 'sillytavern' },
   );
@@ -357,5 +362,108 @@ test('combined mobile gateway preserves SillyTavern and routes provider MCP endp
   assert.deepEqual(
     classifyRequestPath('/ai-secret/unknown/mcp', { sillyPath, aiPrefix }),
     { kind: 'not_found' },
+  );
+});
+
+
+test('client sanitizes persisted Nemo client preflight report', async () => {
+  const fetchImpl = async (url, options = {}) => {
+    if (String(url).endsWith('/csrf-token')) return makeJsonResponse({ token: 'csrf-client' });
+    assert.equal(String(url), 'https://st.example.test/user/files/nemo-client-runtime-report.json');
+    assert.equal(options.method, 'GET');
+    return makeJsonResponse({
+      ok: true,
+      bootstrapVersion: '1.1.0',
+      preset: 'Nemo Engine 11.5.2 - Ready RU RP',
+      importedAt: '2026-09-29T01:50:00.000Z',
+      transform: { coldPromptCount: 445, promptCount: 458, regexCount: 97, recipeRuntime: false, vexRuntime: false },
+      preflight: { available: true, ok: true, aborted: false },
+      recipe: { active: false },
+      cold: { hydrated: 445 },
+      vex: { active: false },
+      rendering: { enabled: true },
+      persistence: { ok: true, path: '/files/nemo-client-runtime-report.json' },
+      secretShouldNotLeak: 'nope',
+    });
+  };
+
+  const client = new SillyTavernClient({ baseUrl: 'https://st.example.test', fetchImpl });
+  const report = await client.getNemoClientRuntimeStatus();
+
+  assert.deepEqual(report, {
+    ok: true,
+    bootstrapVersion: '1.1.0',
+    preset: 'Nemo Engine 11.5.2 - Ready RU RP',
+    importedAt: '2026-09-29T01:50:00.000Z',
+    transform: { coldPromptCount: 445, promptCount: 458, regexCount: 97, recipeRuntime: false, vexRuntime: false },
+    preflight: { available: true, ok: true, aborted: false },
+    recipe: { active: false },
+    cold: { hydrated: 445 },
+    vex: { active: false },
+    rendering: { enabled: true },
+    persistence: { ok: true, path: '/files/nemo-client-runtime-report.json' },
+  });
+});
+
+test('full Nemo status combines server verification with optional client preflight', async () => {
+  const client = new SillyTavernClient({
+    baseUrl: 'https://st.example.test',
+    fetchImpl: async (url) => {
+      if (String(url).endsWith('/csrf-token')) return makeJsonResponse({ token: 'csrf-full' });
+      if (String(url).endsWith('/user/files/nemo-runtime-report.json')) {
+        return makeJsonResponse({
+          ok: true,
+          preset: 'Nemo Engine 11.5.2 - Ready RU RP',
+          promptCount: 458,
+          regexCount: 97,
+          recipe: { applicable: false, active: false, validated: false },
+          vex: { applicable: false, active: false, validated: false },
+          cold: { applicable: true, active: true, validated: true, count: 445 },
+          sidecars: { recipe: 0, vex: 0, cold: 5 },
+          rendering: { stage: '5B.3/5', enabled: true, clientRuntime: 'NemoPresetExt' },
+        });
+      }
+      if (String(url).endsWith('/user/files/nemo-client-runtime-report.json')) {
+        return makeJsonResponse({ error: 'Not Found' }, { status: 404 });
+      }
+      throw new Error('unexpected URL');
+    },
+  });
+
+  const status = await client.getNemoFullStatus();
+  assert.equal(status.ok, true);
+  assert.equal(status.server.ok, true);
+  assert.deepEqual(status.client, { available: false });
+});
+
+test('Nemo client runtime sanitizer keeps only the verification contract', () => {
+  assert.deepEqual(
+    sanitizeNemoClientRuntimeReport({
+      ok: true,
+      bootstrapVersion: '1.1.0',
+      preset: 'Nemo',
+      importedAt: '2026-09-29T01:50:00.000Z',
+      transform: { coldPromptCount: 445 },
+      preflight: { available: true, ok: true, aborted: false },
+      recipe: { active: false },
+      cold: { hydrated: 445 },
+      vex: { active: false },
+      rendering: { enabled: true },
+      persistence: { ok: true, path: '/files/nemo-client-runtime-report.json' },
+      credentials: { hidden: true },
+    }),
+    {
+      ok: true,
+      bootstrapVersion: '1.1.0',
+      preset: 'Nemo',
+      importedAt: '2026-09-29T01:50:00.000Z',
+      transform: { coldPromptCount: 445 },
+      preflight: { available: true, ok: true, aborted: false },
+      recipe: { active: false },
+      cold: { hydrated: 445 },
+      vex: { active: false },
+      rendering: { enabled: true },
+      persistence: { ok: true, path: '/files/nemo-client-runtime-report.json' },
+    },
   );
 });
