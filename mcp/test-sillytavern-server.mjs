@@ -7,6 +7,7 @@ import {
   classifyRequestPath,
   normalizeBaseUrl,
   resolveSillyTavernBaseUrl,
+  sanitizeNemoRuntimeReport,
 } from './sillytavern-server.mjs';
 
 function makeJsonResponse(body, { status = 200, setCookies = [] } = {}) {
@@ -198,6 +199,85 @@ test('readiness safely checks authenticated CSRF and characters API without deli
   assert.equal('baseUrl' in apiFailed, false);
 });
 
+
+test('client reads and sanitizes the persisted Nemo runtime report without exposing unrelated fields', async () => {
+  const calls = [];
+  const fetchImpl = async (url, options = {}) => {
+    calls.push({ url: String(url), options });
+    if (String(url).endsWith('/csrf-token')) {
+      return makeJsonResponse(
+        { token: 'csrf-nemo' },
+        { setCookies: ['connect.sid=nemo-session; Path=/; HttpOnly'] },
+      );
+    }
+    assert.equal(String(url), 'https://st.example.test/files/nemo-runtime-report.json');
+    assert.equal(options.method, 'GET');
+    assert.equal(options.headers.cookie, 'connect.sid=nemo-session');
+    return makeJsonResponse({
+      ok: true,
+      preset: 'Nemo Engine 11.5.2 - Ready RU RP',
+      promptCount: 458,
+      regexCount: 97,
+      recipe: { applicable: true, active: true, validated: true },
+      vex: { applicable: true, active: true, validated: true },
+      cold: { applicable: true, active: true, validated: true, count: 321 },
+      sidecars: { recipe: 4, vex: 6, cold: 3 },
+      rendering: { stage: '5B.3/5', enabled: true, clientRuntime: 'NemoPresetExt' },
+      secretShouldNotLeak: 'nope',
+    });
+  };
+
+  const client = new SillyTavernClient({
+    baseUrl: 'https://st.example.test',
+    username: 'user',
+    password: 'pass',
+    fetchImpl,
+  });
+
+  const report = await client.getNemoRuntimeStatus();
+  assert.deepEqual(report, {
+    ok: true,
+    preset: 'Nemo Engine 11.5.2 - Ready RU RP',
+    promptCount: 458,
+    regexCount: 97,
+    recipe: { applicable: true, active: true, validated: true },
+    vex: { applicable: true, active: true, validated: true },
+    cold: { applicable: true, active: true, validated: true, count: 321 },
+    sidecars: { recipe: 4, vex: 6, cold: 3 },
+    rendering: { stage: '5B.3/5', enabled: true, clientRuntime: 'NemoPresetExt' },
+  });
+  assert.equal(calls.length, 2);
+});
+
+test('Nemo runtime sanitizer keeps only the public verification contract', () => {
+  assert.deepEqual(
+    sanitizeNemoRuntimeReport({
+      ok: true,
+      preset: 'Nemo',
+      promptCount: 458,
+      regexCount: 97,
+      recipe: { active: true },
+      vex: { active: true },
+      cold: { count: 12 },
+      sidecars: { cold: 2 },
+      rendering: { enabled: true },
+      apiKey: 'must-not-leak',
+      credentials: { username: 'hidden' },
+    }),
+    {
+      ok: true,
+      preset: 'Nemo',
+      promptCount: 458,
+      regexCount: 97,
+      recipe: { active: true },
+      vex: { active: true },
+      cold: { count: 12 },
+      sidecars: { cold: 2 },
+      rendering: { enabled: true },
+    },
+  );
+});
+
 test('combined mobile gateway preserves SillyTavern and routes provider MCP endpoints', () => {
   const sillyPath = '/st-secret/mcp';
   const aiPrefix = '/ai-secret';
@@ -205,6 +285,10 @@ test('combined mobile gateway preserves SillyTavern and routes provider MCP endp
   assert.deepEqual(
     classifyRequestPath('/healthz', { sillyPath, aiPrefix }),
     { kind: 'health' },
+  );
+  assert.deepEqual(
+    classifyRequestPath('/nemo-runtime-status', { sillyPath, aiPrefix }),
+    { kind: 'nemo_status' },
   );
   assert.deepEqual(
     classifyRequestPath(sillyPath, { sillyPath, aiPrefix }),
