@@ -1,5 +1,3 @@
-import { pathToFileURL } from 'node:url';
-
 const SUPPORTED_OPS = new Set([
   'skip',
   'status',
@@ -218,8 +216,7 @@ async function cliMain(env = process.env) {
   console.log('SILLYTAVERN_ONE_SHOT_RESULT '+JSON.stringify(result));
 }
 
-const invokedAsScript =
-  process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href;
+const invokedAsScript = process.argv.includes('--run');
 
 if (invokedAsScript) {
   cliMain().catch((error) => {
