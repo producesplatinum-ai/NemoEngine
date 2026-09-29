@@ -10,8 +10,9 @@ COPY seed-nemoengine.mjs /usr/local/bin/seed-nemoengine.mjs
 COPY test-seed-provider-secrets.mjs /tmp/test-seed-provider-secrets.mjs
 COPY test-seed-connection-profiles.mjs /tmp/test-seed-connection-profiles.mjs
 COPY test-seed-nemoengine.mjs /tmp/test-seed-nemoengine.mjs
-RUN node --test /tmp/test-seed-provider-secrets.mjs /tmp/test-seed-connection-profiles.mjs /tmp/test-seed-nemoengine.mjs \
-    && rm -f /tmp/test-seed-provider-secrets.mjs /tmp/test-seed-connection-profiles.mjs /tmp/test-seed-nemoengine.mjs
+COPY test-install-nemo-full-bootstrap.mjs /tmp/test-install-nemo-full-bootstrap.mjs
+RUN node --test /tmp/test-seed-provider-secrets.mjs /tmp/test-seed-connection-profiles.mjs /tmp/test-seed-nemoengine.mjs /tmp/test-install-nemo-full-bootstrap.mjs \
+    && rm -f /tmp/test-seed-provider-secrets.mjs /tmp/test-seed-connection-profiles.mjs /tmp/test-seed-nemoengine.mjs /tmp/test-install-nemo-full-bootstrap.mjs
 RUN chmod +x /usr/local/bin/railway-sillytavern-entrypoint \
     && rm -rf config data plugins backups public/scripts/extensions/third-party \
     && ln -s /persistent/config config \
