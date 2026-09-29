@@ -6,6 +6,7 @@ import {
   checkReadiness,
   classifyRequestPath,
   normalizeBaseUrl,
+  resolveSillyTavernBaseUrl,
 } from './sillytavern-server.mjs';
 
 function makeJsonResponse(body, { status = 200, setCookies = [] } = {}) {
@@ -34,6 +35,23 @@ test('normalizeBaseUrl accepts only http(s) and removes trailing slashes', () =>
   assert.equal(normalizeBaseUrl('https://example.test///'), 'https://example.test');
   assert.equal(normalizeBaseUrl('http://127.0.0.1:8000/'), 'http://127.0.0.1:8000');
   assert.throws(() => normalizeBaseUrl('file:///tmp/st'), /http/i);
+});
+
+test('Railway deployments prefer the private SillyTavern hostname while local runs keep SILLYTAVERN_URL', () => {
+  assert.equal(
+    resolveSillyTavernBaseUrl({
+      SILLYTAVERN_URL: 'https://public.example.test',
+      RAILWAY_ENVIRONMENT_ID: 'env-123',
+    }),
+    'http://sillytavern.railway.internal:8000',
+  );
+
+  assert.equal(
+    resolveSillyTavernBaseUrl({
+      SILLYTAVERN_URL: 'https://public.example.test',
+    }),
+    'https://public.example.test',
+  );
 });
 
 test('client obtains a CSRF token, preserves the session cookie, and lists characters', async () => {
@@ -179,7 +197,6 @@ test('readiness safely checks authenticated CSRF and characters API without deli
   assert.match(apiFailed.error, /characters API unavailable/);
   assert.equal('baseUrl' in apiFailed, false);
 });
-
 
 test('combined mobile gateway preserves SillyTavern and routes provider MCP endpoints', () => {
   const sillyPath = '/st-secret/mcp';
