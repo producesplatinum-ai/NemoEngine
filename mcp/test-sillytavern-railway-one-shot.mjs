@@ -1,5 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import { spawnSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 
 import {
   executeOneShot,
@@ -78,4 +80,25 @@ test('skip performs no network call', async () => {
   });
   assert.equal(calls, 0);
   assert.deepEqual(result, { ok: true, skipped: true });
+});
+
+
+test('CLI executes only with explicit --run and emits a terminal result marker', () => {
+  const script = fileURLToPath(new URL('./sillytavern-railway-one-shot.mjs', import.meta.url));
+  const baseEnv = { ...process.env, SILLYTAVERN_ONE_SHOT_JSON: '' };
+
+  const passive = spawnSync(process.execPath, [script], {
+    env: baseEnv,
+    encoding: 'utf8',
+  });
+  assert.equal(passive.status, 0);
+  assert.equal(passive.stdout.trim(), '');
+
+  const explicit = spawnSync(process.execPath, [script, '--run'], {
+    env: baseEnv,
+    encoding: 'utf8',
+  });
+  assert.equal(explicit.status, 0);
+  assert.match(explicit.stdout, /SILLYTAVERN_ONE_SHOT_RESULT/);
+  assert.match(explicit.stdout, /"skipped":true/);
 });
