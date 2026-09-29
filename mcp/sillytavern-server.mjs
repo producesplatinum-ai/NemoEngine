@@ -319,6 +319,63 @@ export class SillyTavernClient {
     return this.post('/api/characters/get', { avatar_url: avatarUrl });
   }
 
+  async createCharacter({ card, fileName = '' }) {
+    if (!card || typeof card !== 'object' || Array.isArray(card)) {
+      throw new Error('Character card must be an object.');
+    }
+
+    const data =
+      card?.data && typeof card.data === 'object' && !Array.isArray(card.data)
+        ? card.data
+        : {};
+    const extensions =
+      data?.extensions &&
+      typeof data.extensions === 'object' &&
+      !Array.isArray(data.extensions)
+        ? data.extensions
+        : {};
+    const name = String(data.name || card.name || '').trim();
+    if (!name) throw new Error('Character card name is required.');
+
+    const payload = {
+      ch_name: name,
+      description: data.description ?? card.description ?? '',
+      personality: data.personality ?? card.personality ?? '',
+      scenario: data.scenario ?? card.scenario ?? '',
+      first_mes: data.first_mes ?? card.first_mes ?? '',
+      mes_example: data.mes_example ?? card.mes_example ?? '',
+      creator_notes:
+        data.creator_notes ?? card.creator_notes ?? card.creatorcomment ?? '',
+      system_prompt: data.system_prompt ?? '',
+      post_history_instructions: data.post_history_instructions ?? '',
+      tags: data.tags ?? card.tags ?? [],
+      creator: data.creator ?? card.creator ?? '',
+      character_version:
+        data.character_version ?? card.character_version ?? '',
+      alternate_greetings:
+        data.alternate_greetings ?? card.alternate_greetings ?? [],
+      talkativeness:
+        extensions.talkativeness ?? card.talkativeness ?? 0.5,
+      json_data: JSON.stringify(card),
+    };
+
+    const normalizedFileName = String(fileName || '').trim();
+    if (normalizedFileName) payload.file_name = normalizedFileName;
+
+    const avatarUrl = String(
+      await this.post('/api/characters/create', payload),
+    ).trim();
+    if (!avatarUrl) {
+      throw new Error('SillyTavern character create returned no avatar filename.');
+    }
+
+    return {
+      ok: true,
+      avatarUrl,
+      characterName: name,
+    };
+  }
+
   listWorldInfo() {
     return this.post('/api/worldinfo/list', {});
   }
@@ -838,6 +895,7 @@ export function parseMobileWriteBody(contentType, text) {
     if (params.has('source')) parsed.source = params.get('source') || '';
     if (params.has('model')) parsed.model = params.get('model') || '';
     if (params.has('marker')) parsed.marker = params.get('marker') || '';
+    if (params.has('cardJson')) parsed.cardJson = params.get('cardJson') || '';
     return parsed;
   }
 
@@ -850,6 +908,25 @@ function escapeHtmlAttribute(value) {
     .replaceAll('"', '&quot;')
     .replaceAll('<', '&lt;')
     .replaceAll('>', '&gt;');
+}
+
+export function mobileCharacterCreateFormHtml(actionPath) {
+  const action = escapeHtmlAttribute(actionPath);
+  return `<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SillyTavern Mobile Character Create</title>
+</head>
+<body>
+<form method="post" action="${action}">
+<label>fileName <input name="fileName" autocomplete="off"></label>
+<label>cardJson <textarea name="cardJson" required></textarea></label>
+<button type="submit">Create character</button>
+</form>
+</body>
+</html>`;
 }
 
 export function mobileTurnFormHtml(actionPath) {
@@ -1349,7 +1426,9 @@ export function startHttpServer({
 
     if (mobileRoute.kind !== 'not_found') {
       const mobileWriteRoute =
-        mobileRoute.kind === 'turn' || mobileRoute.kind === 'generate';
+        mobileRoute.kind === 'turn' ||
+        mobileRoute.kind === 'generate' ||
+        mobileRoute.kind === 'character_create';
 
       if (mobileWriteRoute && req.method === 'GET') {
         res.statusCode = 200;
@@ -1362,7 +1441,13 @@ export function startHttpServer({
         res.end(
           mobileRoute.kind === 'turn'
             ? mobileTurnFormHtml(`${MOBILE_REST_BASE_PATH}/turn`)
-            : mobileGenerateFormHtml(`${MOBILE_REST_BASE_PATH}/generate`),
+            : mobileRoute.kind === 'character_create'
+              ? mobileCharacterCreateFormHtml(
+                  `${MOBILE_REST_BASE_PATH}/character-create`,
+                )
+              : mobileGenerateFormHtml(
+                  `${MOBILE_REST_BASE_PATH}/generate`,
+                ),
         );
         return;
       }
@@ -1400,6 +1485,7 @@ export function startHttpServer({
             message.includes(' is required.') ||
             message.includes(' are required.') ||
             message.includes('must not be empty.') ||
+            message === 'cardJson must be valid JSON.' ||
             message === 'Unsupported generation source.' ||
             message === 'Invalid JSON body.' ||
             message === 'Unsupported content type.' ||
