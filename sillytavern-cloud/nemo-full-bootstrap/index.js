@@ -198,6 +198,8 @@ async function runClientGenerationDiagnostic(request, bootstrapReport) {
     beforeCount: 0,
     afterCount: 0,
     assistantMessagePresent: false,
+    generatedNewAssistant: false,
+    outcome: 'pending',
     bootstrapImportedAt: bootstrapReport?.importedAt || '',
     error: '',
   };
@@ -238,11 +240,14 @@ async function runClientGenerationDiagnostic(request, bootstrapReport) {
     if (existingAssistant) {
       const report = {
         ...baseReport,
-        ok: true,
+        ok: false,
         beforeCount: chat.length,
         afterCount: chat.length,
         assistantMessagePresent: true,
+        generatedNewAssistant: false,
+        outcome: 'already_present',
         alreadyGenerated: true,
+        error: 'Assistant message already existed after the control marker; no new generation was executed.',
       };
       try {
         report.persistence = await persistClientGenerationReport(report);
@@ -283,6 +288,8 @@ async function runClientGenerationDiagnostic(request, bootstrapReport) {
       beforeCount,
       afterCount: chat.length,
       assistantMessagePresent,
+      generatedNewAssistant: assistantMessagePresent && chat.length > beforeCount,
+      outcome: assistantMessagePresent && chat.length > beforeCount ? 'generated' : 'no_new_assistant',
     };
     if (!report.ok) {
       report.error = 'Generate completed without a persisted assistant message.';
@@ -301,6 +308,8 @@ async function runClientGenerationDiagnostic(request, bootstrapReport) {
       generatedAt: new Date().toISOString(),
       beforeCount: Array.isArray(chat) ? chat.length : 0,
       afterCount: Array.isArray(chat) ? chat.length : 0,
+      generatedNewAssistant: false,
+      outcome: 'error',
       error: String(error?.message || error),
     };
     try {
