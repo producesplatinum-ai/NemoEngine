@@ -29,6 +29,7 @@ jobs:
       - name: Run focused SillyTavern Nemo tests
         run: |
           node --test \
+            sillytavern-cloud/test-seed-darya.mjs \
             sillytavern-cloud/test-darya-card-profile.mjs \
             sillytavern-cloud/test-seed-nemoengine.mjs \
             sillytavern-cloud/test-install-nemo-full-bootstrap.mjs
