@@ -1,0 +1,10 @@
+{
+  "display_name": "Nemo Full Bootstrap",
+  "author": "producesplatinum-ai",
+  "version": "1.0.0",
+  "description": "Runs NemoPresetExt import-time optimization and runtime verification for Nemo Engine 11.5.2.",
+  "requires": [],
+  "optional": [],
+  "js": "index.js",
+  "loading_order": 1100
+}
