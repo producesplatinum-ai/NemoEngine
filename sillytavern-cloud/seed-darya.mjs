@@ -34,8 +34,8 @@ function writeBufferIfChanged(filePath, buffer) {
   return true;
 }
 
-export function shouldRefreshDarya(state, revision) {
-  return !state || state.revision !== revision;
+export function shouldRefreshDarya(state, revision, cardRevision = 'card-v2') {
+  return !state || state.revision !== revision || state.cardRevision !== cardRevision;
 }
 
 function entry(uid, {
@@ -606,8 +606,9 @@ export async function seedDarya({
     console.warn(`Darya full source mirror deferred: ${sourceError}`);
   }
 
+  const cardRevision = process.env.DARYA_CARD_REV || 'card-v2';
   const state = readState(statePath);
-  const refresh = shouldRefreshDarya(state, actualRevision)
+  const refresh = shouldRefreshDarya(state, actualRevision, cardRevision)
     || Boolean(state?.sourceMirrored) !== sourceMirrored
     || !fs.existsSync(characterPath)
     || !fs.existsSync(worldPath);
@@ -640,6 +641,7 @@ export async function seedDarya({
   const nextState = {
     revision: actualRevision,
     repository: 'producesplatinum-ai/Darya-Krasavina',
+    cardRevision,
     sourceDir,
     sourceMirrored,
     sourceError,
