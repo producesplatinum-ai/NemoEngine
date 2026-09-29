@@ -687,3 +687,76 @@ test('client generation report sanitizer keeps only verification fields', () => 
     },
   );
 });
+
+
+test('client generation status rejects stale marker reports', async () => {
+  const fetchImpl = async (url) => {
+    const path = new URL(String(url)).pathname;
+    if (path === '/csrf-token') return makeJsonResponse({ token: 'csrf-generation-status' });
+    if (path === '/user/files/nemo-client-generation-report.json') {
+      return makeJsonResponse({
+        ok: true,
+        requestId: 'old-request',
+        generatedAt: '2026-09-29T03:36:38.786Z',
+        preset: 'Nemo Engine 11.5.2 - Ready RU Gooner RP',
+        avatarUrl: 'default_Seraphina.png',
+        fileName: 'Nemo mobile test',
+        marker: 'OLD_MARKER',
+        beforeCount: 2,
+        afterCount: 2,
+        assistantMessagePresent: true,
+        generatedNewAssistant: false,
+        outcome: 'already_present',
+        bootstrapImportedAt: '2026-09-29T03:36:38.675Z',
+        error: '',
+      });
+    }
+    throw new Error('unexpected URL: ' + url);
+  };
+
+  const client = new SillyTavernClient({ baseUrl: 'https://st.example.test', fetchImpl });
+  const report = await client.getNemoClientGenerationStatus('NEW_MARKER');
+  assert.deepEqual(report, {
+    available: false,
+    stale: true,
+    expectedMarker: 'NEW_MARKER',
+    reportMarker: 'OLD_MARKER',
+  });
+});
+
+test('client generation report exposes whether a new assistant was actually generated', () => {
+  assert.deepEqual(
+    sanitizeNemoClientGenerationReport({
+      ok: true,
+      requestId: 'req-456',
+      generatedAt: '2026-09-29T03:40:00.000Z',
+      preset: 'Nemo Engine 11.5.2 - Ready RU Gooner RP',
+      avatarUrl: 'default_Seraphina.png',
+      fileName: 'Nemo mobile test',
+      marker: 'SAFE_MARKER',
+      beforeCount: 4,
+      afterCount: 5,
+      assistantMessagePresent: true,
+      generatedNewAssistant: true,
+      outcome: 'generated',
+      bootstrapImportedAt: '2026-09-29T03:39:50.000Z',
+      error: '',
+    }),
+    {
+      ok: true,
+      requestId: 'req-456',
+      generatedAt: '2026-09-29T03:40:00.000Z',
+      preset: 'Nemo Engine 11.5.2 - Ready RU Gooner RP',
+      avatarUrl: 'default_Seraphina.png',
+      fileName: 'Nemo mobile test',
+      marker: 'SAFE_MARKER',
+      beforeCount: 4,
+      afterCount: 5,
+      assistantMessagePresent: true,
+      generatedNewAssistant: true,
+      outcome: 'generated',
+      bootstrapImportedAt: '2026-09-29T03:39:50.000Z',
+      error: '',
+    },
+  );
+});
