@@ -383,68 +383,21 @@ test('preset save rejects missing or invalid payloads', async () => {
 });
 
 
-test('classifies Nemo profile library routes and installs all profiles explicitly', async () => {
+test('Darya-specific Nemo profile routes are removed in favor of the official exact catalog', () => {
   const basePath = '/st-secret/mobile';
   assert.deepEqual(
     classifyMobileRestRequest('/st-secret/mobile/nemo-profiles', basePath),
-    { kind: 'nemo_profiles' },
+    { kind: 'not_found' },
   );
   assert.deepEqual(
     classifyMobileRestRequest('/st-secret/mobile/nemo-profile-install', basePath),
-    { kind: 'nemo_profile_install' },
-  );
-
-  const calls = [];
-  const client = {
-    listDaryaNemoProfiles() {
-      calls.push(['list']);
-      return [{ id: 'darya-petplay' }];
-    },
-    async installDaryaNemoProfile(profileId) {
-      calls.push(['install', profileId]);
-      return { ok: true, profileId };
-    },
-    async installAllDaryaNemoProfiles() {
-      calls.push(['installAll']);
-      return { ok: true, installed: 9 };
-    },
-  };
-
-  assert.deepEqual(
-    await executeMobileRestRoute({ kind: 'nemo_profiles' }, client),
-    [{ id: 'darya-petplay' }],
+    { kind: 'not_found' },
   );
   assert.deepEqual(
-    await executeMobileRestRoute(
-      { kind: 'nemo_profile_install' },
-      client,
-      { profileId: 'darya-petplay' },
-    ),
-    { ok: true, profileId: 'darya-petplay' },
-  );
-  assert.deepEqual(
-    await executeMobileRestRoute(
-      { kind: 'nemo_profile_install' },
-      client,
-      { profileId: 'all' },
-    ),
-    { ok: true, installed: 9 },
-  );
-  assert.deepEqual(calls, [
-    ['list'],
-    ['install', 'darya-petplay'],
-    ['installAll'],
-  ]);
-});
-
-test('Nemo profile install rejects missing profile id', async () => {
-  const client = {};
-  await assert.rejects(
-    () => executeMobileRestRoute({ kind: 'nemo_profile_install' }, client, {}),
-    /profileId is required/,
+    classifyMobileRestRequest('/st-secret/mobile/nemo-exact-catalog', basePath),
+    { kind: 'nemo_exact_catalog' },
   );
 });
-
 
 test('classifies exhaustive exact Nemo catalog routes and supports all install', async () => {
   const basePath = '/st-secret/mobile';
