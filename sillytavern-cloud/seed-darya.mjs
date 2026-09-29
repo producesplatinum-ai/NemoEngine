@@ -544,20 +544,26 @@ function countFiles(root) {
   return count;
 }
 
-const FALLBACK_AVATAR_PNG = Buffer.from(
-  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=',
-  'base64',
-);
+export function resolveDaryaAvatarPath({
+  sourceDir = DEFAULT_SOURCE_DIR,
+  fallbackAvatarPath = '/home/node/app/public/img/ai4.png',
+} = {}) {
+  const sourceAvatarPath = path.join(
+    sourceDir,
+    'assets',
+    'darya-face',
+    'primary-static.jpeg',
+  );
+
+  if (fs.existsSync(sourceAvatarPath)) return sourceAvatarPath;
+  return fallbackAvatarPath;
+}
 
 async function buildCardPng(sourceDir, card) {
-  const avatarPath = path.join(sourceDir, 'assets', 'darya-face', 'primary-static.jpeg');
+  const avatarPath = resolveDaryaAvatarPath({ sourceDir });
   const parser = await import(pathToFileURL('/home/node/app/src/character-card-parser.js').href);
-
-  if (!fs.existsSync(avatarPath)) {
-    return parser.write(FALLBACK_AVATAR_PNG, JSON.stringify(card));
-  }
-
   const { Jimp, JimpMime } = await import(pathToFileURL('/home/node/app/src/jimp.js').href);
+
   const image = await Jimp.read(avatarPath);
   const png = await image.getBuffer(JimpMime.png);
   return parser.write(png, JSON.stringify(card));
