@@ -7,6 +7,7 @@ COPY railway-entrypoint.sh /usr/local/bin/railway-sillytavern-entrypoint
 COPY seed-provider-secrets.mjs /usr/local/bin/seed-provider-secrets.mjs
 COPY seed-connection-profiles.mjs /usr/local/bin/seed-connection-profiles.mjs
 COPY seed-nemoengine.mjs /usr/local/bin/seed-nemoengine.mjs
+COPY optimize-nemo-runtime.mjs /usr/local/bin/optimize-nemo-runtime.mjs
 COPY install-nemo-full-bootstrap.mjs /usr/local/bin/install-nemo-full-bootstrap.mjs
 COPY nemo-full-bootstrap /usr/local/share/nemo-full-bootstrap
 COPY test-seed-provider-secrets.mjs /tmp/test-seed-provider-secrets.mjs
