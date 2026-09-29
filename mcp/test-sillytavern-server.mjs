@@ -793,3 +793,79 @@ test('client-generation-status carries expected marker through the mobile route'
     reportMarker: 'OLD',
   });
 });
+
+
+test('client creates a character card through the current SillyTavern create endpoint', async () => {
+  let createBody = null;
+  const fetchImpl = async (url, options = {}) => {
+    const path = new URL(String(url)).pathname;
+    if (path === '/csrf-token') return makeJsonResponse({ token: 'csrf-create-character' });
+    if (path === '/api/characters/create') {
+      createBody = JSON.parse(options.body);
+      return makeJsonResponse('Darya.png');
+    }
+    throw new Error('unexpected URL: ' + url);
+  };
+
+  const card = {
+    spec: 'chara_card_v3',
+    spec_version: '3.0',
+    data: {
+      name: 'Darya',
+      description: 'Darya voice',
+      personality: 'sharp and evidence-led',
+      scenario: 'private adult roleplay',
+      first_mes: 'Говори.',
+      mes_example: '',
+      creator_notes: 'Darya canonical card',
+      system_prompt: 'Stay in Darya voice.',
+      post_history_instructions: 'Keep role facts grounded.',
+      tags: ['darya', 'nemo'],
+      creator: 'producesplatinum-ai',
+      character_version: '1.0',
+      alternate_greetings: [],
+      extensions: {
+        talkativeness: 0.7,
+        custom_marker: 'preserve-me',
+      },
+    },
+  };
+
+  const client = new SillyTavernClient({
+    baseUrl: 'https://st.example.test',
+    fetchImpl,
+  });
+  const result = await client.createCharacter({ card, fileName: 'Darya' });
+
+  assert.deepEqual(result, {
+    ok: true,
+    avatarUrl: 'Darya.png',
+    characterName: 'Darya',
+  });
+  assert.equal(createBody.ch_name, 'Darya');
+  assert.equal(createBody.file_name, 'Darya');
+  assert.equal(createBody.description, 'Darya voice');
+  assert.equal(createBody.system_prompt, 'Stay in Darya voice.');
+  assert.equal(createBody.post_history_instructions, 'Keep role facts grounded.');
+  assert.deepEqual(createBody.tags, ['darya', 'nemo']);
+  assert.equal(createBody.talkativeness, 0.7);
+  assert.equal(createBody.json_data, JSON.stringify(card));
+});
+
+test('browser form parser carries character card JSON without altering it', () => {
+  const cardJson = JSON.stringify({
+    spec: 'chara_card_v3',
+    data: { name: 'Darya' },
+  });
+  const encoded = new URLSearchParams({
+    fileName: 'Darya',
+    cardJson,
+  }).toString();
+  const parsed = parseMobileWriteBody(
+    'application/x-www-form-urlencoded',
+    encoded,
+  );
+
+  assert.equal(parsed.fileName, 'Darya');
+  assert.equal(parsed.cardJson, cardJson);
+});
