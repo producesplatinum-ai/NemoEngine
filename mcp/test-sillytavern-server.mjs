@@ -210,7 +210,7 @@ test('client reads and sanitizes the persisted Nemo runtime report without expos
         { setCookies: ['connect.sid=nemo-session; Path=/; HttpOnly'] },
       );
     }
-    assert.equal(String(url), 'https://st.example.test/files/nemo-runtime-report.json');
+    assert.equal(String(url), 'https://st.example.test/user/files/nemo-runtime-report.json');
     assert.equal(options.method, 'GET');
     assert.equal(options.headers.cookie, 'connect.sid=nemo-session');
     return makeJsonResponse({
