@@ -15,7 +15,7 @@ test('canonical Darya card uses the GitHub-owned visible identity without profil
   assert.equal(card.spec, 'chara_card_v3');
   assert.equal(card.spec_version, '3.0');
   assert.equal(card.data.name, 'Дарья');
-  assert.equal(card.data.character_version, 'DARYA_ST_V5_GITHUB_CANON');
+  assert.equal(card.data.character_version, 'DARYA_ST_V6_GITHUB_REGISTERS');
   assert.equal(card.data.extensions.world, 'Darya');
   assert.equal(card.data.extensions.darya_source_revision, revision);
   assert.equal(card.data.extensions.darya_speech_passport_id, 'DARYA_SPEECH_PASSPORT_2026_09_12_R4');
@@ -44,6 +44,9 @@ test('canonical Darya lorebook includes execution lock, voice continuity and lon
   const calibration = entries.find(x => x.comment === 'Darya calibration boundary');
   const address = entries.find(x => x.comment === 'Darya address and personalization');
   const scope = entries.find(x => x.comment === 'Darya scope discipline');
+  const registers = entries.find(x => x.comment === 'Darya speech register routing');
+  const visibility = entries.find(x => x.comment === 'Darya social visibility and sting axis');
+  const reaction = entries.find(x => x.comment === 'Darya reaction and social effect');
 
   assert.ok(practice);
   assert.equal(practice.constant, true);
@@ -71,7 +74,30 @@ test('canonical Darya lorebook includes execution lock, voice continuity and lon
   assert.match(scope.content, /положительн.*одобр|живое одобрение/i);
   assert.match(scope.content, /исправим.*упущ|проверяем.*действ/i);
 
-  assert.ok(entries.length >= 14);
+  assert.ok(registers);
+  assert.equal(registers.constant, false);
+  assert.match(registers.content, /DARYA_STATUS_COMPRESSION_REGISTER_V1/);
+  assert.match(registers.content, /DARYA_WRITTEN_POLEMIC_REGISTER_V1/);
+  assert.match(registers.content, /DARYA_MULTI_BEAT_ROLE_REGISTER_V2/);
+  assert.match(registers.content, /DARYA_RECRUITMENT_REGISTER_V1/);
+  assert.match(registers.content, /DARYA_PRACTICAL_REPROACH_REGISTER_V1/);
+  assert.match(registers.content, /не смешивай|не.*обязательн.*схем/i);
+
+  assert.ok(visibility);
+  assert.equal(visibility.constant, false);
+  assert.match(visibility.content, /S0 SEMANTIC_VISIBILITY/);
+  assert.match(visibility.content, /S1 DYADIC_EXPOSURE/);
+  assert.match(visibility.content, /S2 ESTABLISHED_OR_ROLEPLAY_AUDIENCE/);
+  assert.match(visibility.content, /NO_FAKE_CROWD_SHORTCUT/);
+  assert.match(visibility.content, /ROLE_VS_CONTENT|LABEL_VS_CRITERION/);
+
+  assert.ok(reaction);
+  assert.equal(reaction.constant, false);
+  assert.match(reaction.content, /фактическ.*режим/i);
+  assert.match(reaction.content, /ролев|игр|JOI/i);
+  assert.match(reaction.content, /свеж.*поправ/i);
+
+  assert.ok(entries.length >= 19);
 });
 
 test('canonical migration upgrades Darya-owned fields but preserves local extensions and chat identity', () => {
@@ -120,7 +146,7 @@ test('canonical migration upgrades Darya-owned fields but preserves local extens
   assert.equal(patched.data.post_history_instructions, canonical.data.post_history_instructions);
   assert.deepEqual(patched.data.alternate_greetings, canonical.data.alternate_greetings);
   assert.deepEqual(patched.data.tags, canonical.data.tags);
-  assert.equal(patched.data.character_version, 'DARYA_ST_V5_GITHUB_CANON');
+  assert.equal(patched.data.character_version, 'DARYA_ST_V6_GITHUB_REGISTERS');
   assert.equal(patched.data.extensions.fav, true);
   assert.deepEqual(patched.data.extensions.custom_local_extension, { keep: 1 });
   assert.equal(patched.data.extensions.world, 'Darya');
