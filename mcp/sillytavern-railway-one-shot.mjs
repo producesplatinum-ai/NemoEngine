@@ -1,6 +1,11 @@
 const SUPPORTED_OPS = new Set([
   'skip',
   'status',
+  'presets',
+  'nemo_exact_catalog',
+  'nemo_exact_install',
+  'nemo_exact_activate',
+  'client_generation_status',
   'characters',
   'character',
   'world_info',
@@ -63,6 +68,12 @@ export function parseOneShotCommand(raw) {
   if (op === 'world_info_entry') {
     command.name = requiredString(value.name, 'name');
   }
+  if (['nemo_exact_install', 'nemo_exact_activate'].includes(op)) {
+    command.entryId = requiredString(value.entryId, 'entryId');
+  }
+  if (op === 'client_generation_status') {
+    command.marker = requiredString(value.marker, 'marker');
+  }
   if (op === 'turn') {
     command.userText = requiredString(value.userText, 'userText');
   }
@@ -81,6 +92,26 @@ function routeFor(command) {
   switch (command.op) {
     case 'status':
       return { method: 'GET', suffix: '/status' };
+    case 'presets':
+      return { method: 'GET', suffix: '/presets' };
+    case 'nemo_exact_catalog':
+      return { method: 'GET', suffix: '/nemo-exact-catalog' };
+    case 'nemo_exact_install':
+      return {
+        method: 'POST',
+        suffix: '/nemo-exact-install',
+        body: { entryId: command.entryId },
+      };
+    case 'nemo_exact_activate':
+      return {
+        method: 'POST',
+        suffix: '/nemo-exact-activate',
+        body: { entryId: command.entryId },
+      };
+    case 'client_generation_status': {
+      const q = new URLSearchParams({ marker: command.marker });
+      return { method: 'GET', suffix: `/client-generation-status?${q}` };
+    }
     case 'characters':
       return { method: 'GET', suffix: '/characters' };
     case 'character': {
