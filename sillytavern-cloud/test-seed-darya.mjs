@@ -8,6 +8,7 @@ import {
   buildDaryaCharacter,
   buildDaryaWorldInfo,
   shouldRefreshDarya,
+  syncBundledDaryaSource,
   writeTextIfChanged,
 } from './seed-darya.mjs';
 
@@ -65,4 +66,29 @@ test('writeTextIfChanged is additive and does not rewrite identical existing con
   assert.equal(writeTextIfChanged(file, '{"a":1}'), false);
   assert.equal(fs.statSync(file).mtimeMs, firstMtime);
   assert.equal(fs.readFileSync(file, 'utf8'), '{"a":1}');
+});
+
+
+test('syncBundledDaryaSource copies a complete private-repo snapshot without git credentials', () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'darya-bundled-source-'));
+  const bundled = path.join(root, 'bundled');
+  const destination = path.join(root, 'persistent', 'darya-source');
+
+  fs.mkdirSync(path.join(bundled, 'assets', 'darya-face'), { recursive: true });
+  fs.mkdirSync(path.join(bundled, 'references'), { recursive: true });
+  fs.writeFileSync(path.join(bundled, 'SKILL.md'), '# Darya bundled source');
+  fs.writeFileSync(path.join(bundled, 'references', 'darya-core.md'), '# core');
+  fs.writeFileSync(path.join(bundled, 'assets', 'darya-face', 'primary-static.jpeg'), 'avatar');
+
+  const result = syncBundledDaryaSource({
+    bundledSourceDir: bundled,
+    sourceDir: destination,
+    revision,
+  });
+
+  assert.equal(result, revision);
+  assert.equal(fs.readFileSync(path.join(destination, 'SKILL.md'), 'utf8'), '# Darya bundled source');
+  assert.equal(fs.readFileSync(path.join(destination, 'references', 'darya-core.md'), 'utf8'), '# core');
+  assert.equal(fs.readFileSync(path.join(destination, 'assets', 'darya-face', 'primary-static.jpeg'), 'utf8'), 'avatar');
+  assert.equal(fs.existsSync(path.join(destination, '.git')), false);
 });
