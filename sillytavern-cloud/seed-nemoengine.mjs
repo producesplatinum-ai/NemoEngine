@@ -145,6 +145,36 @@ function installExtension() {
   return manifest;
 }
 
+function overlayNemoPresetExtInstaller(activePresetText) {
+  const assetPath = path.join(extensionDir, 'assets', 'nemo-engine-latest.json');
+  const installerPath = path.join(extensionDir, 'features', 'preset-installer', 'runtime.js');
+
+  if (!fs.existsSync(installerPath)) {
+    throw new Error('NemoPresetExt preset installer runtime is missing');
+  }
+
+  writeAtomic(assetPath, activePresetText);
+
+  const original = fs.readFileSync(installerPath, 'utf8');
+  let patched = original
+    .replace(/const PRESET_VERSION = '[^']+';/, "const PRESET_VERSION = '11.5.2';")
+    .replace(
+      /const PRESET_NAME = .*?;\n/,
+      "const PRESET_NAME = 'Nemo Engine 11.5.2 - Ready RU RP';\n",
+    );
+
+  if (!patched.includes("const PRESET_VERSION = '11.5.2';") ||
+      !patched.includes("const PRESET_NAME = 'Nemo Engine 11.5.2 - Ready RU RP';")) {
+    throw new Error('NemoPresetExt installer overlay could not be applied safely');
+  }
+
+  if (patched !== original) {
+    writeAtomic(installerPath, patched);
+  }
+
+  console.log('NemoPresetExt installer overlay: 11.5.2 Ready RU RP');
+}
+
 function updateSettings() {
   if (!fs.existsSync(settingsPath)) {
     throw new Error(`SillyTavern settings not found at ${settingsPath}`);
@@ -161,6 +191,22 @@ function updateSettings() {
   }
 
   settings.extension_settings ??= {};
+  settings.extension_settings.NemoPresetExt ??= {};
+  const nemo = settings.extension_settings.NemoPresetExt;
+  for (const [key, value] of Object.entries({
+    enableRecipeRuntime: true,
+    enableColdPromptStorage: true,
+    enableVexRuntime: true,
+    enableIncrementalPromptRendering: true,
+    enablePromptManager: true,
+    enableNemoEngineInstaller: true,
+  })) {
+    if (nemo[key] !== value) {
+      nemo[key] = value;
+      changed = true;
+    }
+  }
+
   settings.extension_settings.preset_allowed_regex ??= {};
   const allowed = Array.isArray(settings.extension_settings.preset_allowed_regex.openai)
     ? settings.extension_settings.preset_allowed_regex.openai
@@ -207,6 +253,11 @@ async function main() {
   }
 
   const manifest = installExtension();
+  const active = loaded.find(item => item.name === ACTIVE_PRESET);
+  if (!active) {
+    throw new Error('Active NemoEngine preset was not loaded');
+  }
+  overlayNemoPresetExtInstaller(active.text);
   updateSettings();
 
   console.log(
