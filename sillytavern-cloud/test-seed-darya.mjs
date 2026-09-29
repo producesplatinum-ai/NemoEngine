@@ -216,3 +216,20 @@ test('syncDaryaSourceFromHttp fails closed on a digest mismatch and preserves ol
 
   assert.equal(fs.readFileSync(path.join(destination, 'KEEP.txt'), 'utf8'), 'old snapshot');
 });
+
+
+test('buildDaryaCharacter marks a deferred source mirror without falsely claiming a completed copy', () => {
+  const card = buildDaryaCharacter({ revision, sourceMirrored: false });
+
+  assert.equal(card.data.extensions.darya_source_mirrored, false);
+  assert.match(card.data.creator_notes, /pending|deferred|ожида/i);
+  assert.doesNotMatch(card.data.creator_notes, /Full working tree mirrored/);
+});
+
+test('buildDaryaWorldInfo records deferred source-mirror state explicitly', () => {
+  const book = buildDaryaWorldInfo({ revision, sourceMirrored: false });
+  const provenance = Object.values(book.entries).find((x) => x.comment === 'Darya source provenance');
+
+  assert.ok(provenance);
+  assert.match(provenance.content, /pending|deferred|ожида/i);
+});
