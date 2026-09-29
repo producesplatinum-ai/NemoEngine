@@ -30,6 +30,43 @@ export function normalizeBaseUrl(value) {
   return parsed.toString().replace(/\/+$/, '');
 }
 
+export function resolveSillyTavernBaseUrl(env = process.env) {
+  if (env?.RAILWAY_ENVIRONMENT_ID) {
+    return 'http://sillytavern.railway.internal:8000';
+  }
+  return normalizeBaseUrl(env?.SILLYTAVERN_URL || '');
+}
+
+export function sanitizeNemoRuntimeReport(report) {
+  if (!report || typeof report !== 'object' || Array.isArray(report)) {
+    throw new Error('Invalid Nemo runtime report.');
+  }
+
+  const {
+    ok = false,
+    preset = '',
+    promptCount = 0,
+    regexCount = 0,
+    recipe = null,
+    vex = null,
+    cold = null,
+    sidecars = null,
+    rendering = null,
+  } = report;
+
+  return {
+    ok: Boolean(ok),
+    preset,
+    promptCount,
+    regexCount,
+    recipe,
+    vex,
+    cold,
+    sidecars,
+    rendering,
+  };
+}
+
 function cookieHeaderFromResponse(headers) {
   let setCookies = [];
   if (typeof headers?.getSetCookie === 'function') {
@@ -111,6 +148,40 @@ export class SillyTavernClient {
     this.cookie = cookieHeaderFromResponse(response.headers);
   }
 
+  async getJson(pathname) {
+    await this.bootstrapSession();
+
+    const headers = {
+      ...this.authHeaders(),
+      accept: 'application/json',
+    };
+    if (this.cookie) headers.cookie = this.cookie;
+
+    const response = await this.fetchImpl(`${this.baseUrl}${pathname}`, {
+      method: 'GET',
+      headers,
+    });
+
+    if (!response.ok) {
+      const bodyText = await response.text();
+      throw new Error(
+        `SillyTavern ${pathname} failed with HTTP ${response.status}: ${safeErrorBody(bodyText)}`,
+      );
+    }
+
+    const contentType = response.headers?.get?.('content-type') || '';
+    if (contentType.includes('application/json')) {
+      return response.json();
+    }
+
+    const text = await response.text();
+    try {
+      return JSON.parse(text);
+    } catch {
+      throw new Error(`SillyTavern ${pathname} did not return JSON.`);
+    }
+  }
+
   async post(pathname, body = {}) {
     await this.bootstrapSession();
 
@@ -184,6 +255,11 @@ export class SillyTavernClient {
       file_name: fileName,
     });
   }
+
+  async getNemoRuntimeStatus() {
+    const report = await this.getJson('/files/nemo-runtime-report.json');
+    return sanitizeNemoRuntimeReport(report);
+  }
 }
 
 function parsePort(value) {
@@ -219,6 +295,7 @@ export function classifyRequestPath(
   } = {},
 ) {
   if (pathname === '/healthz') return { kind: 'health' };
+  if (pathname === '/nemo-runtime-status') return { kind: 'nemo_status' };
   if (pathname === sillyPath) return { kind: 'sillytavern' };
 
   const providerId = providerFromEndpointPath(pathname, aiPrefix);
@@ -229,7 +306,7 @@ export function classifyRequestPath(
 
 function clientFromEnv() {
   return new SillyTavernClient({
-    baseUrl: process.env.SILLYTAVERN_URL || '',
+    baseUrl: resolveSillyTavernBaseUrl(process.env),
     username: process.env.SILLYTAVERN_BASIC_AUTH_USERNAME || '',
     password: process.env.SILLYTAVERN_BASIC_AUTH_PASSWORD || '',
   });
@@ -374,6 +451,22 @@ export function buildMcpServer({ getClient = clientFromEnv } = {}) {
   );
 
   server.registerTool(
+    'sillytavern_nemo_runtime_status',
+    {
+      description:
+        'Read the persisted NemoEngine runtime verification report. Returns only sanitized runtime status fields and never secrets or sidecar contents.',
+      inputSchema: noInput,
+    },
+    async () => {
+      try {
+        return textResult(await getClient().getNemoRuntimeStatus());
+      } catch (error) {
+        return errorResult(error);
+      }
+    },
+  );
+
+  server.registerTool(
     'sillytavern_recent_chats',
     {
       description:
@@ -464,6 +557,24 @@ export function startHttpServer({
         res.setHeader('content-type', 'application/json; charset=utf-8');
         res.end(JSON.stringify(result));
       });
+      return;
+    }
+
+    if (route.kind === 'nemo_status') {
+      void getClient().getNemoRuntimeStatus()
+        .then((result) => {
+          res.statusCode = 200;
+          res.setHeader('content-type', 'application/json; charset=utf-8');
+          res.end(JSON.stringify(result));
+        })
+        .catch((error) => {
+          res.statusCode = 503;
+          res.setHeader('content-type', 'application/json; charset=utf-8');
+          res.end(JSON.stringify({
+            ok: false,
+            error: error instanceof Error ? error.message : String(error),
+          }));
+        });
       return;
     }
 
