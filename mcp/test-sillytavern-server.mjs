@@ -9,6 +9,8 @@ import {
   resolveSillyTavernBaseUrl,
   parseMobileWriteBody,
   mobileTurnFormHtml,
+  createBootstrapProxyCookie,
+  hasBootstrapProxyCookie,
   sanitizeNemoRuntimeReport,
   sanitizeNemoClientRuntimeReport,
 } from './sillytavern-server.mjs';
@@ -535,4 +537,20 @@ test('mobile turn GET form posts the three explicit fields back to the same endp
   assert.match(html, /name="avatarUrl"/);
   assert.match(html, /name="fileName"/);
   assert.match(html, /name="userText"/);
+});
+
+
+test('bootstrap proxy cookie is capability-bound, short-lived, and not accepted with the wrong MCP path', () => {
+  const cookie = createBootstrapProxyCookie('/st-secret/mcp');
+  assert.match(cookie, /^st_bootstrap_proxy=/);
+  assert.match(cookie, /Path=\//);
+  assert.match(cookie, /Max-Age=300/);
+  assert.match(cookie, /HttpOnly/);
+  assert.match(cookie, /Secure/);
+  assert.match(cookie, /SameSite=Strict/);
+
+  const pair = cookie.split(';', 1)[0];
+  assert.equal(hasBootstrapProxyCookie(pair, '/st-secret/mcp'), true);
+  assert.equal(hasBootstrapProxyCookie(pair, '/other-secret/mcp'), false);
+  assert.equal(hasBootstrapProxyCookie('', '/st-secret/mcp'), false);
 });
