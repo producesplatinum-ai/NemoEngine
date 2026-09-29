@@ -637,64 +637,6 @@ export async function syncDaryaSourceFromHttp({
   }
 }
 
-export function verifyLocalDaryaSource({
-  sourceDir = DEFAULT_SOURCE_DIR,
-  revision = DARYA_REVISION,
-} = {}) {
-  const manifestPath = path.join(sourceDir, 'SOURCE_MANIFEST.sha256');
-  if (!fs.existsSync(manifestPath)) {
-    return { ok: false, revision, reason: 'SOURCE_MANIFEST.sha256 is missing' };
-  }
-
-  let lines;
-  try {
-    lines = fs.readFileSync(manifestPath, 'utf8').split(/\r?\n/).filter(Boolean);
-  } catch (error) {
-    return {
-      ok: false,
-      revision,
-      reason: `SOURCE_MANIFEST.sha256 could not be read: ${error instanceof Error ? error.message : String(error)}`,
-    };
-  }
-
-  const entries = [];
-  for (const line of lines) {
-    const match = line.match(/^([0-9a-f]{64})  \.\/(.+)$/);
-    if (!match) {
-      return { ok: false, revision, reason: `Invalid manifest line: ${line.slice(0, 120)}` };
-    }
-    const relativePath = validateSnapshotRelativePath(match[2]);
-    entries.push({ sha256: match[1], relativePath });
-  }
-
-  if (!entries.length) {
-    return { ok: false, revision, reason: 'SOURCE_MANIFEST.sha256 is empty' };
-  }
-
-  for (const entry of entries) {
-    const target = path.join(sourceDir, ...entry.relativePath.split('/'));
-    if (!fs.existsSync(target) || !fs.statSync(target).isFile()) {
-      return { ok: false, revision, reason: `Missing file: ${entry.relativePath}` };
-    }
-
-    const actual = sha256Buffer(fs.readFileSync(target));
-    if (actual !== entry.sha256) {
-      return {
-        ok: false,
-        revision,
-        reason: `SHA256 mismatch for ${entry.relativePath}: expected ${entry.sha256}, got ${actual}`,
-      };
-    }
-  }
-
-  return {
-    ok: true,
-    revision,
-    manifestEntries: entries.length,
-    fileCount: entries.length + 1,
-  };
-}
-
 function runGit(args, cwd) {
   const result = spawnSync('git', args, {
     cwd,
@@ -713,15 +655,6 @@ export async function syncDaryaSource({
   sourceDir = DEFAULT_SOURCE_DIR,
   revision = DARYA_REVISION,
 } = {}) {
-  const local = verifyLocalDaryaSource({ sourceDir, revision });
-  if (local.ok) {
-    console.log(
-      `Darya local source mirror verified: ${local.manifestEntries} manifest entries, ${local.fileCount} files`,
-    );
-    return revision;
-  }
-  console.warn(`Darya local source mirror not complete: ${local.reason}`);
-
   const baseUrl = process.env.DARYA_SOURCE_BASE_URL || '';
   const token = process.env.DARYA_SOURCE_TOKEN || '';
   if (baseUrl) {
