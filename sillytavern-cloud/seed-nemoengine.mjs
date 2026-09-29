@@ -3,12 +3,12 @@ import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 
 const NEMOENGINE_REF = '9a88242471b27670351ebbe2a62226714039964a';
-const ACTIVE_PRESET = 'Nemo Engine 11.5.2 - Ready RU RP';
+const ACTIVE_PRESET = 'Nemo Engine 11.5.2 - Ready RU Gooner RP';
 
 const PRESETS = [
   { name: 'Nemo Engine 11.5.2 - General RP', repoPath: 'Nemo Engine/Nemo Engine 11.5.2 - General RP.json' },
   { name: 'Nemo Engine 11.5.2 - Default RP', repoPath: 'Nemo Engine/Nemo Engine 11.5.2 - Default RP.json' },
-  { name: 'Nemo Engine 11.5.2 - Ready RU RP', repoPath: 'Nemo Engine/Ready/Nemo Engine 11.5.2 - Ready RU RP.json' },
+  { name: 'Nemo Engine 11.5.2 - Ready RU Gooner RP', repoPath: 'Nemo Engine/Ready/Nemo Engine 11.5.2 - Ready RU Gooner RP.json' },
   { name: 'Nemo Engine 11.5.2 - Ready RU Gooner RP', repoPath: 'Nemo Engine/Ready/Nemo Engine 11.5.2 - Ready RU Gooner RP.json' },
   { name: 'Nemo Engine 11.5.2 - Ready RU Psychology Humiliation JOI RP', repoPath: 'Nemo Engine/Ready/Nemo Engine 11.5.2 - Ready RU Psychology Humiliation JOI RP.json' },
 ];
@@ -160,11 +160,11 @@ function overlayNemoPresetExtInstaller(activePresetText) {
     .replace(/const PRESET_VERSION = '[^']+';/, "const PRESET_VERSION = '11.5.2';")
     .replace(
       /const PRESET_NAME = .*?;\n/,
-      "const PRESET_NAME = 'Nemo Engine 11.5.2 - Ready RU RP';\n",
+      "const PRESET_NAME = 'Nemo Engine 11.5.2 - Ready RU Gooner RP';\n",
     );
 
   if (!patched.includes("const PRESET_VERSION = '11.5.2';") ||
-      !patched.includes("const PRESET_NAME = 'Nemo Engine 11.5.2 - Ready RU RP';")) {
+      !patched.includes("const PRESET_NAME = 'Nemo Engine 11.5.2 - Ready RU Gooner RP';")) {
     throw new Error('NemoPresetExt installer overlay could not be applied safely');
   }
 
@@ -172,7 +172,7 @@ function overlayNemoPresetExtInstaller(activePresetText) {
     writeAtomic(installerPath, patched);
   }
 
-  console.log('NemoPresetExt installer overlay: 11.5.2 Ready RU RP');
+  console.log('NemoPresetExt installer overlay: 11.5.2 Ready RU Gooner RP');
 }
 
 function updateSettings() {
