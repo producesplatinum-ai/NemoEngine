@@ -38,7 +38,7 @@ test('SillyTavern client sends a minimal provider generation through chat-comple
     assert.equal(body.model, 'openai/gpt-oss-120b');
     assert.equal(body.stream, false);
     assert.equal(body.temperature, 0);
-    assert.equal(body.max_tokens, 24);
+    assert.equal(body.max_tokens, 128);
     assert.deepEqual(body.messages, [
       { role: 'user', content: 'Reply exactly: GROQ_OK' },
     ]);
