@@ -588,3 +588,31 @@ test('client runtime status falls back to NemoFullBootstrap settings when persis
   const report = await client.getNemoClientRuntimeStatus();
   assert.deepEqual(report, sanitizeNemoClientRuntimeReport(runtime));
 });
+
+
+test('client runtime file read proves persistence when older report omitted persistence metadata', async () => {
+  const fetchImpl = async (url, options = {}) => {
+    const path = new URL(String(url)).pathname;
+    if (path === '/csrf-token') return makeJsonResponse({ token: 'csrf-persisted-client' });
+    if (path === '/user/files/nemo-client-runtime-report.json') {
+      assert.equal(options.method, 'GET');
+      return makeJsonResponse({
+        ok: true,
+        bootstrapVersion: '1.1.0',
+        preset: 'Nemo Engine 11.5.2 - Ready RU Gooner RP',
+        importedAt: '2026-09-29T03:23:08.190Z',
+        transform: { coldPromptCount: 445, promptCount: 458, regexCount: 97 },
+        preflight: { available: true, ok: true, aborted: false },
+        persistence: null,
+      });
+    }
+    throw new Error('unexpected URL: ' + url);
+  };
+
+  const client = new SillyTavernClient({ baseUrl: 'https://st.example.test', fetchImpl });
+  const report = await client.getNemoClientRuntimeStatus();
+  assert.deepEqual(report.persistence, {
+    ok: true,
+    path: '/files/nemo-client-runtime-report.json',
+  });
+});
