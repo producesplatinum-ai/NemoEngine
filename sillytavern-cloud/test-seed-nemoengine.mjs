@@ -10,7 +10,7 @@ const seeder = process.env.NEMO_SEED_SCRIPT || '/usr/local/bin/seed-nemoengine.m
 const PRESETS = [
   'Nemo Engine 11.5.2 - General RP',
   'Nemo Engine 11.5.2 - Default RP',
-  'Nemo Engine 11.5.2 - Ready RU RP',
+  'Nemo Engine 11.5.2 - Ready RU Gooner RP',
   'Nemo Engine 11.5.2 - Ready RU Gooner RP',
   'Nemo Engine 11.5.2 - Ready RU Psychology Humiliation JOI RP',
 ];
@@ -114,7 +114,7 @@ test('installs NemoEngine 11.5.2, enables full NemoPresetExt runtime, and overla
 
   const settings = JSON.parse(fs.readFileSync(path.join(fixture.userDataDir, 'settings.json'), 'utf8'));
   assert.equal(settings.marker, 'keep-me');
-  assert.equal(settings.oai_settings.preset_settings_openai, 'Nemo Engine 11.5.2 - Ready RU RP');
+  assert.equal(settings.oai_settings.preset_settings_openai, 'Nemo Engine 11.5.2 - Ready RU Gooner RP');
   assert.equal(settings.oai_settings.chat_completion_source, 'groq');
   assert.equal(settings.oai_settings.groq_model, 'openai/gpt-oss-120b');
   assert.equal(settings.extension_settings.connectionManager.selectedProfile, 'groq-profile');
@@ -144,7 +144,7 @@ test('installs NemoEngine 11.5.2, enables full NemoPresetExt runtime, and overla
   assert.equal(manifest.version, '6.0.6');
 
   const bundled = JSON.parse(fs.readFileSync(path.join(extDir, 'assets', 'nemo-engine-latest.json'), 'utf8'));
-  assert.equal(bundled.name, 'Nemo Engine 11.5.2 - Ready RU RP');
+  assert.equal(bundled.name, 'Nemo Engine 11.5.2 - Ready RU Gooner RP');
   assert.equal(bundled.prompts.length, 458);
   assert.equal(bundled.extensions.regex_scripts.length, 97);
 
