@@ -12,6 +12,16 @@ export const DARYA_CORPUS_ID = 'DARYA_SPEECH_CORPUS_2026_09_07_R6_ALL5_FORENSIC_
 
 const DEFAULT_USER_DATA_DIR = process.env.SILLYTAVERN_USER_DATA_DIR || '/persistent/data/default-user';
 const DEFAULT_SOURCE_DIR = process.env.DARYA_SOURCE_DIR || '/persistent/darya-source';
+const DEFAULT_CARD_PARSER_PATH = '/home/node/app/src/character-card-parser.js';
+const DEFAULT_FALLBACK_AVATAR_PATH = '/home/node/app/public/img/ai4.png';
+
+function getDaryaCardParserPath() {
+  return process.env.DARYA_CARD_PARSER_PATH || DEFAULT_CARD_PARSER_PATH;
+}
+
+function getDaryaFallbackAvatarPath() {
+  return process.env.DARYA_FALLBACK_AVATAR_PATH || DEFAULT_FALLBACK_AVATAR_PATH;
+}
 
 function atomicWrite(filePath, data, options = {}) {
   fs.mkdirSync(path.dirname(filePath), { recursive: true });
@@ -871,7 +881,7 @@ export async function getDaryaCardBasePng(
   // Keep the canonical JPEG in the mirrored source tree. Character-card metadata
   // requires a PNG envelope; use SillyTavern's local fallback PNG rather than
   // invoking network-backed Jimp/WASM codecs during startup.
-  const fallbackAvatarPath = '/home/node/app/public/img/ai4.png';
+  const fallbackAvatarPath = getDaryaFallbackAvatarPath();
   if (!fs.existsSync(fallbackAvatarPath)) {
     throw new Error(`SillyTavern fallback avatar is missing: ${fallbackAvatarPath}`);
   }
@@ -879,7 +889,7 @@ export async function getDaryaCardBasePng(
 }
 
 async function buildCardPng(sourceDir, card) {
-  const parser = await import(pathToFileURL('/home/node/app/src/character-card-parser.js').href);
+  const parser = await import(pathToFileURL(getDaryaCardParserPath()).href);
   const basePng = await getDaryaCardBasePng(sourceDir);
   return parser.write(basePng, JSON.stringify(card));
 }
@@ -892,7 +902,7 @@ async function patchExistingDaryaCard(
 ) {
   if (!fs.existsSync(characterPath)) return false;
 
-  const parser = await import(pathToFileURL('/home/node/app/src/character-card-parser.js').href);
+  const parser = await import(pathToFileURL(getDaryaCardParserPath()).href);
   const raw = await parser.parse(characterPath, 'png');
   const existing = JSON.parse(raw);
   const canonical = buildDaryaCharacter({ revision, sourceMirrored });
