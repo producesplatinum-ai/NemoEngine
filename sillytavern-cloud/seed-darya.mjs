@@ -4,7 +4,7 @@ import { spawnSync } from 'node:child_process';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 export const DARYA_REPO = 'https://github.com/producesplatinum-ai/Darya-Krasavina.git';
-export const DARYA_REVISION = '36e967df9f7524ca862bf380087f0ea0494daaad';
+export const DARYA_REVISION = process.env.DARYA_SOURCE_REV || '36e967df9f7524ca862bf380087f0ea0494daaad';
 
 const DEFAULT_USER_DATA_DIR = process.env.SILLYTAVERN_USER_DATA_DIR || '/persistent/data/default-user';
 const DEFAULT_SOURCE_DIR = process.env.DARYA_SOURCE_DIR || '/persistent/darya-source';
