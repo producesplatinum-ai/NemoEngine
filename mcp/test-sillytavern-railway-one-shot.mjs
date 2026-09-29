@@ -103,6 +103,35 @@ test('CLI executes only with explicit --run and emits a terminal result marker',
   assert.match(explicit.stdout, /\"skipped\":true/);
 });
 
+test('preset list performs exactly one GET through the mobile gateway', async () => {
+  const calls = [];
+  const fetchImpl = async (url, init = {}) => {
+    calls.push({ url: String(url), init });
+    return new Response(JSON.stringify([
+      'Default',
+      'Nemo Engine 11.5.2 - Ready RU RP',
+    ]), {
+      status: 200,
+      headers: { 'content-type': 'application/json' },
+    });
+  };
+
+  const result = await executeOneShot({
+    command: { op: 'presets', nonce: 'presets-1' },
+    publicDomain: 'example.up.railway.app',
+    mcpPath: '/secret/mcp',
+    fetchImpl,
+  });
+
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].url, 'https://example.up.railway.app/secret/mobile/presets');
+  assert.equal(calls[0].init.method, 'GET');
+  assert.deepEqual(result, [
+    'Default',
+    'Nemo Engine 11.5.2 - Ready RU RP',
+  ]);
+});
+
 test('exact Nemo catalog performs exactly one GET through the mobile gateway', async () => {
   const calls = [];
   const fetchImpl = async (url, init = {}) => {
