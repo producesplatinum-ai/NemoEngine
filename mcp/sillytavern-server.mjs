@@ -29,6 +29,10 @@ import {
   semanticSha256,
 } from './nemo-exact-catalog.mjs';
 
+import {
+  applyOpenAiPresetToSettings,
+} from './openai-preset-activation.mjs';
+
 const DEFAULT_PORT = 8790;
 const MAX_TOOL_TEXT = 200_000;
 
@@ -504,6 +508,97 @@ export class SillyTavernClient {
         })),
       ),
       profiles: results,
+    };
+  }
+
+  async activateExactNemoCatalogEntry(entryId) {
+    const built = await buildExactNemoPreset(entryId);
+    const slotName = 'Nemo Exact Active';
+
+    const saved = await this.saveOpenAiPreset({
+      name: slotName,
+      preset: built.preset,
+    });
+
+    const beforeBundle = await this.post('/api/settings/get', {});
+    const rawSettings = beforeBundle?.settings;
+    const currentSettings =
+      typeof rawSettings === 'string'
+        ? JSON.parse(rawSettings)
+        : rawSettings && typeof rawSettings === 'object'
+          ? rawSettings
+          : {};
+    const nextSettings = applyOpenAiPresetToSettings(
+      currentSettings,
+      built.preset,
+      saved.name || slotName,
+    );
+
+    await this.post('/api/settings/save', nextSettings);
+
+    const afterBundle = await this.post('/api/settings/get', {});
+    const afterRaw = afterBundle?.settings;
+    const afterSettings =
+      typeof afterRaw === 'string'
+        ? JSON.parse(afterRaw)
+        : afterRaw && typeof afterRaw === 'object'
+          ? afterRaw
+          : {};
+
+    const names = Array.isArray(afterBundle?.openai_setting_names)
+      ? afterBundle.openai_setting_names
+      : [];
+    const values = Array.isArray(afterBundle?.openai_settings)
+      ? afterBundle.openai_settings
+      : [];
+    const presetIndex = names.indexOf(saved.name || slotName);
+    let storedPreset = null;
+    if (presetIndex >= 0 && presetIndex < values.length) {
+      const value = values[presetIndex];
+      if (typeof value === 'string') {
+        try {
+          storedPreset = JSON.parse(value);
+        } catch {
+          storedPreset = null;
+        }
+      } else if (value && typeof value === 'object') {
+        storedPreset = value;
+      }
+    }
+
+    const expectedSettings = applyOpenAiPresetToSettings(
+      currentSettings,
+      built.preset,
+      saved.name || slotName,
+    );
+    const storedPresetExact =
+      Boolean(storedPreset) &&
+      semanticSha256(storedPreset) === built.presetSemanticSha256;
+    const activeSettingsExact =
+      Boolean(afterSettings?.oai_settings) &&
+      semanticSha256(afterSettings.oai_settings) ===
+        semanticSha256(expectedSettings.oai_settings);
+
+    if (!storedPresetExact || !activeSettingsExact) {
+      throw new Error('Exact Nemo active-slot verification failed.');
+    }
+
+    return {
+      ok: true,
+      entryId,
+      kind: built.entry.kind,
+      family: built.entry.family,
+      identifier: built.entry.identifier || '',
+      group: built.entry.group || '',
+      slotName: saved.name || slotName,
+      sourceRawSha256: built.sourceRawSha256,
+      sourceSemanticSha256: built.sourceSemanticSha256,
+      presetSemanticSha256: built.presetSemanticSha256,
+      storedPresetExact,
+      activeSettingsExact,
+      activePrompts: Array.isArray(built.preset?.prompt_order?.[0]?.order)
+        ? built.preset.prompt_order[0].order.filter((entry) => entry.enabled).length
+        : null,
     };
   }
 
@@ -1130,6 +1225,24 @@ function escapeHtmlAttribute(value) {
     .replaceAll('"', '&quot;')
     .replaceAll('<', '&lt;')
     .replaceAll('>', '&gt;');
+}
+
+export function mobileNemoExactActivateFormHtml(actionPath) {
+  const action = escapeHtmlAttribute(actionPath);
+  return `<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SillyTavern Mobile Exact Nemo Activate</title>
+</head>
+<body>
+<form method="post" action="${action}">
+<label>entryId <input name="entryId" autocomplete="off" required></label>
+<button type="submit">Activate exact Nemo preset</button>
+</form>
+</body>
+</html>`;
 }
 
 export function mobileNemoExactInstallFormHtml(actionPath) {
@@ -1761,7 +1874,8 @@ export function startHttpServer({
         mobileRoute.kind === 'character_create' ||
         mobileRoute.kind === 'preset_save' ||
         mobileRoute.kind === 'nemo_profile_install' ||
-        mobileRoute.kind === 'nemo_exact_install';
+        mobileRoute.kind === 'nemo_exact_install' ||
+        mobileRoute.kind === 'nemo_exact_activate';
 
       if (mobileWriteRoute && req.method === 'GET') {
         res.statusCode = 200;
@@ -1790,9 +1904,13 @@ export function startHttpServer({
                     ? mobileNemoExactInstallFormHtml(
                         `${MOBILE_REST_BASE_PATH}/nemo-exact-install`,
                       )
-                    : mobileGenerateFormHtml(
-                        `${MOBILE_REST_BASE_PATH}/generate`,
-                      ),
+                    : mobileRoute.kind === 'nemo_exact_activate'
+                      ? mobileNemoExactActivateFormHtml(
+                          `${MOBILE_REST_BASE_PATH}/nemo-exact-activate`,
+                        )
+                      : mobileGenerateFormHtml(
+                          `${MOBILE_REST_BASE_PATH}/generate`,
+                        ),
         );
         return;
       }
