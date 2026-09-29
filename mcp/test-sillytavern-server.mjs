@@ -927,3 +927,108 @@ test('client forwards one Darya source file as raw bytes through protected impor
   assert.equal(result.path, 'references/darya-core.md');
   assert.equal(calls.length, 2);
 });
+
+
+test('client deletes a Chat Completion preset and switches away first when it is active', async () => {
+  const calls = [];
+  const settings = {
+    oai_settings: {
+      preset_settings_openai: 'Nemo Exact Active',
+      temp_openai: 0.5,
+    },
+  };
+  const fallbackPreset = {
+    temperature: 0.8,
+    prompts: [{ identifier: 'fallback' }],
+    prompt_order: [{ character_id: 100001, order: [] }],
+  };
+
+  const fetchImpl = async (url, options = {}) => {
+    const path = new URL(String(url)).pathname;
+    calls.push({ path, body: options.body ? JSON.parse(options.body) : null });
+    if (path === '/csrf-token') return makeJsonResponse({ token: 'csrf-delete-preset' });
+    if (path === '/api/settings/get') {
+      return makeJsonResponse({
+        settings: JSON.stringify(settings),
+        openai_setting_names: [
+          'Nemo Exact Active',
+          'Nemo Engine 11.5.2 - Ready RU Gooner RP',
+        ],
+        openai_settings: [
+          JSON.stringify({ temperature: 0.1 }),
+          JSON.stringify(fallbackPreset),
+        ],
+      });
+    }
+    if (path === '/api/settings/save') return makeJsonResponse({ ok: true });
+    if (path === '/api/presets/delete') return makeJsonResponse({ ok: true });
+    throw new Error('unexpected URL: ' + url);
+  };
+
+  const client = new SillyTavernClient({
+    baseUrl: 'https://st.example.test',
+    fetchImpl,
+  });
+
+  const result = await client.deleteOpenAiPreset({
+    name: 'Nemo Exact Active',
+    fallbackName: 'Nemo Engine 11.5.2 - Ready RU Gooner RP',
+  });
+
+  assert.deepEqual(result, {
+    ok: true,
+    deleted: 'Nemo Exact Active',
+    fallbackApplied: 'Nemo Engine 11.5.2 - Ready RU Gooner RP',
+  });
+
+  const saveCall = calls.find((item) => item.path === '/api/settings/save');
+  assert(saveCall);
+  assert.equal(
+    saveCall.body.oai_settings.preset_settings_openai,
+    'Nemo Engine 11.5.2 - Ready RU Gooner RP',
+  );
+  assert.equal(saveCall.body.oai_settings.temp_openai, 0.8);
+
+  const deleteCall = calls.find((item) => item.path === '/api/presets/delete');
+  assert.deepEqual(deleteCall.body, {
+    apiId: 'openai',
+    name: 'Nemo Exact Active',
+  });
+});
+
+test('client deletes an inactive Chat Completion preset without rewriting settings', async () => {
+  const calls = [];
+  const fetchImpl = async (url, options = {}) => {
+    const path = new URL(String(url)).pathname;
+    calls.push({ path, body: options.body ? JSON.parse(options.body) : null });
+    if (path === '/csrf-token') return makeJsonResponse({ token: 'csrf-delete-inactive' });
+    if (path === '/api/settings/get') {
+      return makeJsonResponse({
+        settings: JSON.stringify({
+          oai_settings: { preset_settings_openai: 'Nemo Engine 11.5.2 - Ready RU Gooner RP' },
+        }),
+        openai_setting_names: ['Darya Custom'],
+        openai_settings: [JSON.stringify({ temperature: 0.7 })],
+      });
+    }
+    if (path === '/api/presets/delete') return makeJsonResponse({ ok: true });
+    throw new Error('unexpected URL: ' + url);
+  };
+
+  const client = new SillyTavernClient({
+    baseUrl: 'https://st.example.test',
+    fetchImpl,
+  });
+
+  const result = await client.deleteOpenAiPreset({
+    name: 'Darya Custom',
+    fallbackName: 'Nemo Engine 11.5.2 - Ready RU Gooner RP',
+  });
+
+  assert.deepEqual(result, {
+    ok: true,
+    deleted: 'Darya Custom',
+    fallbackApplied: '',
+  });
+  assert.equal(calls.some((item) => item.path === '/api/settings/save'), false);
+});
