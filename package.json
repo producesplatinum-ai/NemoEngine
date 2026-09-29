@@ -10,7 +10,7 @@
     "start": "node mcp/server.mjs",
     "start:sillytavern": "node mcp/sillytavern-server.mjs",
     "start:ai-providers": "node mcp/ai-provider-server.mjs",
-    "test:mcp": "node --test mcp/test-server.mjs mcp/test-sillytavern-server.mjs mcp/test-ai-provider-server.mjs mcp/test-nemo-runtime-status.mjs",
+    "test:mcp": "node --test mcp/test-server.mjs mcp/test-sillytavern-server.mjs mcp/test-ai-provider-server.mjs mcp/test-nemo-runtime-status.mjs mcp/test-provider-smoke.mjs",
     "test:nemo": "node --test scripts/test-nemo-chatgpt-runtime.mjs scripts/test-nemo-chatgpt-executor.mjs",
     "test": "npm run test:mcp && npm run test:nemo"
   },
