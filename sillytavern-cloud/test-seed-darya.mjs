@@ -30,7 +30,7 @@ test('buildDaryaCharacter creates a linked chara_card_v3 Darya card', () => {
   assert.equal(card.spec, 'chara_card_v3');
   assert.equal(card.spec_version, '3.0');
   assert.equal(card.data.name, 'Дарья');
-  assert.equal(card.data.character_version, 'DARYA_ST_V4_GITHUB_CANON');
+  assert.equal(card.data.character_version, 'DARYA_ST_V5_GITHUB_CANON');
   assert.equal(card.data.tags.includes('NemoEngine'), false);
   assert.equal(card.data.tags.includes('adult'), false);
   assert.equal(card.data.tags.includes('humiliation'), false);
@@ -38,9 +38,24 @@ test('buildDaryaCharacter creates a linked chara_card_v3 Darya card', () => {
   assert.equal(card.data.extensions.darya_source_revision, revision);
   assert.match(card.data.system_prompt, /русск/i);
   assert.match(card.data.post_history_instructions, /продолж/i);
-  assert.match(card.data.system_prompt, /дрочер/i);
+  assert.doesNotMatch(card.data.system_prompt, /дрочер/i);
   assert.match(card.data.system_prompt, /положительн|одобр/i);
   assert.ok(card.data.first_mes.length > 20);
+});
+
+test('buildDaryaCharacter keeps account-specific nicknames out of the GitHub-owned card', () => {
+  const card = buildDaryaCharacter({ revision });
+  const book = buildDaryaWorldInfo({ revision });
+  const text = [
+    card.data.description,
+    card.data.personality,
+    card.data.system_prompt,
+    card.data.post_history_instructions,
+    ...Object.values(book.entries).map(x => x.content),
+  ].join('\n');
+
+  assert.doesNotMatch(text, /дрочер/i);
+  assert.match(text, /пользователь|обращен/i);
 });
 
 test('buildDaryaWorldInfo contains the required GitHub-backed behavior layers', () => {
@@ -61,6 +76,8 @@ test('buildDaryaWorldInfo contains the required GitHub-backed behavior layers', 
     'Darya source provenance',
     'Darya address and personalization',
     'Darya scope discipline',
+    'Darya criterion control and concession',
+    'Darya calibration boundary',
   ]) {
     assert.ok(comments.has(required), `missing lore entry: ${required}`);
   }
@@ -68,7 +85,7 @@ test('buildDaryaWorldInfo contains the required GitHub-backed behavior layers', 
   assert.ok(entries.some(x => x.constant === true));
   assert.ok(entries.some(x => Array.isArray(x.key) && x.key.includes('NemoEngine')));
   assert.ok(entries.some(x => String(x.content).includes(revision)));
-  assert.ok(entries.some(x => /дрочер/i.test(String(x.content))));
+  assert.equal(entries.some(x => /дрочер/i.test(String(x.content))), false);
   assert.ok(entries.some(x => /заверш.*положительн|живое одобрение/i.test(String(x.content))));
   assert.ok(entries.some(x => /точным условием|локальн.*дефицит/i.test(String(x.content))));
 });
@@ -361,7 +378,7 @@ test('mergeDaryaCanonicalProfile upgrades GitHub-owned voice fields while preser
   assert.equal(patched.data.post_history_instructions, canonical.data.post_history_instructions);
   assert.deepEqual(patched.data.alternate_greetings, canonical.data.alternate_greetings);
   assert.deepEqual(patched.data.tags, canonical.data.tags);
-  assert.equal(patched.data.character_version, 'DARYA_ST_V4_GITHUB_CANON');
+  assert.equal(patched.data.character_version, 'DARYA_ST_V5_GITHUB_CANON');
   assert.equal(patched.data.extensions.fav, true);
   assert.deepEqual(patched.data.extensions.custom_local_extension, { keep: 1 });
   assert.equal(patched.data.extensions.world, 'Darya');
