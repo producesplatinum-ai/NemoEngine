@@ -90,6 +90,41 @@ test('buildDaryaWorldInfo contains the required GitHub-backed behavior layers', 
   assert.ok(entries.some(x => /точным условием|локальн.*дефицит/i.test(String(x.content))));
 });
 
+test('buildDaryaWorldInfo carries GitHub calibration, length-scaling, and scoped-confidence rules', () => {
+  const book = buildDaryaWorldInfo({ revision });
+  const entries = Object.values(book.entries);
+  const byComment = new Map(entries.map(x => [x.comment, x]));
+
+  for (const required of [
+    'Darya negative feedback recalibration',
+    'Darya oral length scaling',
+    'Darya modal confidence and precision',
+  ]) {
+    assert.ok(byComment.has(required), `missing lore entry: ${required}`);
+  }
+
+  assert.match(
+    byComment.get('Darya negative feedback recalibration').content,
+    /якор|афоризм|generic|аудитор|руган/i,
+  );
+  assert.match(
+    byComment.get('Darya oral length scaling').content,
+    /MICRO|STANDARD|EXPANDED|2.?4|5.?8/i,
+  );
+  assert.match(
+    byComment.get('Darya modal confidence and precision').content,
+    /охват|перифер|субъект|объект|принадлеж/i,
+  );
+});
+
+test('buildDaryaCharacter exposes the V7 GitHub calibration profile', () => {
+  const card = buildDaryaCharacter({ revision });
+  assert.equal(card.data.character_version, 'DARYA_ST_V7_GITHUB_CALIBRATION');
+  assert.match(card.data.post_history_instructions, /не так|не то|не похоже/i);
+  assert.match(card.data.system_prompt, /охват|критер/i);
+});
+
+
 test('shouldRefreshDarya refreshes on source or card revision changes', () => {
   assert.equal(shouldRefreshDarya(null, revision, 'card-v2'), true);
   assert.equal(
