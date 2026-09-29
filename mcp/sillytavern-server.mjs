@@ -1,5 +1,7 @@
+import { createHash } from 'node:crypto';
 import { createServer } from 'node:http';
 import { resolve } from 'node:path';
+import { Readable } from 'node:stream';
 
 import { toNodeHandler } from '@modelcontextprotocol/node';
 import { createMcpHandler, McpServer } from '@modelcontextprotocol/server';
@@ -547,6 +549,147 @@ export const MCP_ENDPOINT_PATH = normalizeEndpointPath(
 export const MOBILE_REST_BASE_PATH =
   deriveMobileRestBasePath(MCP_ENDPOINT_PATH);
 
+const BOOTSTRAP_PROXY_COOKIE = 'st_bootstrap_proxy';
+
+function bootstrapProxyToken(mcpPath) {
+  return createHash('sha256')
+    .update(`sillytavern-bootstrap-proxy-v1\0${normalizeEndpointPath(mcpPath)}`)
+    .digest('base64url');
+}
+
+export function createBootstrapProxyCookie(mcpPath) {
+  return [
+    `${BOOTSTRAP_PROXY_COOKIE}=${bootstrapProxyToken(mcpPath)}`,
+    'Path=/',
+    'Max-Age=300',
+    'HttpOnly',
+    'Secure',
+    'SameSite=Strict',
+  ].join('; ');
+}
+
+export function hasBootstrapProxyCookie(cookieHeader, mcpPath) {
+  const expected = `${BOOTSTRAP_PROXY_COOKIE}=${bootstrapProxyToken(mcpPath)}`;
+  return String(cookieHeader || '')
+    .split(';')
+    .some((part) => part.trim() === expected);
+}
+
+function bootstrapProxyHeaders(requestHeaders, env = process.env) {
+  const headers = new Headers();
+  const blocked = new Set([
+    'host',
+    'connection',
+    'content-length',
+    'transfer-encoding',
+    'accept-encoding',
+    'authorization',
+  ]);
+
+  for (const [name, value] of Object.entries(requestHeaders || {})) {
+    if (blocked.has(name.toLowerCase()) || value === undefined) continue;
+    headers.set(name, Array.isArray(value) ? value.join(', ') : String(value));
+  }
+
+  headers.set('accept-encoding', 'identity');
+
+  const username = env.SILLYTAVERN_BASIC_AUTH_USERNAME || '';
+  const password = env.SILLYTAVERN_BASIC_AUTH_PASSWORD || '';
+  if ((username && !password) || (!username && password)) {
+    throw new Error('SillyTavern Basic Auth proxy credentials are incomplete.');
+  }
+  if (username && password) {
+    headers.set(
+      'authorization',
+      'Basic ' + Buffer.from(`${username}:${password}`, 'utf8').toString('base64'),
+    );
+  }
+
+  return headers;
+}
+
+export async function proxyBootstrapBrowserRequest(
+  req,
+  res,
+  {
+    fetchImpl = globalThis.fetch,
+    env = process.env,
+  } = {},
+) {
+  if (typeof fetchImpl !== 'function') {
+    throw new Error('A fetch implementation is required for bootstrap proxying.');
+  }
+
+  const upstreamBase = resolveSillyTavernBaseUrl(env);
+  const requestTarget = req.url || '/';
+  const method = String(req.method || 'GET').toUpperCase();
+  const init = {
+    method,
+    headers: bootstrapProxyHeaders(req.headers, env),
+    redirect: 'manual',
+  };
+
+  if (method !== 'GET' && method !== 'HEAD') {
+    init.body = req;
+    init.duplex = 'half';
+  }
+
+  const upstream = await fetchImpl(`${upstreamBase}${requestTarget}`, init);
+  res.statusCode = upstream.status;
+  if (upstream.statusText) res.statusMessage = upstream.statusText;
+
+  for (const [name, value] of upstream.headers) {
+    const lower = name.toLowerCase();
+    if (
+      lower === 'set-cookie' ||
+      lower === 'content-length' ||
+      lower === 'content-encoding' ||
+      lower === 'transfer-encoding'
+    ) {
+      continue;
+    }
+
+    if (lower === 'location') {
+      try {
+        const location = new URL(value, upstreamBase);
+        const upstreamUrl = new URL(upstreamBase);
+        if (location.origin === upstreamUrl.origin) {
+          res.setHeader(
+            name,
+            `${location.pathname}${location.search}${location.hash}`,
+          );
+          continue;
+        }
+      } catch {
+        // Preserve non-URL Location values below.
+      }
+    }
+
+    res.setHeader(name, value);
+  }
+
+  const setCookies =
+    typeof upstream.headers?.getSetCookie === 'function'
+      ? upstream.headers.getSetCookie()
+      : [];
+  for (const cookie of setCookies) {
+    res.appendHeader('set-cookie', cookie);
+  }
+
+  if (method === 'HEAD' || !upstream.body) {
+    res.end();
+    return;
+  }
+
+  await new Promise((resolvePipe, rejectPipe) => {
+    const body = Readable.fromWeb(upstream.body);
+    body.on('error', rejectPipe);
+    res.on('error', rejectPipe);
+    res.on('finish', resolvePipe);
+    body.pipe(res);
+  });
+}
+
 
 export function classifyRequestPath(
   pathname,
@@ -983,6 +1126,36 @@ export function startHttpServer({
   const httpServer = createServer((req, res) => {
     const requestTarget = req.url || '/';
     const pathname = requestTarget.split('?', 1)[0];
+    const bootstrapPath = `${MOBILE_REST_BASE_PATH}/client-bootstrap`;
+
+    if (pathname === bootstrapPath) {
+      if (req.method !== 'GET') {
+        res.statusCode = 405;
+        res.setHeader('allow', 'GET');
+        res.end('GET required.');
+        return;
+      }
+      res.statusCode = 302;
+      res.setHeader('cache-control', 'no-store');
+      res.setHeader('set-cookie', createBootstrapProxyCookie(MCP_ENDPOINT_PATH));
+      res.setHeader('location', '/');
+      res.end();
+      return;
+    }
+
+    if (hasBootstrapProxyCookie(req.headers?.cookie || '', MCP_ENDPOINT_PATH)) {
+      void proxyBootstrapBrowserRequest(req, res).catch((error) => {
+        const message = error instanceof Error ? error.message : String(error);
+        console.error('[sillytavern-mcp:bootstrap-proxy]', message);
+        if (!res.headersSent) {
+          res.statusCode = 502;
+          res.setHeader('content-type', 'text/plain; charset=utf-8');
+        }
+        if (!res.writableEnded) res.end('Bootstrap proxy failed.');
+      });
+      return;
+    }
+
     const route = classifyRequestPath(pathname, {
       sillyPath: MCP_ENDPOINT_PATH,
       aiPrefix,
