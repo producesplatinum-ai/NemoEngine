@@ -37,6 +37,40 @@ export function resolveSillyTavernBaseUrl(env = process.env) {
   return normalizeBaseUrl(env?.SILLYTAVERN_URL || '');
 }
 
+export function sanitizeNemoClientRuntimeReport(report) {
+  if (!report || typeof report !== 'object' || Array.isArray(report)) {
+    throw new Error('Invalid Nemo client runtime report.');
+  }
+
+  const {
+    ok = false,
+    bootstrapVersion = '',
+    preset = '',
+    importedAt = '',
+    transform = null,
+    preflight = null,
+    recipe = null,
+    cold = null,
+    vex = null,
+    rendering = null,
+    persistence = null,
+  } = report;
+
+  return {
+    ok: Boolean(ok),
+    bootstrapVersion,
+    preset,
+    importedAt,
+    transform,
+    preflight,
+    recipe,
+    cold,
+    vex,
+    rendering,
+    persistence,
+  };
+}
+
 export function sanitizeNemoRuntimeReport(report) {
   if (!report || typeof report !== 'object' || Array.isArray(report)) {
     throw new Error('Invalid Nemo runtime report.');
@@ -256,6 +290,36 @@ export class SillyTavernClient {
     });
   }
 
+  async getNemoClientRuntimeStatus() {
+    try {
+      const report = await this.getJson('/user/files/nemo-client-runtime-report.json');
+      return sanitizeNemoClientRuntimeReport(report);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      if (
+        message.includes('/user/files/nemo-client-runtime-report.json') &&
+        message.includes('HTTP 404')
+      ) {
+        return null;
+      }
+      throw error;
+    }
+  }
+
+  async getNemoFullStatus() {
+    const server = await this.getNemoRuntimeStatus();
+    const clientReport = await this.getNemoClientRuntimeStatus();
+    const client = clientReport
+      ? { available: true, ...clientReport }
+      : { available: false };
+
+    return {
+      ok: Boolean(server?.ok) && (!client.available || client.ok !== false),
+      server,
+      client,
+    };
+  }
+
   async getNemoRuntimeStatus() {
     try {
       const report = await this.getJson('/user/files/nemo-runtime-report.json');
@@ -310,6 +374,7 @@ export function classifyRequestPath(
 ) {
   if (pathname === '/healthz') return { kind: 'health' };
   if (pathname === '/nemo-runtime-status') return { kind: 'nemo_status' };
+  if (pathname === '/nemo-full-status') return { kind: 'nemo_full_status' };
   if (pathname === sillyPath) return { kind: 'sillytavern' };
 
   const providerId = providerFromEndpointPath(pathname, aiPrefix);
@@ -481,6 +546,22 @@ export function buildMcpServer({ getClient = clientFromEnv } = {}) {
   );
 
   server.registerTool(
+    'sillytavern_nemo_full_status',
+    {
+      description:
+        'Read the combined NemoEngine server runtime verification and optional client-side preflight report. Read-only and sanitized.',
+      inputSchema: noInput,
+    },
+    async () => {
+      try {
+        return textResult(await getClient().getNemoFullStatus());
+      } catch (error) {
+        return errorResult(error);
+      }
+    },
+  );
+
+  server.registerTool(
     'sillytavern_recent_chats',
     {
       description:
@@ -571,6 +652,23 @@ export function startHttpServer({
         res.setHeader('content-type', 'application/json; charset=utf-8');
         res.end(JSON.stringify(result));
       });
+      return;
+    }
+
+    if (route.kind === 'nemo_full_status') {
+      void getClient().getNemoFullStatus()
+        .then((result) => {
+          res.statusCode = result.ok ? 200 : 503;
+          res.setHeader('content-type', 'application/json; charset=utf-8');
+          res.end(JSON.stringify(result));
+        })
+        .catch((error) => {
+          const message = error instanceof Error ? error.message : String(error);
+          console.error('[sillytavern-mcp:nemo-full-status]', message);
+          res.statusCode = 503;
+          res.setHeader('content-type', 'application/json; charset=utf-8');
+          res.end(JSON.stringify({ ok: false, error: message }));
+        });
       return;
     }
 
