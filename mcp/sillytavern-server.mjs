@@ -257,7 +257,7 @@ export class SillyTavernClient {
   }
 
   async getNemoRuntimeStatus() {
-    const report = await this.getJson('/files/nemo-runtime-report.json');
+    const report = await this.getJson('/user/files/nemo-runtime-report.json');
     return sanitizeNemoRuntimeReport(report);
   }
 }
