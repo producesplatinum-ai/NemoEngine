@@ -7,6 +7,8 @@ import {
   classifyRequestPath,
   normalizeBaseUrl,
   resolveSillyTavernBaseUrl,
+  parseMobileWriteBody,
+  mobileTurnFormHtml,
   sanitizeNemoRuntimeReport,
   sanitizeNemoClientRuntimeReport,
 } from './sillytavern-server.mjs';
@@ -509,4 +511,28 @@ test('client appends and persists a user message without replacing an existing c
   assert.equal(saveBody.chat.length, 2);
   assert.equal(saveBody.chat[1].is_user, true);
   assert.equal(saveBody.chat[1].mes, 'NEMO_ST_MOBILE_WRITE_0929');
+});
+
+
+test('parses browser form POST bodies for mobile turn writes', () => {
+  assert.deepEqual(
+    parseMobileWriteBody(
+      'application/x-www-form-urlencoded',
+      'avatarUrl=default_Seraphina.png&fileName=Nemo+mobile+test&userText=NEMO_ST_MOBILE_WRITE_0929',
+    ),
+    {
+      avatarUrl: 'default_Seraphina.png',
+      fileName: 'Nemo mobile test',
+      userText: 'NEMO_ST_MOBILE_WRITE_0929',
+    },
+  );
+});
+
+test('mobile turn GET form posts the three explicit fields back to the same endpoint', () => {
+  const html = mobileTurnFormHtml('/st-secret/mobile/turn');
+  assert.match(html, /<form[^>]+method="post"/i);
+  assert.match(html, /action="\/st-secret\/mobile\/turn"/);
+  assert.match(html, /name="avatarUrl"/);
+  assert.match(html, /name="fileName"/);
+  assert.match(html, /name="userText"/);
 });
