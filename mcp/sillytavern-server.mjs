@@ -95,6 +95,8 @@ export function sanitizeNemoClientGenerationReport(report) {
     beforeCount = 0,
     afterCount = 0,
     assistantMessagePresent = false,
+    generatedNewAssistant = false,
+    outcome = '',
     bootstrapImportedAt = '',
     error = '',
   } = report;
@@ -110,6 +112,8 @@ export function sanitizeNemoClientGenerationReport(report) {
     beforeCount,
     afterCount,
     assistantMessagePresent: Boolean(assistantMessagePresent),
+    generatedNewAssistant: Boolean(generatedNewAssistant),
+    outcome,
     bootstrapImportedAt,
     error,
   };
@@ -543,13 +547,23 @@ export class SillyTavernClient {
     throw fileError;
   }
 
-  async getNemoClientGenerationStatus() {
+  async getNemoClientGenerationStatus(expectedMarker = '') {
     const reportPath = '/user/files/nemo-client-generation-report.json';
     try {
       const report = await this.getJson(reportPath);
+      const sanitized = sanitizeNemoClientGenerationReport(report);
+      const marker = String(expectedMarker || '').trim();
+      if (marker && sanitized.marker !== marker) {
+        return {
+          available: false,
+          stale: true,
+          expectedMarker: marker,
+          reportMarker: sanitized.marker,
+        };
+      }
       return {
         available: true,
-        ...sanitizeNemoClientGenerationReport(report),
+        ...sanitized,
       };
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
