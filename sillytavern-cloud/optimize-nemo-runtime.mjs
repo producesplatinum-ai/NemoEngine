@@ -8,7 +8,7 @@ const activePreset = process.env.NEMO_ACTIVE_PRESET || 'Nemo Engine 11.5.2 - Rea
 
 const presetPath = path.join(userDataDir, 'OpenAI Settings', activePreset + '.json');
 const settingsPath = path.join(userDataDir, 'settings.json');
-const filesDir = path.join(userDataDir, 'files');
+const filesDir = path.join(userDataDir, 'user', 'files');
 const backupDir = path.join(userDataDir, 'backups', 'nemo-runtime');
 const backupPath = path.join(backupDir, activePreset + '.portable.json');
 const reportPath = path.join(filesDir, 'nemo-runtime-report.json');
