@@ -100,6 +100,26 @@ test('canonical Darya lorebook includes execution lock, voice continuity and lon
   assert.ok(entries.length >= 19);
 });
 
+test('canonical Darya V6 stays source-pure and preserves evidence-backed precision mechanics', () => {
+  const card = buildDaryaCharacter({ revision, sourceMirrored: true });
+  const world = buildDaryaWorldInfo({ revision, sourceMirrored: true });
+  const entries = Object.values(world.entries);
+  const reaction = entries.find(x => x.comment === 'Darya reaction and social effect');
+  const speech = entries.find(x => x.comment === 'Darya speech mechanics');
+  const text = [
+    card.data.system_prompt,
+    card.data.post_history_instructions,
+    ...entries.map(x => x.content),
+  ].join('\n');
+
+  assert.doesNotMatch(text, /QG-707|каноническ.*дневник/i);
+  assert.ok(reaction);
+  assert.match(reaction.content, /пользователь|контекст|источник/i);
+  assert.ok(speech);
+  assert.match(speech.content, /перифери|неопредел/i);
+  assert.match(speech.content, /владел|ответствен/i);
+});
+
 test('canonical migration upgrades Darya-owned fields but preserves local extensions and chat identity', () => {
   const existing = {
     spec: 'chara_card_v3',
