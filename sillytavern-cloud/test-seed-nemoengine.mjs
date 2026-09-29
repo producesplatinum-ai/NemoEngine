@@ -206,13 +206,13 @@ test('installs NemoEngine 11.5.2, enables full NemoPresetExt runtime, and overla
 
   const installerRuntime = fs.readFileSync(path.join(extDir, 'features', 'preset-installer', 'runtime.js'), 'utf8');
   assert.match(installerRuntime, /const PRESET_VERSION = '11\.5\.2';/);
-  assert.match(installerRuntime, /const PRESET_NAME = 'Nemo Engine 11\.5\.2 - Ready RU Gooner RP';/);
+  assert.match(installerRuntime, /const PRESET_NAME = 'Nemo Engine 11\.5\.2 - Ready RU Psychology Humiliation JOI RP';/);
   assert.doesNotMatch(installerRuntime, /Nemo Engine v\$\{PRESET_VERSION\}/);
 
   assert.match(result.stdout, /NemoEngine presets synced/);
   assert.match(result.stdout, /NemoPresetExt ready/);
-  assert.match(result.stdout, /NemoPresetExt installer overlay: 11\.5\.2 Ready RU Gooner RP/);
-  assert.match(result.stdout, /NemoEngine active preset: Nemo Engine 11\.5\.2 - Ready RU Gooner RP/);
+  assert.match(result.stdout, /NemoPresetExt installer overlay: 11\.5\.2 - Ready RU Psychology Humiliation JOI RP/);
+  assert.match(result.stdout, /NemoEngine active preset: Nemo Engine 11\.5\.2 - Ready RU Psychology Humiliation JOI RP/);
   assert.match(result.stdout, /NemoEngine preset regex allowed/);
 });
 
