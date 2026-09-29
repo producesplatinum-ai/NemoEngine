@@ -207,3 +207,50 @@ test('mobile turn rejects missing or empty write inputs', async () => {
     /userText must not be empty/,
   );
 });
+
+
+test('classifies mobile generate route and dispatches explicit generation inputs', async () => {
+  const basePath = '/st-secret/mobile';
+  assert.deepEqual(
+    classifyMobileRestRequest('/st-secret/mobile/generate', basePath),
+    { kind: 'generate' },
+  );
+
+  const calls = [];
+  const client = {
+    async generateAssistantMessage(input) {
+      calls.push(input);
+      return { ok: true, saved: true, message: 'SERAPHINA_GENERATED_OK' };
+    },
+  };
+
+  const body = {
+    avatarUrl: 'default_Seraphina.png',
+    fileName: 'Seraphina - 2023-5-12 @21h 32m 29s 224ms',
+    source: 'deepseek',
+    model: 'deepseek-flash',
+  };
+  const result = await executeMobileRestRoute({ kind: 'generate' }, client, body);
+
+  assert.equal(result.ok, true);
+  assert.equal(result.saved, true);
+  assert.equal(result.message, 'SERAPHINA_GENERATED_OK');
+  assert.deepEqual(calls, [body]);
+});
+
+test('mobile generate rejects missing chat identifiers', async () => {
+  const client = {
+    generateAssistantMessage() {
+      throw new Error('should not be called');
+    },
+  };
+
+  await assert.rejects(
+    () => executeMobileRestRoute(
+      { kind: 'generate' },
+      client,
+      { source: 'deepseek', model: 'deepseek-flash' },
+    ),
+    /avatarUrl and fileName are required/,
+  );
+});
