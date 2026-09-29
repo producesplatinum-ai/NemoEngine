@@ -568,11 +568,13 @@ export function startHttpServer({
           res.end(JSON.stringify(result));
         })
         .catch((error) => {
+          const message = error instanceof Error ? error.message : String(error);
+          console.error('[sillytavern-mcp:nemo-runtime-status]', message);
           res.statusCode = 503;
           res.setHeader('content-type', 'application/json; charset=utf-8');
           res.end(JSON.stringify({
             ok: false,
-            error: error instanceof Error ? error.message : String(error),
+            error: message,
           }));
         });
       return;
