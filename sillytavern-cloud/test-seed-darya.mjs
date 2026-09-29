@@ -14,6 +14,7 @@ import {
   syncBundledDaryaSource,
   syncDaryaSourceFromHttp,
   writeTextIfChanged,
+  resolveDaryaAvatarPath,
 } from './seed-darya.mjs';
 
 const revision = '36e967df9f7524ca862bf380087f0ea0494daaad';
@@ -234,4 +235,18 @@ test('buildDaryaWorldInfo records deferred source-mirror state explicitly', () =
 
   assert.ok(provenance);
   assert.match(provenance.content, /pending|deferred|ожида/i);
+});
+
+
+test('resolveDaryaAvatarPath falls back to SillyTavern default avatar when private source is unavailable', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'darya-avatar-test-'));
+  const fallback = path.join(dir, 'ai4.png');
+  fs.writeFileSync(fallback, 'x');
+
+  const resolved = resolveDaryaAvatarPath({
+    sourceDir: path.join(dir, 'missing-source'),
+    fallbackAvatarPath: fallback,
+  });
+
+  assert.equal(resolved, fallback);
 });
