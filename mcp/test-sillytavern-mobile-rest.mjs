@@ -315,3 +315,69 @@ test('character create rejects missing or invalid card JSON', async () => {
   );
 });
 
+
+
+test('classifies preset list and preset save routes', () => {
+  const basePath = '/st-secret/mobile';
+  assert.deepEqual(
+    classifyMobileRestRequest('/st-secret/mobile/presets', basePath),
+    { kind: 'presets' },
+  );
+  assert.deepEqual(
+    classifyMobileRestRequest('/st-secret/mobile/preset-save', basePath),
+    { kind: 'preset_save' },
+  );
+});
+
+test('lists openai presets and saves one explicit preset payload', async () => {
+  const calls = [];
+  const client = {
+    async listOpenAiPresets() {
+      calls.push(['listOpenAiPresets']);
+      return ['Default', 'Nemo Engine 11.5.2 - Ready RU Gooner RP'];
+    },
+    async saveOpenAiPreset(input) {
+      calls.push(['saveOpenAiPreset', input]);
+      return { ok: true, name: input.name };
+    },
+  };
+
+  assert.deepEqual(
+    await executeMobileRestRoute({ kind: 'presets' }, client),
+    ['Default', 'Nemo Engine 11.5.2 - Ready RU Gooner RP'],
+  );
+
+  const preset = { preset_name: 'Darya Test', prompts: [] };
+  const result = await executeMobileRestRoute(
+    { kind: 'preset_save' },
+    client,
+    { name: 'Darya Test', presetJson: JSON.stringify(preset) },
+  );
+
+  assert.deepEqual(result, { ok: true, name: 'Darya Test' });
+  assert.deepEqual(calls, [
+    ['listOpenAiPresets'],
+    ['saveOpenAiPreset', { name: 'Darya Test', preset }],
+  ]);
+});
+
+test('preset save rejects missing or invalid payloads', async () => {
+  const client = {
+    saveOpenAiPreset() {
+      throw new Error('should not be called');
+    },
+  };
+
+  await assert.rejects(
+    () => executeMobileRestRoute({ kind: 'preset_save' }, client, {}),
+    /name and presetJson are required/,
+  );
+  await assert.rejects(
+    () => executeMobileRestRoute(
+      { kind: 'preset_save' },
+      client,
+      { name: 'Bad', presetJson: '{not-json}' },
+    ),
+    /presetJson must be valid JSON/,
+  );
+});
