@@ -236,7 +236,7 @@ function overlayNemoPresetExtInstaller(activePresetText) {
     .replace(/const PRESET_VERSION = '[^']+';/, "const PRESET_VERSION = '11.5.2';")
     .replace(
       /const PRESET_NAME = .*?;\n/,
-      `const PRESET_NAME = '${ACTIVE_PRESET}';\\n`,
+      `const PRESET_NAME = '${ACTIVE_PRESET}';\n`,
     );
 
   if (!patched.includes("const PRESET_VERSION = '11.5.2';") ||
