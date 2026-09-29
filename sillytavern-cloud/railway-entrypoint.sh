@@ -9,5 +9,6 @@ mkdir -p \
   /persistent/backups
 
 node /usr/local/bin/seed-provider-secrets.mjs
+node /usr/local/bin/seed-connection-profiles.mjs
 
 exec /home/node/app/docker-entrypoint.sh "$@"
