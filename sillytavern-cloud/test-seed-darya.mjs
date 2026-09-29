@@ -16,6 +16,7 @@ import {
   writeTextIfChanged,
   resolveDaryaAvatarPath,
   mergeDaryaWorldLink,
+  verifyLocalDaryaSource,
 } from './seed-darya.mjs';
 
 const revision = '36e967df9f7524ca862bf380087f0ea0494daaad';
@@ -298,4 +299,69 @@ test('mergeDaryaWorldLink preserves an existing Darya card while linking the Dar
   assert.equal(patched.data.extensions.world, 'Darya');
   assert.equal(patched.data.character_book.name, 'Darya');
   assert.equal(patched.data.character_book.entries.length, 9);
+});
+
+
+test('verifyLocalDaryaSource accepts a complete manifest-backed local mirror and rejects tampering', () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'darya-local-mirror-'));
+  const files = new Map([
+    ['SKILL.md', Buffer.from('# skill')],
+    ['references/darya-core.md', Buffer.from('# core')],
+    ['assets/darya-face/primary-static.jpeg', Buffer.from('avatar')],
+  ]);
+
+  for (const [relativePath, bytes] of files) {
+    const target = path.join(root, relativePath);
+    fs.mkdirSync(path.dirname(target), { recursive: true });
+    fs.writeFileSync(target, bytes);
+  }
+
+  const manifest = [...files]
+    .map(([relativePath, bytes]) =>
+      `${createHash('sha256').update(bytes).digest('hex')}  ./${relativePath}`
+    )
+    .join('\n') + '\n';
+  fs.writeFileSync(path.join(root, 'SOURCE_MANIFEST.sha256'), manifest);
+
+  const ok = verifyLocalDaryaSource({ sourceDir: root, revision });
+  assert.equal(ok.ok, true);
+  assert.equal(ok.revision, revision);
+  assert.equal(ok.manifestEntries, 3);
+  assert.equal(ok.fileCount, 4);
+
+  fs.writeFileSync(path.join(root, 'references', 'darya-core.md'), '# tampered');
+  const bad = verifyLocalDaryaSource({ sourceDir: root, revision });
+  assert.equal(bad.ok, false);
+  assert.match(bad.reason, /mismatch/i);
+});
+
+test('mergeDaryaWorldLink can mark an existing card as fully mirrored without overwriting custom voice fields', () => {
+  const existing = {
+    spec: 'chara_card_v3',
+    spec_version: '3.0',
+    data: {
+      name: 'Дарья',
+      description: 'KEEP_DESCRIPTION',
+      system_prompt: 'KEEP_SYSTEM_PROMPT',
+      creator_notes: 'KEEP_NOTES',
+      extensions: {
+        world: '',
+        darya_source_mirrored: false,
+        darya_source_revision: 'old',
+      },
+    },
+  };
+  const world = buildDaryaWorldInfo({ revision, sourceMirrored: true });
+
+  const patched = mergeDaryaWorldLink(existing, world, {
+    revision,
+    sourceMirrored: true,
+  });
+
+  assert.equal(patched.data.description, 'KEEP_DESCRIPTION');
+  assert.equal(patched.data.system_prompt, 'KEEP_SYSTEM_PROMPT');
+  assert.equal(patched.data.creator_notes, 'KEEP_NOTES');
+  assert.equal(patched.data.extensions.world, 'Darya');
+  assert.equal(patched.data.extensions.darya_source_revision, revision);
+  assert.equal(patched.data.extensions.darya_source_mirrored, true);
 });
