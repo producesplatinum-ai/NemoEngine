@@ -16,6 +16,7 @@ import {
   writeTextIfChanged,
   resolveDaryaAvatarPath,
   mergeDaryaWorldLink,
+  mergeDaryaCanonicalProfile,
   verifyLocalDaryaSource,
   getDaryaCardBasePng,
   seedDarya,
@@ -28,7 +29,11 @@ test('buildDaryaCharacter creates a linked chara_card_v3 Darya card', () => {
 
   assert.equal(card.spec, 'chara_card_v3');
   assert.equal(card.spec_version, '3.0');
-  assert.equal(card.data.name, 'Darya');
+  assert.equal(card.data.name, 'Дарья');
+  assert.equal(card.data.character_version, 'DARYA_ST_V2_GITHUB_CANON');
+  assert.equal(card.data.tags.includes('NemoEngine'), false);
+  assert.equal(card.data.tags.includes('adult'), false);
+  assert.equal(card.data.tags.includes('humiliation'), false);
   assert.equal(card.data.extensions.world, 'Darya');
   assert.equal(card.data.extensions.darya_source_revision, revision);
   assert.match(card.data.system_prompt, /русск/i);
@@ -50,6 +55,7 @@ test('buildDaryaWorldInfo contains the required GitHub-backed behavior layers', 
     'Darya causal humiliation',
     'Darya NemoEngine bridge',
     'Darya correction and continuation',
+    'Darya practice execution lock',
     'Darya source provenance',
   ]) {
     assert.ok(comments.has(required), `missing lore entry: ${required}`);
@@ -197,7 +203,6 @@ test('syncDaryaSourceFromHttp fails closed on a digest mismatch and preserves ol
       sha256: createHash('sha256').update(expected).digest('hex'),
     }],
   };
-
   const server = createServer((req, res) => {
     const url = new URL(req.url || '/', 'http://127.0.0.1');
     if (url.pathname === '/source-manifest') {
@@ -303,6 +308,60 @@ test('mergeDaryaWorldLink preserves an existing Darya card while linking the Dar
   assert.equal(patched.data.character_book.entries.length, 9);
 });
 
+
+
+test('mergeDaryaCanonicalProfile upgrades GitHub-owned voice fields while preserving local extensions', () => {
+  const existing = {
+    spec: 'chara_card_v3',
+    spec_version: '3.0',
+    avatar: 'Darya.png',
+    chat: 'KEEP_CHAT',
+    data: {
+      name: 'Дарья',
+      description: 'OLD_DESCRIPTION',
+      personality: 'OLD_PERSONALITY',
+      scenario: 'OLD_SCENARIO',
+      first_mes: 'OLD_FIRST',
+      mes_example: 'OLD_EXAMPLES',
+      system_prompt: 'OLD_SYSTEM',
+      post_history_instructions: 'OLD_POST',
+      alternate_greetings: ['OLD_GREETING'],
+      tags: ['OLD_TAG'],
+      creator: 'OLD_CREATOR',
+      character_version: 'DARYA_ST_V1',
+      extensions: {
+        fav: true,
+        custom_local_extension: { keep: 1 },
+        depth_prompt: { prompt: 'OLD_DEPTH', depth: 9, role: 'system' },
+      },
+    },
+  };
+
+  const canonical = buildDaryaCharacter({ revision, sourceMirrored: true });
+  const world = buildDaryaWorldInfo({ revision, sourceMirrored: true });
+  const patched = mergeDaryaCanonicalProfile(existing, canonical, world, {
+    revision,
+    sourceMirrored: true,
+  });
+
+  assert.equal(patched.avatar, 'Darya.png');
+  assert.equal(patched.chat, 'KEEP_CHAT');
+  assert.equal(patched.data.name, 'Дарья');
+  assert.equal(patched.data.description, canonical.data.description);
+  assert.equal(patched.data.personality, canonical.data.personality);
+  assert.equal(patched.data.scenario, canonical.data.scenario);
+  assert.equal(patched.data.system_prompt, canonical.data.system_prompt);
+  assert.equal(patched.data.post_history_instructions, canonical.data.post_history_instructions);
+  assert.deepEqual(patched.data.alternate_greetings, canonical.data.alternate_greetings);
+  assert.deepEqual(patched.data.tags, canonical.data.tags);
+  assert.equal(patched.data.character_version, 'DARYA_ST_V2_GITHUB_CANON');
+  assert.equal(patched.data.extensions.fav, true);
+  assert.deepEqual(patched.data.extensions.custom_local_extension, { keep: 1 });
+  assert.equal(patched.data.extensions.world, 'Darya');
+  assert.equal(patched.data.extensions.depth_prompt.prompt, canonical.data.extensions.depth_prompt.prompt);
+  assert.equal(patched.data.character_book.name, 'Darya');
+  assert.ok(patched.data.character_book.entries.length >= 10);
+});
 
 test('verifyLocalDaryaSource accepts a complete manifest-backed local mirror and rejects tampering', () => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'darya-local-mirror-'));
