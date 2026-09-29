@@ -11,7 +11,7 @@ const seeder = process.env.NEMO_SEED_SCRIPT || '/usr/local/bin/seed-nemoengine.m
 const PRESETS = [
   'Nemo Engine 11.5.2 - General RP',
   'Nemo Engine 11.5.2 - Default RP',
-  'Nemo Engine 11.5.2 - Ready RU Gooner RP',
+  'Nemo Engine 11.5.2 - Ready RU RP',
   'Nemo Engine 11.5.2 - Ready RU Gooner RP',
   'Nemo Engine 11.5.2 - Ready RU Psychology Humiliation JOI RP',
 ];
@@ -126,7 +126,7 @@ function runSeeder(fixture) {
       NEMOENGINE_PRESET_SOURCE_DIR: fixture.sourceDir,
       NEMO_PRESET_EXT_SOURCE_DIR: fixture.extSource,
       NEMOENGINE_SKIP_EXTENSION_GIT_UPDATE: '1',
-      NEMO_ACTIVE_PRESET: 'Nemo Engine 11.5.2 - Ready RU Psychology Humiliation JOI RP',
+      NEMO_ACTIVE_PRESET: 'Nemo Engine 11.5.2 - Ready RU RP',
     },
     encoding: 'utf8',
   });
@@ -147,37 +147,16 @@ test('installs NemoEngine 11.5.2, enables full NemoPresetExt runtime, and overla
     assert.equal(preset.extensions.regex_scripts.length, 97);
   }
 
-  const derived = [
-    ['Nemo Engine 11.5.2 - Ready RU Sensory Psychology Humiliation JOI RP', 65],
-    ['Nemo Engine 11.5.2 - Ready RU Lustful Psychology Humiliation JOI RP', 58],
-  ];
-  for (const [name, vexIndex] of derived) {
-    const file = path.join(presetDir, `${name}.json`);
-    assert.equal(fs.existsSync(file), true, `missing derived preset ${name}`);
-    const preset = JSON.parse(fs.readFileSync(file, 'utf8'));
-    const order = preset.prompt_order[0].order;
-    assert.equal(order[vexIndex].enabled, true, `${name}: target Vex is off`);
-    for (const index of [43, ...Array.from({ length: 31 }, (_, i) => 45 + i)]) {
-      if (index !== vexIndex) assert.equal(order[index].enabled, false, `${name}: conflicting Vex at ${index}`);
-    }
-    for (const index of [287, 288, 406, 407, 410, 443, 455, 456]) {
-      assert.equal(order[index].enabled, true, `${name}: required module ${index} is off`);
-    }
-  }
-
   const settings = JSON.parse(fs.readFileSync(path.join(fixture.userDataDir, 'settings.json'), 'utf8'));
   assert.equal(settings.marker, 'keep-me');
-  assert.equal(settings.oai_settings.preset_settings_openai, 'Nemo Engine 11.5.2 - Ready RU Psychology Humiliation JOI RP');
+  assert.equal(settings.oai_settings.preset_settings_openai, 'Nemo Engine 11.5.2 - Ready RU RP');
   assert.equal(settings.oai_settings.chat_completion_source, 'groq');
   assert.equal(settings.oai_settings.groq_model, 'openai/gpt-oss-120b');
   assert.equal(settings.extension_settings.connectionManager.selectedProfile, 'groq-profile');
 
   const allowed = settings.extension_settings.preset_allowed_regex.openai;
   assert.equal(allowed.includes('Existing Preset'), true);
-  for (const name of [...PRESETS,
-    'Nemo Engine 11.5.2 - Ready RU Sensory Psychology Humiliation JOI RP',
-    'Nemo Engine 11.5.2 - Ready RU Lustful Psychology Humiliation JOI RP',
-  ]) {
+  for (const name of PRESETS) {
     assert.equal(allowed.includes(name), true, `regex not allowed for ${name}`);
   }
 
@@ -200,19 +179,19 @@ test('installs NemoEngine 11.5.2, enables full NemoPresetExt runtime, and overla
   assert.equal(manifest.version, '6.0.6');
 
   const bundled = JSON.parse(fs.readFileSync(path.join(extDir, 'assets', 'nemo-engine-latest.json'), 'utf8'));
-  assert.equal(bundled.name, 'Nemo Engine 11.5.2 - Ready RU Psychology Humiliation JOI RP');
+  assert.equal(bundled.name, 'Nemo Engine 11.5.2 - Ready RU RP');
   assert.equal(bundled.prompts.length, 458);
   assert.equal(bundled.extensions.regex_scripts.length, 97);
 
   const installerRuntime = fs.readFileSync(path.join(extDir, 'features', 'preset-installer', 'runtime.js'), 'utf8');
   assert.match(installerRuntime, /const PRESET_VERSION = '11\.5\.2';/);
-  assert.match(installerRuntime, /const PRESET_NAME = 'Nemo Engine 11\.5\.2 - Ready RU Psychology Humiliation JOI RP';/);
+  assert.match(installerRuntime, /const PRESET_NAME = 'Nemo Engine 11\.5\.2 - Ready RU RP';/);
   assert.doesNotMatch(installerRuntime, /Nemo Engine v\$\{PRESET_VERSION\}/);
 
   assert.match(result.stdout, /NemoEngine presets synced/);
   assert.match(result.stdout, /NemoPresetExt ready/);
-  assert.match(result.stdout, /NemoPresetExt installer overlay: 11\.5\.2 - Ready RU Psychology Humiliation JOI RP/);
-  assert.match(result.stdout, /NemoEngine active preset: Nemo Engine 11\.5\.2 - Ready RU Psychology Humiliation JOI RP/);
+  assert.match(result.stdout, /NemoPresetExt installer overlay: 11\.5\.2 - Ready RU RP/);
+  assert.match(result.stdout, /NemoEngine active preset: Nemo Engine 11\.5\.2 - Ready RU RP/);
   assert.match(result.stdout, /NemoEngine preset regex allowed/);
 });
 
@@ -254,8 +233,9 @@ test('production Nemo Full Bootstrap follows the selected supported preset inste
   );
   assert.match(script, /SUPPORTED_PRESETS/);
   assert.match(script, /preset_settings_openai/);
+  assert.match(script, /Ready RU RP/);
   assert.match(script, /Ready RU Gooner RP/);
   assert.match(script, /Ready RU Psychology Humiliation JOI RP/);
-  assert.match(script, /Ready RU Sensory Psychology Humiliation JOI RP/);
-  assert.match(script, /Ready RU Lustful Psychology Humiliation JOI RP/);
+  assert.doesNotMatch(script, /Ready RU Sensory Psychology Humiliation JOI RP/);
+  assert.doesNotMatch(script, /Ready RU Lustful Psychology Humiliation JOI RP/);
 });
