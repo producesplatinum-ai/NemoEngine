@@ -10,5 +10,6 @@ mkdir -p \
 
 node /usr/local/bin/seed-provider-secrets.mjs
 node /usr/local/bin/seed-connection-profiles.mjs
+node /usr/local/bin/seed-nemoengine.mjs
 
 exec /home/node/app/docker-entrypoint.sh "$@"
