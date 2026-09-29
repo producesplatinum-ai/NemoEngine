@@ -8,6 +8,7 @@ mkdir -p \
   /persistent/extensions \
   /persistent/backups
 
+cp /usr/local/share/darya-source-import.mjs /persistent/plugins/darya-source-import.mjs
 node /usr/local/bin/seed-provider-secrets.mjs
 node /usr/local/bin/seed-connection-profiles.mjs
 node /usr/local/bin/seed-darya.mjs || echo "Darya seed deferred; continuing SillyTavern startup" >&2
