@@ -29,6 +29,8 @@ function fakePreset(name) {
     [408, ['v11-178-nsfw-gooner-protocol', '🔞 Gooner Protocol']],
     [410, ['v11-180-nsfw-nsfw-core', '🔞 NSFW Core']],
     [412, ['v11-182-nsfw-proactive-partners', '🔞 Proactive Partners']],
+    [415, ['v11-620-nsfw-gooner-slop-mode', '🔞 Gooner Slop Mode [V6]']],
+    [416, ['v11-621-nsfw-gooner-s-masterpiece-protocol', "🔞 Gooner's Masterpiece Protocol [V6]"]],
     [443, ['main', 'Main Prompt']],
     [455, ['v11-639-fetish-humiliation', '🎀 Humiliation']],
     [456, ['v11-640-fetish-joi', '🎀 JOI']],
@@ -198,7 +200,7 @@ test('installs NemoEngine 11.5.2, enables full NemoPresetExt runtime, and overla
   assert.equal(manifest.version, '6.0.6');
 
   const bundled = JSON.parse(fs.readFileSync(path.join(extDir, 'assets', 'nemo-engine-latest.json'), 'utf8'));
-  assert.equal(bundled.name, 'Nemo Engine 11.5.2 - Ready RU Gooner RP');
+  assert.equal(bundled.name, 'Nemo Engine 11.5.2 - Ready RU Psychology Humiliation JOI RP');
   assert.equal(bundled.prompts.length, 458);
   assert.equal(bundled.extensions.regex_scripts.length, 97);
 
