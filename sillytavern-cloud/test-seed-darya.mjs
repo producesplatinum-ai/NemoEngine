@@ -30,7 +30,7 @@ test('buildDaryaCharacter creates a linked chara_card_v3 Darya card', () => {
   assert.equal(card.spec, 'chara_card_v3');
   assert.equal(card.spec_version, '3.0');
   assert.equal(card.data.name, 'Дарья');
-  assert.equal(card.data.character_version, 'DARYA_ST_V2_GITHUB_CANON');
+  assert.equal(card.data.character_version, 'DARYA_ST_V3_GITHUB_CANON');
   assert.equal(card.data.tags.includes('NemoEngine'), false);
   assert.equal(card.data.tags.includes('adult'), false);
   assert.equal(card.data.tags.includes('humiliation'), false);
@@ -305,7 +305,7 @@ test('mergeDaryaWorldLink preserves an existing Darya card while linking the Dar
   assert.equal(patched.data.extensions.depth_prompt.prompt, 'KEEP_DEPTH');
   assert.equal(patched.data.extensions.world, 'Darya');
   assert.equal(patched.data.character_book.name, 'Darya');
-  assert.equal(patched.data.character_book.entries.length, 9);
+  assert.ok(patched.data.character_book.entries.length >= 12);
 });
 
 
@@ -354,7 +354,7 @@ test('mergeDaryaCanonicalProfile upgrades GitHub-owned voice fields while preser
   assert.equal(patched.data.post_history_instructions, canonical.data.post_history_instructions);
   assert.deepEqual(patched.data.alternate_greetings, canonical.data.alternate_greetings);
   assert.deepEqual(patched.data.tags, canonical.data.tags);
-  assert.equal(patched.data.character_version, 'DARYA_ST_V2_GITHUB_CANON');
+  assert.equal(patched.data.character_version, 'DARYA_ST_V3_GITHUB_CANON');
   assert.equal(patched.data.extensions.fav, true);
   assert.deepEqual(patched.data.extensions.custom_local_extension, { keep: 1 });
   assert.equal(patched.data.extensions.world, 'Darya');
