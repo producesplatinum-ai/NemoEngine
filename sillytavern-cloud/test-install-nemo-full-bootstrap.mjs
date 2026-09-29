@@ -1,0 +1,58 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import { spawnSync } from 'node:child_process';
+
+const installer = process.env.NEMO_BOOTSTRAP_INSTALLER || '/usr/local/bin/install-nemo-full-bootstrap.mjs';
+
+test('installs a client-side Nemo bootstrap extension with the full import/runtime contract', () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'nemo-bootstrap-'));
+  const source = path.join(root, 'source');
+  const user = path.join(root, 'user');
+  fs.mkdirSync(source, { recursive: true });
+  fs.mkdirSync(user, { recursive: true });
+
+  fs.writeFileSync(path.join(source, 'manifest.json'), JSON.stringify({
+    display_name: 'Nemo Full Bootstrap',
+    version: '1.0.0',
+    js: 'index.js',
+    loading_order: 1100,
+  }, null, 2));
+  fs.writeFileSync(path.join(source, 'index.js'), [
+    "const ACTIVE_PRESET = 'Nemo Engine 11.5.2 - Ready RU RP';",
+    "event_types.OAI_PRESET_IMPORT_READY",
+    "globalThis.NemoRecipeRuntime",
+    "globalThis.NemoColdPrompts",
+    "globalThis.NemoVexRuntime",
+    "globalThis.NemoPromptRendering",
+    "enableRecipeRuntime",
+    "enableColdPromptStorage",
+    "enableVexRuntime",
+    "enableIncrementalPromptRendering",
+  ].join('\n'));
+
+  const run = spawnSync(process.execPath, [installer], {
+    env: {
+      ...process.env,
+      SILLYTAVERN_USER_DATA_DIR: user,
+      NEMO_BOOTSTRAP_SOURCE_DIR: source,
+    },
+    encoding: 'utf8',
+  });
+
+  assert.equal(run.status, 0, run.stderr);
+  const dest = path.join(user, 'extensions', 'NemoFullBootstrap');
+  const manifest = JSON.parse(fs.readFileSync(path.join(dest, 'manifest.json'), 'utf8'));
+  const script = fs.readFileSync(path.join(dest, 'index.js'), 'utf8');
+
+  assert.equal(manifest.display_name, 'Nemo Full Bootstrap');
+  assert.equal(manifest.loading_order, 1100);
+  assert.match(script, /Nemo Engine 11\.5\.2 - Ready RU RP/);
+  assert.match(script, /OAI_PRESET_IMPORT_READY/);
+  assert.match(script, /NemoRecipeRuntime/);
+  assert.match(script, /NemoColdPrompts/);
+  assert.match(script, /NemoVexRuntime/);
+  assert.match(script, /NemoPromptRendering/);
+});
