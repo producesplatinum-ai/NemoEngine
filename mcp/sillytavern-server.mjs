@@ -351,6 +351,95 @@ export class SillyTavernClient {
     };
   }
 
+  async generateAssistantMessage({ avatarUrl, fileName, source, model }) {
+    const character = await this.getCharacter(avatarUrl);
+    const fallbackName = String(avatarUrl).replace(/\\.png$/i, '');
+    const characterName = String(
+      character?.name || character?.data?.name || fallbackName || 'Assistant',
+    ).trim();
+
+    const existing = await this.getChat({ avatarUrl, fileName });
+    const chat = Array.isArray(existing) ? existing.slice() : [];
+    const conversation = chat.filter(
+      (entry) => entry && typeof entry === 'object' && typeof entry.mes === 'string' && entry.mes.trim(),
+    );
+    if (!conversation.some((entry) => entry.is_user === true)) {
+      throw new Error('Chat must contain a user message before generation.');
+    }
+
+    const data = character?.data && typeof character.data === 'object' ? character.data : {};
+    const systemParts = [
+      `You are ${characterName}. Reply as this character and do not speak for the user.`,
+      character?.description || data.description || '',
+      character?.personality || data.personality || '',
+      character?.scenario || data.scenario || '',
+    ].map((value) => String(value || '').trim()).filter(Boolean);
+
+    const messages = [];
+    if (systemParts.length) {
+      messages.push({ role: 'system', content: systemParts.join('\\n\\n') });
+    }
+    for (const entry of conversation) {
+      messages.push({
+        role: entry.is_system ? 'system' : entry.is_user ? 'user' : 'assistant',
+        content: String(entry.mes),
+      });
+    }
+
+    const payload = await this.post('/api/backends/chat-completions/generate', {
+      chat_completion_source: source,
+      messages,
+      model,
+      temperature: 0.7,
+      max_tokens: 512,
+      stream: false,
+      presence_penalty: 0,
+      frequency_penalty: 0,
+      top_p: 1,
+      stop: [],
+      seed: 0,
+      logprobs: 0,
+      include_reasoning: false,
+    });
+
+    const message = String(
+      payload?.choices?.[0]?.message?.content ||
+      payload?.choices?.[0]?.text ||
+      '',
+    ).trim();
+    if (!message) {
+      throw new Error(`SillyTavern ${source} generation returned no message content.`);
+    }
+
+    chat.push({
+      name: characterName,
+      is_user: false,
+      is_system: false,
+      send_date: new Date().toISOString(),
+      mes: message,
+      extra: {},
+    });
+
+    await this.post('/api/chats/save', {
+      ch_name: characterName,
+      file_name: fileName,
+      chat,
+      avatar_url: avatarUrl,
+    });
+
+    return {
+      ok: true,
+      saved: true,
+      avatarUrl,
+      fileName,
+      characterName,
+      source,
+      model,
+      message,
+      messageCount: chat.length,
+    };
+  }
+
   async generateChatCompletion({ source, model, expected }) {
     const payload = await this.post('/api/backends/chat-completions/generate', {
       chat_completion_source: source,
@@ -516,6 +605,8 @@ export function parseMobileWriteBody(contentType, text) {
       avatarUrl: params.get('avatarUrl') || '',
       fileName: params.get('fileName') || '',
       userText: params.get('userText') || '',
+      source: params.get('source') || '',
+      model: params.get('model') || '',
     };
   }
 
@@ -545,6 +636,27 @@ export function mobileTurnFormHtml(actionPath) {
 <label>fileName <input name="fileName" autocomplete="off" required></label>
 <label>userText <textarea name="userText" required></textarea></label>
 <button type="submit">Send one turn</button>
+</form>
+</body>
+</html>`;
+}
+
+export function mobileGenerateFormHtml(actionPath) {
+  const action = escapeHtmlAttribute(actionPath);
+  return `<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SillyTavern Mobile Generate</title>
+</head>
+<body>
+<form method="post" action="${action}">
+<label>avatarUrl <input name="avatarUrl" autocomplete="off" required></label>
+<label>fileName <input name="fileName" autocomplete="off" required></label>
+<label>source <select name="source" required><option value="deepseek">deepseek</option><option value="groq">groq</option><option value="openrouter">openrouter</option></select></label>
+<label>model <input name="model" value="deepseek-flash" autocomplete="off" required></label>
+<button type="submit">Generate one reply</button>
 </form>
 </body>
 </html>`;
@@ -881,7 +993,10 @@ export function startHttpServer({
     );
 
     if (mobileRoute.kind !== 'not_found') {
-      if (mobileRoute.kind === 'turn' && req.method === 'GET') {
+      const mobileWriteRoute =
+        mobileRoute.kind === 'turn' || mobileRoute.kind === 'generate';
+
+      if (mobileWriteRoute && req.method === 'GET') {
         res.statusCode = 200;
         res.setHeader('content-type', 'text/html; charset=utf-8');
         res.setHeader('cache-control', 'no-store');
@@ -889,24 +1004,22 @@ export function startHttpServer({
           'content-security-policy',
           "default-src 'none'; style-src 'unsafe-inline'; form-action 'self'; base-uri 'none'",
         );
-        res.end(mobileTurnFormHtml(`${MOBILE_REST_BASE_PATH}/turn`));
+        res.end(
+          mobileRoute.kind === 'turn'
+            ? mobileTurnFormHtml(`${MOBILE_REST_BASE_PATH}/turn`)
+            : mobileGenerateFormHtml(`${MOBILE_REST_BASE_PATH}/generate`),
+        );
         return;
       }
 
-      const expectedMethod = mobileRoute.kind === 'turn' ? 'POST' : 'GET';
+      const expectedMethod = mobileWriteRoute ? 'POST' : 'GET';
       if (req.method !== expectedMethod) {
         res.statusCode = 405;
-        res.setHeader(
-          'allow',
-          mobileRoute.kind === 'turn' ? 'GET, POST' : expectedMethod,
-        );
+        res.setHeader('allow', mobileWriteRoute ? 'GET, POST' : expectedMethod);
         res.setHeader('content-type', 'application/json; charset=utf-8');
         res.end(JSON.stringify({
           ok: false,
-          error:
-            mobileRoute.kind === 'turn'
-              ? 'GET or POST required.'
-              : `${expectedMethod} required.`,
+          error: mobileWriteRoute ? 'GET or POST required.' : `${expectedMethod} required.`,
         }));
         return;
       }
@@ -932,6 +1045,7 @@ export function startHttpServer({
             message.includes(' is required.') ||
             message.includes(' are required.') ||
             message.includes('must not be empty.') ||
+            message === 'Unsupported generation source.' ||
             message === 'Invalid JSON body.' ||
             message === 'Unsupported content type.' ||
             message === 'Request body too large.';
