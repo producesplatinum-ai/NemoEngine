@@ -540,3 +540,42 @@ test('exact Nemo activate rejects missing entry id', async () => {
     /entryId is required/,
   );
 });
+
+
+test('classifies preset delete route and dispatches explicit name with fallback', async () => {
+  const basePath = '/st-secret/mobile';
+  assert.deepEqual(
+    classifyMobileRestRequest('/st-secret/mobile/preset-delete', basePath),
+    { kind: 'preset_delete' },
+  );
+
+  const calls = [];
+  const client = {
+    async deleteOpenAiPreset(input) {
+      calls.push(input);
+      return { ok: true, deleted: input.name };
+    },
+  };
+
+  const result = await executeMobileRestRoute(
+    { kind: 'preset_delete' },
+    client,
+    {
+      name: 'Nemo Exact Active',
+      fallbackName: 'Nemo Engine 11.5.2 - Ready RU Gooner RP',
+    },
+  );
+
+  assert.deepEqual(result, { ok: true, deleted: 'Nemo Exact Active' });
+  assert.deepEqual(calls, [{
+    name: 'Nemo Exact Active',
+    fallbackName: 'Nemo Engine 11.5.2 - Ready RU Gooner RP',
+  }]);
+});
+
+test('preset delete rejects missing name', async () => {
+  await assert.rejects(
+    () => executeMobileRestRoute({ kind: 'preset_delete' }, {}, {}),
+    /name is required/,
+  );
+});
