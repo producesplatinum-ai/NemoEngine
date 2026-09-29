@@ -50,6 +50,7 @@ test('turn performs exactly one POST and returns parsed JSON', async () => {
   assert.equal(calls[0].url, 'https://example.test/mobile/turn');
   assert.equal(calls[0].init.method, 'POST');
   assert.deepEqual(JSON.parse(calls[0].init.body), {
+    nonce: 'n-turn',
     avatarUrl: 'Darya.png',
     fileName: 'Darya Native Story F1',
     userText: 'ONE_SHOT_ONLY',
