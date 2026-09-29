@@ -744,13 +744,14 @@ export function parseMobileWriteBody(contentType, text) {
 
   if (normalizedType === 'application/x-www-form-urlencoded') {
     const params = new URLSearchParams(bodyText);
-    return {
+    const parsed = {
       avatarUrl: params.get('avatarUrl') || '',
       fileName: params.get('fileName') || '',
       userText: params.get('userText') || '',
-      source: params.get('source') || '',
-      model: params.get('model') || '',
     };
+    if (params.has('source')) parsed.source = params.get('source') || '';
+    if (params.has('model')) parsed.model = params.get('model') || '';
+    return parsed;
   }
 
   throw new Error('Unsupported content type.');
