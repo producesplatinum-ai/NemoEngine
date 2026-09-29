@@ -473,10 +473,16 @@ export class SillyTavernClient {
   }
 
   async getNemoClientRuntimeStatus() {
+    const reportPath = '/user/files/nemo-client-runtime-report.json';
+    const publicPath = '/files/nemo-client-runtime-report.json';
     let fileError = null;
     try {
-      const report = await this.getJson('/user/files/nemo-client-runtime-report.json');
-      return sanitizeNemoClientRuntimeReport(report);
+      const report = await this.getJson(reportPath);
+      const sanitized = sanitizeNemoClientRuntimeReport(report);
+      if (!sanitized.persistence?.ok) {
+        sanitized.persistence = { ok: true, path: publicPath };
+      }
+      return sanitized;
     } catch (error) {
       fileError = error;
     }
@@ -493,7 +499,7 @@ export class SillyTavernClient {
 
     const message = fileError instanceof Error ? fileError.message : String(fileError || '');
     if (
-      message.includes('/user/files/nemo-client-runtime-report.json') &&
+      message.includes(reportPath) &&
       message.includes('HTTP 404')
     ) {
       return null;
