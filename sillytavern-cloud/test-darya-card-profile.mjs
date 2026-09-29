@@ -26,7 +26,8 @@ test('canonical Darya card uses the GitHub-owned visible identity without profil
   assert.equal(card.data.tags.includes('humiliation'), false);
   assert.match(card.data.system_prompt, /STYLE_EVIDENCE_ONLY/i);
   assert.match(card.data.system_prompt, /REQUESTED_CONTENT_ONLY/i);
-  assert.match(card.data.system_prompt, /дрочер/i);
+  assert.doesNotMatch(card.data.system_prompt, /дрочер/i);
+  assert.match(card.data.system_prompt, /обращен|пользователь/i);
   assert.match(card.data.system_prompt, /одобр|положительн/i);
   assert.match(card.data.post_history_instructions, /не то|не похоже/i);
   assert.match(card.data.extensions.depth_prompt.prompt, /Fact-lock|якор|anchor/i);
