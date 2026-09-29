@@ -389,3 +389,45 @@ test('getDaryaCardBasePng decodes a local avatar from bytes without network fetc
   assert.equal(Buffer.isBuffer(png), true);
   assert.equal(png.subarray(0, 8).toString('hex'), '89504e470d0a1a0a');
 });
+
+
+test('seedDarya builds a card from a local avatar without network fetch', async () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'darya-local-avatar-'));
+  const sourceDir = path.join(root, 'darya-source');
+  const userDataDir = path.join(root, 'user-data');
+  const tinyPng = Buffer.from(
+    'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=',
+    'base64',
+  );
+
+  fs.mkdirSync(path.join(sourceDir, 'assets', 'darya-face'), { recursive: true });
+  const files = new Map([
+    ['SKILL.md', Buffer.from('# local skill')],
+    ['assets/darya-face/primary-static.jpeg', tinyPng],
+  ]);
+
+  for (const [relativePath, bytes] of files) {
+    const target = path.join(sourceDir, relativePath);
+    fs.mkdirSync(path.dirname(target), { recursive: true });
+    fs.writeFileSync(target, bytes);
+  }
+
+  const manifest = [...files]
+    .map(([relativePath, bytes]) =>
+      `${createHash('sha256').update(bytes).digest('hex')}  ./${relativePath}`
+    )
+    .join('\n') + '\n';
+  fs.writeFileSync(path.join(sourceDir, 'SOURCE_MANIFEST.sha256'), manifest);
+
+  const result = await seedDarya({
+    userDataDir,
+    sourceDir,
+    revision: 'test-local-avatar-revision',
+  });
+
+  assert.equal(result.sourceMirrored, true);
+  const characterPath = path.join(userDataDir, 'characters', 'Darya.png');
+  assert.equal(fs.existsSync(characterPath), true);
+  const bytes = fs.readFileSync(characterPath);
+  assert.deepEqual([...bytes.subarray(0, 8)], [137, 80, 78, 71, 13, 10, 26, 10]);
+});
