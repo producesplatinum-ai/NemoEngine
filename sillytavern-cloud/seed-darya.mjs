@@ -715,8 +715,12 @@ export async function syncDaryaSource({
 } = {}) {
   const local = verifyLocalDaryaSource({ sourceDir, revision });
   if (local.ok) {
+    console.log(
+      `Darya local source mirror verified: ${local.manifestEntries} manifest entries, ${local.fileCount} files`,
+    );
     return revision;
   }
+  console.warn(`Darya local source mirror not complete: ${local.reason}`);
 
   const baseUrl = process.env.DARYA_SOURCE_BASE_URL || '';
   const token = process.env.DARYA_SOURCE_TOKEN || '';
