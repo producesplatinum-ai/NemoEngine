@@ -68,4 +68,6 @@ test('production Nemo Full Bootstrap persists client runtime preflight report', 
   assert.match(script, /\/api\/files\/upload/);
   assert.match(script, /persistClientReport/);
   assert.match(script, /getRequestHeaders/);
+  assert.match(script, /persistedReport/);
+  assert.match(script, /persistence:\s*persistence/);
 });
