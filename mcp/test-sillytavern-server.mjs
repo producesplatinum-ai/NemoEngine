@@ -16,6 +16,7 @@ import {
   hasBootstrapProxyCookie,
   sanitizeNemoRuntimeReport,
   sanitizeNemoClientRuntimeReport,
+  isDaryaImportAuthorized,
 } from './sillytavern-server.mjs';
 import { classifyMobileRestRequest, executeMobileRestRoute } from './sillytavern-mobile-rest.mjs';
 
@@ -868,4 +869,61 @@ test('browser form parser carries character card JSON without altering it', () =
 
   assert.equal(parsed.fileName, 'Darya');
   assert.equal(parsed.cardJson, cardJson);
+});
+
+
+test('Darya import gateway auth requires exact sufficiently long token', () => {
+  const token = 'abc123456789def0';
+  assert.equal(isDaryaImportAuthorized(token, token), true);
+  assert.equal(isDaryaImportAuthorized('wrong', token), false);
+  assert.equal(isDaryaImportAuthorized('', token), false);
+  assert.equal(isDaryaImportAuthorized(token, ''), false);
+});
+
+test('client forwards one Darya source file as raw bytes through protected importer', async () => {
+  const body = Buffer.from('darya source bytes');
+  const sha256 = 'a'.repeat(64);
+  const calls = [];
+  const fetchImpl = async (url, options = {}) => {
+    calls.push({ url: String(url), options });
+    if (String(url).endsWith('/csrf-token')) {
+      return makeJsonResponse({ token: 'csrf-import' });
+    }
+
+    assert.equal(
+      String(url),
+      'https://st.example.test/api/plugins/darya-source-import/file',
+    );
+    assert.equal(options.method, 'POST');
+    assert.equal(options.headers['x-csrf-token'], 'csrf-import');
+    assert.equal(options.headers['x-darya-import-token'], 'abc123456789def0');
+    assert.equal(options.headers['x-darya-path'], 'references/darya-core.md');
+    assert.equal(options.headers['x-darya-sha256'], sha256);
+    assert.equal(options.headers['content-type'], 'application/octet-stream');
+    assert.equal(Buffer.isBuffer(options.body), true);
+    assert.equal(options.body.equals(body), true);
+
+    return makeJsonResponse({
+      ok: true,
+      path: 'references/darya-core.md',
+      size: body.length,
+      sha256,
+    });
+  };
+
+  const client = new SillyTavernClient({
+    baseUrl: 'https://st.example.test',
+    fetchImpl,
+  });
+
+  const result = await client.importDaryaSourceFile({
+    relativePath: 'references/darya-core.md',
+    sha256,
+    body,
+    token: 'abc123456789def0',
+  });
+
+  assert.equal(result.ok, true);
+  assert.equal(result.path, 'references/darya-core.md');
+  assert.equal(calls.length, 2);
 });
