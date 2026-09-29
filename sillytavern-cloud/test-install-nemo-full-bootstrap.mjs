@@ -88,3 +88,15 @@ test('production Nemo Full Bootstrap supports guarded one-shot client generation
   assert.match(script, /requestId/);
   assert.match(script, /marker/);
 });
+
+
+test('client generation diagnostic distinguishes generated from already-present assistant turns', () => {
+  const sourceDir = process.env.NEMO_BOOTSTRAP_PRODUCTION_SOURCE || '/usr/local/share/nemo-full-bootstrap';
+  const script = fs.readFileSync(path.join(sourceDir, 'index.js'), 'utf8');
+
+  assert.match(script, /generatedNewAssistant/);
+  assert.match(script, /outcome:\s*'generated'/);
+  assert.match(script, /outcome:\s*'already_present'/);
+  assert.match(script, /generatedNewAssistant:\s*false/);
+  assert.match(script, /generatedNewAssistant:\s*true/);
+});
