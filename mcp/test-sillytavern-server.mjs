@@ -9,6 +9,9 @@ import {
   resolveSillyTavernBaseUrl,
   parseMobileWriteBody,
   mobileTurnFormHtml,
+  mobileClientGenerateFormHtml,
+  buildClientGenerateRedirect,
+  sanitizeNemoClientGenerationReport,
   createBootstrapProxyCookie,
   hasBootstrapProxyCookie,
   sanitizeNemoRuntimeReport,
@@ -615,4 +618,72 @@ test('client runtime file read proves persistence when older report omitted pers
     ok: true,
     path: '/files/nemo-client-runtime-report.json',
   });
+});
+
+
+test('client generate form is explicit and redirect is request-bound', () => {
+  const html = mobileClientGenerateFormHtml('/st-secret/mobile/client-generate');
+  assert.match(html, /<form[^>]+method="post"/i);
+  assert.match(html, /action="\/st-secret\/mobile\/client-generate"/);
+  assert.match(html, /name="avatarUrl"/);
+  assert.match(html, /name="fileName"/);
+  assert.match(html, /name="marker"/);
+
+  const target = buildClientGenerateRedirect({
+    avatarUrl: 'default_Seraphina.png',
+    fileName: 'Nemo mobile test',
+    marker: 'NEMO_ST_MOBILE_WRITE_0929',
+    requestId: 'req-123',
+  });
+  const url = new URL(target, 'https://gateway.invalid');
+  assert.equal(url.pathname, '/');
+  assert.equal(url.searchParams.get('nemoClientGenerate'), '1');
+  assert.equal(url.searchParams.get('avatarUrl'), 'default_Seraphina.png');
+  assert.equal(url.searchParams.get('fileName'), 'Nemo mobile test');
+  assert.equal(url.searchParams.get('marker'), 'NEMO_ST_MOBILE_WRITE_0929');
+  assert.equal(url.searchParams.get('requestId'), 'req-123');
+
+  assert.throws(
+    () => buildClientGenerateRedirect({
+      avatarUrl: '',
+      fileName: 'Nemo mobile test',
+      marker: 'marker',
+      requestId: 'req-123',
+    }),
+    /avatarUrl, fileName, marker, and requestId are required/,
+  );
+});
+
+test('client generation report sanitizer keeps only verification fields', () => {
+  assert.deepEqual(
+    sanitizeNemoClientGenerationReport({
+      ok: true,
+      requestId: 'req-123',
+      generatedAt: '2026-09-29T03:30:00.000Z',
+      preset: 'Nemo Engine 11.5.2 - Ready RU Gooner RP',
+      avatarUrl: 'default_Seraphina.png',
+      fileName: 'Nemo mobile test',
+      marker: 'NEMO_ST_MOBILE_WRITE_0929',
+      beforeCount: 2,
+      afterCount: 3,
+      assistantMessagePresent: true,
+      bootstrapImportedAt: '2026-09-29T03:23:08.190Z',
+      error: '',
+      secretShouldNotLeak: 'nope',
+    }),
+    {
+      ok: true,
+      requestId: 'req-123',
+      generatedAt: '2026-09-29T03:30:00.000Z',
+      preset: 'Nemo Engine 11.5.2 - Ready RU Gooner RP',
+      avatarUrl: 'default_Seraphina.png',
+      fileName: 'Nemo mobile test',
+      marker: 'NEMO_ST_MOBILE_WRITE_0929',
+      beforeCount: 2,
+      afterCount: 3,
+      assistantMessagePresent: true,
+      bootstrapImportedAt: '2026-09-29T03:23:08.190Z',
+      error: '',
+    },
+  );
 });
