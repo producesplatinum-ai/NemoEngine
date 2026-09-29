@@ -1,0 +1,34 @@
+name: SillyTavern cloud
+
+on:
+  push:
+    paths:
+      - 'sillytavern-cloud/**'
+      - '.github/workflows/sillytavern-cloud.yml'
+  pull_request:
+    paths:
+      - 'sillytavern-cloud/**'
+      - '.github/workflows/sillytavern-cloud.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    env:
+      NEMO_SEED_SCRIPT: ${{ github.workspace }}/sillytavern-cloud/seed-nemoengine.mjs
+      NEMO_BOOTSTRAP_INSTALLER: ${{ github.workspace }}/sillytavern-cloud/install-nemo-full-bootstrap.mjs
+      NEMO_BOOTSTRAP_PRODUCTION_SOURCE: ${{ github.workspace }}/sillytavern-cloud/nemo-full-bootstrap
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-node@49933ea5288ca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 22.23.2
+      - name: Run focused SillyTavern Nemo tests
+        run: |
+          node --test \
+            sillytavern-cloud/test-seed-nemoengine.mjs \
+            sillytavern-cloud/test-install-nemo-full-bootstrap.mjs
