@@ -1,7 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { createHash, timingSafeEqual } from 'node:crypto';
-import express from 'express';
 
 export const info = {
   id: 'darya-source-import',
@@ -76,6 +75,18 @@ function authorize(req, res) {
   return true;
 }
 
+async function readRawBody(req, limitBytes = 32 * 1024 * 1024) {
+  const chunks = [];
+  let total = 0;
+  for await (const chunk of req) {
+    const bytes = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
+    total += bytes.length;
+    if (total > limitBytes) throw new Error('Upload exceeds 32 MiB limit.');
+    chunks.push(bytes);
+  }
+  return Buffer.concat(chunks);
+}
+
 export async function init(router) {
   const root = process.env.DARYA_IMPORT_ROOT || '/persistent/darya-source';
 
@@ -84,25 +95,22 @@ export async function init(router) {
     res.json({ ok: true, root, writable: true });
   });
 
-  router.post(
-    '/file',
-    express.raw({ type: 'application/octet-stream', limit: '32mb' }),
-    (req, res) => {
-      if (!authorize(req, res)) return;
-      try {
-        const result = writeUploadedFile({
-          root,
-          relativePath: req.headers['x-darya-path'],
-          body: Buffer.isBuffer(req.body) ? req.body : Buffer.from(req.body || ''),
-          expectedSha256: req.headers['x-darya-sha256'],
-        });
-        res.json({ ok: true, ...result });
-      } catch (error) {
-        res.status(400).json({
-          ok: false,
-          error: error instanceof Error ? error.message : String(error),
-        });
-      }
-    },
-  );
+  router.post('/file', async (req, res) => {
+    if (!authorize(req, res)) return;
+    try {
+      const body = await readRawBody(req);
+      const result = writeUploadedFile({
+        root,
+        relativePath: req.headers['x-darya-path'],
+        body,
+        expectedSha256: req.headers['x-darya-sha256'],
+      });
+      res.json({ ok: true, ...result });
+    } catch (error) {
+      res.status(400).json({
+        ok: false,
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+  });
 }
