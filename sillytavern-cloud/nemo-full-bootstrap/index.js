@@ -1,4 +1,4 @@
-import { eventSource, event_types, getRequestHeaders, saveSettingsDebounced } from '../../../../script.js';
+import { characters, chat, eventSource, event_types, Generate, getRequestHeaders, openCharacterChat, saveSettingsDebounced, selectCharacterById } from '../../../../script.js';
 import { extension_settings } from '../../../extensions.js';
 import { oai_settings, openai_setting_names, openai_settings } from '../../../openai.js';
 
@@ -10,6 +10,28 @@ const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 const clone = value => typeof structuredClone === 'function'
   ? structuredClone(value)
   : JSON.parse(JSON.stringify(value));
+
+function takeClientGenerationRequest() {
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('nemoClientGenerate') !== '1') return null;
+
+  const request = {
+    avatarUrl: String(params.get('avatarUrl') || '').trim(),
+    fileName: String(params.get('fileName') || '').trim(),
+    marker: String(params.get('marker') || '').trim(),
+    requestId: String(params.get('requestId') || '').trim(),
+  };
+
+  const clean = new URL(window.location.href);
+  for (const key of ['nemoClientGenerate', 'avatarUrl', 'fileName', 'marker', 'requestId']) {
+    clean.searchParams.delete(key);
+  }
+  history.replaceState({}, document.title, clean.pathname + clean.search + clean.hash);
+
+  return request;
+}
+
+const clientGenerationRequest = takeClientGenerationRequest();
 
 async function waitFor(predicate, timeoutMs = 60000, stepMs = 250) {
   const started = Date.now();
@@ -113,6 +135,182 @@ async function persistClientReport(report) {
     throw new Error(`Client runtime report upload failed (${response.status}).`);
   }
   return persistence;
+}
+
+async function persistClientGenerationReport(report) {
+  const name = 'nemo-client-generation-report.json';
+  const payload = JSON.stringify(report, null, 2);
+  const response = await fetch('/api/files/upload', {
+    method: 'POST',
+    headers: getRequestHeaders(),
+    body: JSON.stringify({
+      name,
+      data: encodeUtf8Base64(payload),
+    }),
+  });
+  if (!response.ok) {
+    throw new Error(`Client generation report upload failed (${response.status}).`);
+  }
+  return { ok: true, path: '/files/' + name };
+}
+
+function publishClientGenerationStatus(report) {
+  window.NemoClientGenerationReport = report;
+
+  let badge = document.getElementById('nemo-client-generation-status');
+  if (!badge) {
+    badge = document.createElement('div');
+    badge.id = 'nemo-client-generation-status';
+    badge.style.cssText = [
+      'position:fixed',
+      'right:10px',
+      'bottom:54px',
+      'z-index:99999',
+      'max-width:460px',
+      'padding:8px 10px',
+      'border-radius:8px',
+      'background:rgba(20,20,24,.92)',
+      'color:#fff',
+      'font:12px/1.35 sans-serif',
+      'box-shadow:0 4px 18px rgba(0,0,0,.35)',
+    ].join(';');
+    document.body.appendChild(badge);
+  }
+
+  badge.dataset.ok = report.ok ? 'true' : 'false';
+  badge.dataset.requestId = report.requestId || '';
+  badge.textContent = report.ok
+    ? `Nemo client generation PASS · ${report.fileName} · messages ${report.beforeCount}→${report.afterCount}`
+    : `Nemo client generation failed: ${report.error || 'unknown error'}`;
+}
+
+async function runClientGenerationDiagnostic(request, bootstrapReport) {
+  if (!request) return null;
+
+  const baseReport = {
+    ok: false,
+    requestId: request.requestId,
+    generatedAt: new Date().toISOString(),
+    preset: ACTIVE_PRESET,
+    avatarUrl: request.avatarUrl,
+    fileName: request.fileName,
+    marker: request.marker,
+    beforeCount: 0,
+    afterCount: 0,
+    assistantMessagePresent: false,
+    bootstrapImportedAt: bootstrapReport?.importedAt || '',
+    error: '',
+  };
+
+  try {
+    if (!request.avatarUrl || !request.fileName || !request.marker || !request.requestId) {
+      throw new Error('Client generation request is incomplete.');
+    }
+    if (!bootstrapReport?.ok) {
+      throw new Error('Nemo client bootstrap is not ready.');
+    }
+
+    await waitFor(() => Array.isArray(characters) && characters.length > 0, 60000);
+    const characterId = characters.findIndex((item) => item?.avatar === request.avatarUrl);
+    if (characterId < 0) {
+      throw new Error(`Character not found for avatar ${request.avatarUrl}.`);
+    }
+
+    await selectCharacterById(characterId);
+    await openCharacterChat(request.fileName);
+    await waitFor(
+      () => chat.some((entry) =>
+        entry?.is_user === true &&
+        String(entry?.mes || '').trim() === request.marker
+      ),
+      60000,
+    );
+
+    const markerIndex = chat.findIndex((entry) =>
+      entry?.is_user === true &&
+      String(entry?.mes || '').trim() === request.marker
+    );
+    if (markerIndex < 0) throw new Error('Control user marker is not present in the selected chat.');
+
+    const existingAssistant = chat
+      .slice(markerIndex + 1)
+      .find((entry) => entry?.is_user === false && String(entry?.mes || '').trim());
+    if (existingAssistant) {
+      const report = {
+        ...baseReport,
+        ok: true,
+        beforeCount: chat.length,
+        afterCount: chat.length,
+        assistantMessagePresent: true,
+        alreadyGenerated: true,
+      };
+      try {
+        report.persistence = await persistClientGenerationReport(report);
+      } catch (error) {
+        report.persistence = { ok: false, error: String(error?.message || error) };
+      }
+      publishClientGenerationStatus(report);
+      return report;
+    }
+
+    const last = chat[chat.length - 1];
+    if (
+      last?.is_user !== true ||
+      String(last?.mes || '').trim() !== request.marker
+    ) {
+      throw new Error('Control user marker must be the latest chat message.');
+    }
+
+    const beforeCount = chat.length;
+    await Generate('normal');
+
+    await waitFor(
+      () => chat
+        .slice(markerIndex + 1)
+        .some((entry) => entry?.is_user === false && String(entry?.mes || '').trim()),
+      180000,
+      250,
+    );
+
+    const assistantMessagePresent = chat
+      .slice(markerIndex + 1)
+      .some((entry) => entry?.is_user === false && String(entry?.mes || '').trim());
+
+    const report = {
+      ...baseReport,
+      ok: assistantMessagePresent && chat.length > beforeCount,
+      generatedAt: new Date().toISOString(),
+      beforeCount,
+      afterCount: chat.length,
+      assistantMessagePresent,
+    };
+    if (!report.ok) {
+      report.error = 'Generate completed without a persisted assistant message.';
+    }
+
+    try {
+      report.persistence = await persistClientGenerationReport(report);
+    } catch (error) {
+      report.persistence = { ok: false, error: String(error?.message || error) };
+    }
+    publishClientGenerationStatus(report);
+    return report;
+  } catch (error) {
+    const report = {
+      ...baseReport,
+      generatedAt: new Date().toISOString(),
+      beforeCount: Array.isArray(chat) ? chat.length : 0,
+      afterCount: Array.isArray(chat) ? chat.length : 0,
+      error: String(error?.message || error),
+    };
+    try {
+      report.persistence = await persistClientGenerationReport(report);
+    } catch (persistError) {
+      report.persistence = { ok: false, error: String(persistError?.message || persistError) };
+    }
+    publishClientGenerationStatus(report);
+    return report;
+  }
 }
 
 async function runPreflight() {
@@ -240,6 +438,7 @@ async function bootstrap() {
     }
 
     publishStatus(report);
+    await runClientGenerationDiagnostic(clientGenerationRequest, report);
     console.info('[Nemo Full Bootstrap]', report);
   } catch (error) {
     const report = {
@@ -256,6 +455,7 @@ async function bootstrap() {
     }
 
     publishStatus(report);
+    await runClientGenerationDiagnostic(clientGenerationRequest, report);
     console.error('[Nemo Full Bootstrap]', error);
   }
 }
