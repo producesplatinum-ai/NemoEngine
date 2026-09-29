@@ -56,10 +56,20 @@ test('buildDaryaWorldInfo contains the required GitHub-backed behavior layers', 
   assert.ok(entries.some(x => String(x.content).includes(revision)));
 });
 
-test('shouldRefreshDarya refreshes on source revision changes only', () => {
-  assert.equal(shouldRefreshDarya(null, revision), true);
-  assert.equal(shouldRefreshDarya({ revision }, revision), false);
-  assert.equal(shouldRefreshDarya({ revision: 'older' }, revision), true);
+test('shouldRefreshDarya refreshes on source or card revision changes', () => {
+  assert.equal(shouldRefreshDarya(null, revision, 'card-v2'), true);
+  assert.equal(
+    shouldRefreshDarya({ revision, cardRevision: 'card-v2' }, revision, 'card-v2'),
+    false,
+  );
+  assert.equal(
+    shouldRefreshDarya({ revision: 'older', cardRevision: 'card-v2' }, revision, 'card-v2'),
+    true,
+  );
+  assert.equal(
+    shouldRefreshDarya({ revision, cardRevision: 'card-v1' }, revision, 'card-v2'),
+    true,
+  );
 });
 
 test('writeTextIfChanged is additive and does not rewrite identical existing content', () => {
