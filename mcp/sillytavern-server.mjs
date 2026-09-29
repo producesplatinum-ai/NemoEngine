@@ -1,4 +1,4 @@
-import { createHash, randomUUID } from 'node:crypto';
+import { createHash, randomUUID, timingSafeEqual } from 'node:crypto';
 import { createServer } from 'node:http';
 import { resolve } from 'node:path';
 import { Readable } from 'node:stream';
@@ -179,6 +179,15 @@ function safeErrorBody(text) {
   return String(text || '').replace(/\s+/g, ' ').trim().slice(0, 1_000);
 }
 
+export function isDaryaImportAuthorized(suppliedToken, expectedToken) {
+  const supplied = String(suppliedToken || '').trim();
+  const expected = String(expectedToken || '').trim();
+  if (supplied.length < 16 || expected.length < 16) return false;
+  const a = createHash('sha256').update(supplied, 'utf8').digest();
+  const b = createHash('sha256').update(expected, 'utf8').digest();
+  return timingSafeEqual(a, b);
+}
+
 export class SillyTavernClient {
   constructor({
     baseUrl,
@@ -310,6 +319,71 @@ export class SillyTavernClient {
     } catch {
       return text;
     }
+  }
+
+  async postRaw(pathname, body, extraHeaders = {}) {
+    await this.bootstrapSession();
+
+    if (!Buffer.isBuffer(body)) {
+      throw new Error('Raw request body must be a Buffer.');
+    }
+
+    const headers = {
+      ...this.authHeaders(),
+      accept: 'application/json',
+      'content-type': 'application/octet-stream',
+      'x-csrf-token': this.csrfToken,
+      ...extraHeaders,
+    };
+    if (this.cookie) headers.cookie = this.cookie;
+
+    const response = await this.fetchImpl(`${this.baseUrl}${pathname}`, {
+      method: 'POST',
+      headers,
+      body,
+    });
+
+    if (!response.ok) {
+      const bodyText = await response.text();
+      throw new Error(
+        `SillyTavern ${pathname} failed with HTTP ${response.status}: ${safeErrorBody(bodyText)}`,
+      );
+    }
+
+    const contentType = response.headers?.get?.('content-type') || '';
+    if (contentType.includes('application/json')) {
+      return response.json();
+    }
+
+    const text = await response.text();
+    try {
+      return JSON.parse(text);
+    } catch {
+      return text;
+    }
+  }
+
+  async importDaryaSourceFile({ relativePath, sha256, body, token }) {
+    const normalizedPath = String(relativePath || '').trim();
+    const normalizedSha = String(sha256 || '').trim().toLowerCase();
+    const normalizedToken = String(token || '').trim();
+
+    if (!normalizedPath) throw new Error('relativePath is required.');
+    if (!/^[0-9a-f]{64}$/.test(normalizedSha)) {
+      throw new Error('sha256 must be a 64-character hex digest.');
+    }
+    if (!Buffer.isBuffer(body)) throw new Error('body must be a Buffer.');
+    if (normalizedToken.length < 16) throw new Error('Darya import token is unavailable.');
+
+    return this.postRaw(
+      '/api/plugins/darya-source-import/file',
+      body,
+      {
+        'x-darya-import-token': normalizedToken,
+        'x-darya-path': normalizedPath,
+        'x-darya-sha256': normalizedSha,
+      },
+    );
   }
 
   async status() {
@@ -1024,6 +1098,32 @@ export function parseMobileWriteBody(contentType, text) {
   throw new Error('Unsupported content type.');
 }
 
+function readRawRequestBody(req, maxBytes = 100 * 1024 * 1024) {
+  return new Promise((resolveBody, rejectBody) => {
+    const chunks = [];
+    let size = 0;
+    let tooLarge = false;
+
+    req.on('data', (chunk) => {
+      size += chunk.length;
+      if (size > maxBytes) {
+        tooLarge = true;
+        return;
+      }
+      chunks.push(Buffer.from(chunk));
+    });
+
+    req.on('end', () => {
+      if (tooLarge) {
+        rejectBody(new Error('Request body too large.'));
+        return;
+      }
+      resolveBody(Buffer.concat(chunks));
+    });
+    req.on('error', rejectBody);
+  });
+}
+
 function escapeHtmlAttribute(value) {
   return String(value)
     .replaceAll('&', '&amp;')
@@ -1512,6 +1612,7 @@ export function startHttpServer({
     const pathname = requestTarget.split('?', 1)[0];
     const bootstrapPath = `${MOBILE_REST_BASE_PATH}/client-bootstrap`;
     const clientGeneratePath = `${MOBILE_REST_BASE_PATH}/client-generate`;
+    const daryaSourceFilePath = `${MOBILE_REST_BASE_PATH}/darya-source-file`;
 
     if (pathname === bootstrapPath) {
       if (req.method !== 'GET') {
@@ -1570,6 +1671,58 @@ export function startHttpServer({
             message.includes(' are required.') ||
             message === 'Invalid JSON body.' ||
             message === 'Unsupported content type.' ||
+            message === 'Request body too large.';
+          res.statusCode = badRequest ? 400 : 503;
+          res.setHeader('content-type', 'application/json; charset=utf-8');
+          res.setHeader('cache-control', 'no-store');
+          res.end(JSON.stringify({ ok: false, error: message }));
+        });
+      return;
+    }
+
+    if (pathname === daryaSourceFilePath) {
+      if (req.method !== 'POST') {
+        res.statusCode = 405;
+        res.setHeader('allow', 'POST');
+        res.setHeader('content-type', 'application/json; charset=utf-8');
+        res.end(JSON.stringify({ ok: false, error: 'POST required.' }));
+        return;
+      }
+
+      const expectedToken = process.env.DARYA_IMPORT_TOKEN || '';
+      const suppliedToken = String(req.headers['x-darya-import-token'] || '');
+      if (!isDaryaImportAuthorized(suppliedToken, expectedToken)) {
+        res.statusCode = 401;
+        res.setHeader('content-type', 'application/json; charset=utf-8');
+        res.setHeader('cache-control', 'no-store');
+        res.end(JSON.stringify({ ok: false, error: 'unauthorized' }));
+        return;
+      }
+
+      const relativePath = String(req.headers['x-darya-path'] || '').trim();
+      const sha256 = String(req.headers['x-darya-sha256'] || '').trim();
+
+      void readRawRequestBody(req)
+        .then((body) =>
+          getClient().importDaryaSourceFile({
+            relativePath,
+            sha256,
+            body,
+            token: expectedToken,
+          }),
+        )
+        .then((result) => {
+          res.statusCode = 200;
+          res.setHeader('content-type', 'application/json; charset=utf-8');
+          res.setHeader('cache-control', 'no-store');
+          res.end(JSON.stringify(result));
+        })
+        .catch((error) => {
+          const message = error instanceof Error ? error.message : String(error);
+          const badRequest =
+            message.includes(' is required.') ||
+            message.includes('must be a 64-character hex digest') ||
+            message.includes('body must be a Buffer') ||
             message === 'Request body too large.';
           res.statusCode = badRequest ? 400 : 503;
           res.setHeader('content-type', 'application/json; charset=utf-8');
