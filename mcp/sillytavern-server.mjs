@@ -23,6 +23,12 @@ import {
   listDaryaNemoProfiles,
 } from './darya-nemo-profile-library.mjs';
 
+import {
+  buildExactNemoPreset,
+  listExactNemoCatalog,
+  semanticSha256,
+} from './nemo-exact-catalog.mjs';
+
 const DEFAULT_PORT = 8790;
 const MAX_TOOL_TEXT = 200_000;
 
@@ -371,6 +377,58 @@ export class SillyTavernClient {
     return {
       ok: true,
       installed: results.length,
+      profiles: results,
+    };
+  }
+
+  listExactNemoCatalog() {
+    return listExactNemoCatalog();
+  }
+
+  async installExactNemoCatalogEntry(entryId) {
+    const built = await buildExactNemoPreset(entryId);
+    const saved = await this.saveOpenAiPreset({
+      name: built.entry.name,
+      preset: built.preset,
+    });
+    return {
+      ok: true,
+      entryId,
+      kind: built.entry.kind,
+      family: built.entry.family,
+      name: saved.name,
+      identifier: built.entry.identifier || '',
+      group: built.entry.group || '',
+      sourceRawSha256: built.sourceRawSha256,
+      sourceSemanticSha256: built.sourceSemanticSha256,
+      presetSemanticSha256: built.presetSemanticSha256,
+      semanticExact:
+        built.entry.kind === 'canonical'
+          ? built.sourceSemanticSha256 === built.presetSemanticSha256
+          : true,
+      activePrompts: Array.isArray(built.preset?.prompt_order?.[0]?.order)
+        ? built.preset.prompt_order[0].order.filter((entry) => entry.enabled).length
+        : null,
+    };
+  }
+
+  async installAllExactNemoCatalog() {
+    const catalog = listExactNemoCatalog();
+    const results = [];
+    for (const entry of catalog) {
+      results.push(await this.installExactNemoCatalogEntry(entry.id));
+    }
+    return {
+      ok: true,
+      installed: results.length,
+      verified: results.filter((item) => item.semanticExact).length,
+      semanticManifestSha256: semanticSha256(
+        results.map((item) => ({
+          entryId: item.entryId,
+          name: item.name,
+          presetSemanticSha256: item.presetSemanticSha256,
+        })),
+      ),
       profiles: results,
     };
   }
@@ -959,6 +1017,7 @@ export function parseMobileWriteBody(contentType, text) {
     if (params.has('name')) parsed.name = params.get('name') || '';
     if (params.has('presetJson')) parsed.presetJson = params.get('presetJson') || '';
     if (params.has('profileId')) parsed.profileId = params.get('profileId') || '';
+    if (params.has('entryId')) parsed.entryId = params.get('entryId') || '';
     return parsed;
   }
 
@@ -971,6 +1030,24 @@ function escapeHtmlAttribute(value) {
     .replaceAll('"', '&quot;')
     .replaceAll('<', '&lt;')
     .replaceAll('>', '&gt;');
+}
+
+export function mobileNemoExactInstallFormHtml(actionPath) {
+  const action = escapeHtmlAttribute(actionPath);
+  return `<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SillyTavern Mobile Exact Nemo Install</title>
+</head>
+<body>
+<form method="post" action="${action}">
+<label>entryId <input name="entryId" autocomplete="off" required></label>
+<button type="submit">Install exact Nemo preset</button>
+</form>
+</body>
+</html>`;
 }
 
 export function mobileNemoProfileInstallFormHtml(actionPath) {
@@ -1530,7 +1607,8 @@ export function startHttpServer({
         mobileRoute.kind === 'generate' ||
         mobileRoute.kind === 'character_create' ||
         mobileRoute.kind === 'preset_save' ||
-        mobileRoute.kind === 'nemo_profile_install';
+        mobileRoute.kind === 'nemo_profile_install' ||
+        mobileRoute.kind === 'nemo_exact_install';
 
       if (mobileWriteRoute && req.method === 'GET') {
         res.statusCode = 200;
@@ -1555,9 +1633,13 @@ export function startHttpServer({
                   ? mobileNemoProfileInstallFormHtml(
                       `${MOBILE_REST_BASE_PATH}/nemo-profile-install`,
                     )
-                  : mobileGenerateFormHtml(
-                      `${MOBILE_REST_BASE_PATH}/generate`,
-                    ),
+                  : mobileRoute.kind === 'nemo_exact_install'
+                    ? mobileNemoExactInstallFormHtml(
+                        `${MOBILE_REST_BASE_PATH}/nemo-exact-install`,
+                      )
+                    : mobileGenerateFormHtml(
+                        `${MOBILE_REST_BASE_PATH}/generate`,
+                      ),
         );
         return;
       }
