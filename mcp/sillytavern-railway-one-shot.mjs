@@ -107,6 +107,7 @@ function routeFor(command) {
         method: 'POST',
         suffix: '/turn',
         body: {
+          ...(command.nonce ? { nonce: command.nonce } : {}),
           avatarUrl: command.avatarUrl,
           fileName: command.fileName,
           userText: command.userText,
@@ -117,6 +118,7 @@ function routeFor(command) {
         method: 'POST',
         suffix: '/generate',
         body: {
+          ...(command.nonce ? { nonce: command.nonce } : {}),
           avatarUrl: command.avatarUrl,
           fileName: command.fileName,
           source: command.source,
