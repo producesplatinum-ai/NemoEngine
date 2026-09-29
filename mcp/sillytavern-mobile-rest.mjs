@@ -1,3 +1,4 @@
+// Mobile REST gateway for SillyTavern Mobile; write routes stay explicit and payload-validated.
 function normalizeAbsolutePath(value, label) {
   const text = String(value || '').trim();
   if (!text.startsWith('/') || text.includes('#')) {
