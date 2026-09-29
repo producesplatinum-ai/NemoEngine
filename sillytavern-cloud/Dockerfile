@@ -9,6 +9,8 @@ COPY seed-darya.mjs /usr/local/bin/seed-darya.mjs
 COPY seed-darya.mjs /tmp/seed-darya.mjs
 COPY darya-source-import.mjs /tmp/darya-source-import.mjs
 COPY darya-source-import.mjs /usr/local/share/darya-source-import.mjs
+COPY import-darya-url-jobs.mjs /usr/local/bin/import-darya-url-jobs.mjs
+COPY import-darya-url-jobs.mjs /tmp/import-darya-url-jobs.mjs
 COPY seed-connection-profiles.mjs /usr/local/bin/seed-connection-profiles.mjs
 COPY seed-nemoengine.mjs /usr/local/bin/seed-nemoengine.mjs
 COPY optimize-nemo-runtime.mjs /usr/local/bin/optimize-nemo-runtime.mjs
