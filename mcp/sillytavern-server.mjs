@@ -1,4 +1,4 @@
-import { createHash } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import { createServer } from 'node:http';
 import { resolve } from 'node:path';
 import { Readable } from 'node:stream';
@@ -76,6 +76,42 @@ export function sanitizeNemoClientRuntimeReport(report) {
     vex,
     rendering,
     persistence,
+  };
+}
+
+export function sanitizeNemoClientGenerationReport(report) {
+  if (!report || typeof report !== 'object' || Array.isArray(report)) {
+    throw new Error('Invalid Nemo client generation report.');
+  }
+
+  const {
+    ok = false,
+    requestId = '',
+    generatedAt = '',
+    preset = '',
+    avatarUrl = '',
+    fileName = '',
+    marker = '',
+    beforeCount = 0,
+    afterCount = 0,
+    assistantMessagePresent = false,
+    bootstrapImportedAt = '',
+    error = '',
+  } = report;
+
+  return {
+    ok: Boolean(ok),
+    requestId,
+    generatedAt,
+    preset,
+    avatarUrl,
+    fileName,
+    marker,
+    beforeCount,
+    afterCount,
+    assistantMessagePresent: Boolean(assistantMessagePresent),
+    bootstrapImportedAt,
+    error,
   };
 }
 
@@ -507,6 +543,23 @@ export class SillyTavernClient {
     throw fileError;
   }
 
+  async getNemoClientGenerationStatus() {
+    const reportPath = '/user/files/nemo-client-generation-report.json';
+    try {
+      const report = await this.getJson(reportPath);
+      return {
+        available: true,
+        ...sanitizeNemoClientGenerationReport(report),
+      };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      if (message.includes(reportPath) && message.includes('HTTP 404')) {
+        return { available: false };
+      }
+      throw error;
+    }
+  }
+
   async getNemoFullStatus() {
     const server = await this.getNemoRuntimeStatus();
     const clientReport = await this.getNemoClientRuntimeStatus();
@@ -770,6 +823,7 @@ export function parseMobileWriteBody(contentType, text) {
     };
     if (params.has('source')) parsed.source = params.get('source') || '';
     if (params.has('model')) parsed.model = params.get('model') || '';
+    if (params.has('marker')) parsed.marker = params.get('marker') || '';
     return parsed;
   }
 
@@ -802,6 +856,48 @@ export function mobileTurnFormHtml(actionPath) {
 </form>
 </body>
 </html>`;
+}
+
+export function mobileClientGenerateFormHtml(actionPath) {
+  const action = escapeHtmlAttribute(actionPath);
+  return `<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SillyTavern Nemo Client Generate</title>
+</head>
+<body>
+<form method="post" action="${action}">
+<label>avatarUrl <input name="avatarUrl" autocomplete="off" required></label>
+<label>fileName <input name="fileName" autocomplete="off" required></label>
+<label>marker <input name="marker" autocomplete="off" required></label>
+<button type="submit">Run one Nemo client generation</button>
+</form>
+</body>
+</html>`;
+}
+
+export function buildClientGenerateRedirect({
+  avatarUrl,
+  fileName,
+  marker,
+  requestId,
+}) {
+  const values = [avatarUrl, fileName, marker, requestId]
+    .map((value) => String(value || '').trim());
+  if (values.some((value) => !value)) {
+    throw new Error('avatarUrl, fileName, marker, and requestId are required.');
+  }
+
+  const params = new URLSearchParams({
+    nemoClientGenerate: '1',
+    avatarUrl: values[0],
+    fileName: values[1],
+    marker: values[2],
+    requestId: values[3],
+  });
+  return `/?${params.toString()}`;
 }
 
 export function mobileGenerateFormHtml(actionPath) {
@@ -1147,6 +1243,7 @@ export function startHttpServer({
     const requestTarget = req.url || '/';
     const pathname = requestTarget.split('?', 1)[0];
     const bootstrapPath = `${MOBILE_REST_BASE_PATH}/client-bootstrap`;
+    const clientGeneratePath = `${MOBILE_REST_BASE_PATH}/client-generate`;
 
     if (pathname === bootstrapPath) {
       if (req.method !== 'GET') {
@@ -1160,6 +1257,57 @@ export function startHttpServer({
       res.setHeader('set-cookie', createBootstrapProxyCookie(MCP_ENDPOINT_PATH));
       res.setHeader('location', '/');
       res.end();
+      return;
+    }
+
+    if (pathname === clientGeneratePath) {
+      if (req.method === 'GET') {
+        res.statusCode = 200;
+        res.setHeader('content-type', 'text/html; charset=utf-8');
+        res.setHeader('cache-control', 'no-store');
+        res.setHeader('referrer-policy', 'no-referrer');
+        res.setHeader(
+          'content-security-policy',
+          "default-src 'none'; style-src 'unsafe-inline'; form-action 'self'; base-uri 'none'",
+        );
+        res.end(mobileClientGenerateFormHtml(clientGeneratePath));
+        return;
+      }
+
+      if (req.method !== 'POST') {
+        res.statusCode = 405;
+        res.setHeader('allow', 'GET, POST');
+        res.end('GET or POST required.');
+        return;
+      }
+
+      void readMobileWriteRequestBody(req)
+        .then((body) => {
+          const target = buildClientGenerateRedirect({
+            avatarUrl: body?.avatarUrl,
+            fileName: body?.fileName,
+            marker: body?.marker,
+            requestId: randomUUID(),
+          });
+          res.statusCode = 303;
+          res.setHeader('cache-control', 'no-store');
+          res.setHeader('referrer-policy', 'no-referrer');
+          res.setHeader('set-cookie', createBootstrapProxyCookie(MCP_ENDPOINT_PATH));
+          res.setHeader('location', target);
+          res.end();
+        })
+        .catch((error) => {
+          const message = error instanceof Error ? error.message : String(error);
+          const badRequest =
+            message.includes(' are required.') ||
+            message === 'Invalid JSON body.' ||
+            message === 'Unsupported content type.' ||
+            message === 'Request body too large.';
+          res.statusCode = badRequest ? 400 : 503;
+          res.setHeader('content-type', 'application/json; charset=utf-8');
+          res.setHeader('cache-control', 'no-store');
+          res.end(JSON.stringify({ ok: false, error: message }));
+        });
       return;
     }
 
