@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
 
 const seeder = process.env.NEMO_SEED_SCRIPT || '/usr/local/bin/seed-nemoengine.mjs';
@@ -16,10 +17,41 @@ const PRESETS = [
 ];
 
 function fakePreset(name) {
+  const special = new Map([
+    [58, ['v11-327-vex-lustful-vex', '🎭 Lustful Vex']],
+    [60, ['v11-305-vex-narrative-vex', '🎭 Narrative Vex']],
+    [65, ['v11-309-vex-sensory-vex', '🎭 Sensory Vex']],
+    [74, ['v11-329-vex-gooner-vex', '🎭 Gooner Vex']],
+    [287, ['v11-611-augment-manipulation-realism', '😱 Augment: Manipulation Realism']],
+    [288, ['v11-613-augment-psychological-emotional-realism', '🧠 Augment: Psychological & Emotional Realism']],
+    [406, ['v11-176-nsfw-dirty-talk', '🔞 Dirty Talk [V6]']],
+    [407, ['v11-177-nsfw-dom-language', '🔞 Dom Language [V6]']],
+    [408, ['v11-178-nsfw-gooner-protocol', '🔞 Gooner Protocol']],
+    [410, ['v11-180-nsfw-nsfw-core', '🔞 NSFW Core']],
+    [412, ['v11-182-nsfw-proactive-partners', '🔞 Proactive Partners']],
+    [443, ['main', 'Main Prompt']],
+    [455, ['v11-639-fetish-humiliation', '🎀 Humiliation']],
+    [456, ['v11-640-fetish-joi', '🎀 JOI']],
+  ]);
+  const prompts = Array.from({ length: 458 }, (_, i) => {
+    const [identifier, promptName] = special.get(i) ?? [`p-${i}`, `Prompt ${i}`];
+    return { identifier, name: promptName };
+  });
+  const enabledIndices = name.includes('Psychology Humiliation JOI')
+    ? new Set([60, 287, 288, 406, 407, 410, 443, 455, 456])
+    : name.includes('Gooner')
+      ? new Set([74, 408, 410, 412, 443])
+      : new Set([60, 410, 443]);
   return {
     name,
-    prompts: Array.from({ length: 458 }, (_, i) => ({ identifier: `p-${i}`, name: `Prompt ${i}` })),
-    prompt_order: [{ character_id: 100001, order: [{ identifier: 'p-0', enabled: true }] }],
+    prompts,
+    prompt_order: [{
+      character_id: 100001,
+      order: prompts.map((prompt, index) => ({
+        identifier: prompt.identifier,
+        enabled: enabledIndices.has(index),
+      })),
+    }],
     extensions: {
       regex_scripts: Array.from({ length: 97 }, (_, i) => ({ id: `rx-${i}`, scriptName: `Regex ${i}` })),
     },
@@ -92,6 +124,7 @@ function runSeeder(fixture) {
       NEMOENGINE_PRESET_SOURCE_DIR: fixture.sourceDir,
       NEMO_PRESET_EXT_SOURCE_DIR: fixture.extSource,
       NEMOENGINE_SKIP_EXTENSION_GIT_UPDATE: '1',
+      NEMO_ACTIVE_PRESET: 'Nemo Engine 11.5.2 - Ready RU Psychology Humiliation JOI RP',
     },
     encoding: 'utf8',
   });
@@ -112,16 +145,37 @@ test('installs NemoEngine 11.5.2, enables full NemoPresetExt runtime, and overla
     assert.equal(preset.extensions.regex_scripts.length, 97);
   }
 
+  const derived = [
+    ['Nemo Engine 11.5.2 - Ready RU Sensory Psychology Humiliation JOI RP', 65],
+    ['Nemo Engine 11.5.2 - Ready RU Lustful Psychology Humiliation JOI RP', 58],
+  ];
+  for (const [name, vexIndex] of derived) {
+    const file = path.join(presetDir, `${name}.json`);
+    assert.equal(fs.existsSync(file), true, `missing derived preset ${name}`);
+    const preset = JSON.parse(fs.readFileSync(file, 'utf8'));
+    const order = preset.prompt_order[0].order;
+    assert.equal(order[vexIndex].enabled, true, `${name}: target Vex is off`);
+    for (const index of [43, ...Array.from({ length: 31 }, (_, i) => 45 + i)]) {
+      if (index !== vexIndex) assert.equal(order[index].enabled, false, `${name}: conflicting Vex at ${index}`);
+    }
+    for (const index of [287, 288, 406, 407, 410, 443, 455, 456]) {
+      assert.equal(order[index].enabled, true, `${name}: required module ${index} is off`);
+    }
+  }
+
   const settings = JSON.parse(fs.readFileSync(path.join(fixture.userDataDir, 'settings.json'), 'utf8'));
   assert.equal(settings.marker, 'keep-me');
-  assert.equal(settings.oai_settings.preset_settings_openai, 'Nemo Engine 11.5.2 - Ready RU Gooner RP');
+  assert.equal(settings.oai_settings.preset_settings_openai, 'Nemo Engine 11.5.2 - Ready RU Psychology Humiliation JOI RP');
   assert.equal(settings.oai_settings.chat_completion_source, 'groq');
   assert.equal(settings.oai_settings.groq_model, 'openai/gpt-oss-120b');
   assert.equal(settings.extension_settings.connectionManager.selectedProfile, 'groq-profile');
 
   const allowed = settings.extension_settings.preset_allowed_regex.openai;
   assert.equal(allowed.includes('Existing Preset'), true);
-  for (const name of PRESETS) {
+  for (const name of [...PRESETS,
+    'Nemo Engine 11.5.2 - Ready RU Sensory Psychology Humiliation JOI RP',
+    'Nemo Engine 11.5.2 - Ready RU Lustful Psychology Humiliation JOI RP',
+  ]) {
     assert.equal(allowed.includes(name), true, `regex not allowed for ${name}`);
   }
 
@@ -185,4 +239,21 @@ test('is idempotent and fails closed on structurally invalid Nemo preset input',
   const settingsAfterFailure = JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
   assert.equal(settingsAfterFailure.oai_settings.chat_completion_source, 'groq');
   assert.equal(settingsAfterFailure.extension_settings.connectionManager.selectedProfile, 'groq-profile');
+});
+
+
+test('production Nemo Full Bootstrap follows the selected supported preset instead of hardcoding Gooner', () => {
+  const here = path.dirname(fileURLToPath(import.meta.url));
+  const script = fs.readFileSync(path.join(here, 'nemo-full-bootstrap', 'index.js'), 'utf8');
+
+  assert.doesNotMatch(
+    script,
+    /const ACTIVE_PRESET = 'Nemo Engine 11\.5\.2 - Ready RU Gooner RP';/,
+  );
+  assert.match(script, /SUPPORTED_PRESETS/);
+  assert.match(script, /preset_settings_openai/);
+  assert.match(script, /Ready RU Gooner RP/);
+  assert.match(script, /Ready RU Psychology Humiliation JOI RP/);
+  assert.match(script, /Ready RU Sensory Psychology Humiliation JOI RP/);
+  assert.match(script, /Ready RU Lustful Psychology Humiliation JOI RP/);
 });
