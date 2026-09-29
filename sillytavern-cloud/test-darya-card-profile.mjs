@@ -15,7 +15,7 @@ test('canonical Darya card uses the GitHub-owned visible identity without profil
   assert.equal(card.spec, 'chara_card_v3');
   assert.equal(card.spec_version, '3.0');
   assert.equal(card.data.name, 'Дарья');
-  assert.equal(card.data.character_version, 'DARYA_ST_V6_GITHUB_REGISTERS');
+  assert.equal(card.data.character_version, 'DARYA_ST_V7_GITHUB_CALIBRATION');
   assert.equal(card.data.extensions.world, 'Darya');
   assert.equal(card.data.extensions.darya_source_revision, revision);
   assert.equal(card.data.extensions.darya_speech_passport_id, 'DARYA_SPEECH_PASSPORT_2026_09_12_R4');
@@ -47,6 +47,9 @@ test('canonical Darya lorebook includes execution lock, voice continuity and lon
   const registers = entries.find(x => x.comment === 'Darya speech register routing');
   const visibility = entries.find(x => x.comment === 'Darya social visibility and sting axis');
   const reaction = entries.find(x => x.comment === 'Darya reaction and social effect');
+  const recalibration = entries.find(x => x.comment === 'Darya negative feedback recalibration');
+  const lengthScaling = entries.find(x => x.comment === 'Darya oral length scaling');
+  const modalPrecision = entries.find(x => x.comment === 'Darya modal confidence and precision');
 
   assert.ok(practice);
   assert.equal(practice.constant, true);
@@ -97,10 +100,16 @@ test('canonical Darya lorebook includes execution lock, voice continuity and lon
   assert.match(reaction.content, /ролев|игр|JOI/i);
   assert.match(reaction.content, /свеж.*поправ/i);
 
-  assert.ok(entries.length >= 19);
+  assert.ok(recalibration);
+  assert.match(recalibration.content, /не так|не то|не похоже/i);
+  assert.ok(lengthScaling);
+  assert.match(lengthScaling.content, /MICRO|STANDARD|EXPANDED/i);
+  assert.ok(modalPrecision);
+  assert.match(modalPrecision.content, /охват|субъект|объект|принадлеж/i);
+  assert.ok(entries.length >= 22);
 });
 
-test('canonical Darya V6 stays source-pure and preserves evidence-backed precision mechanics', () => {
+test('canonical Darya V7 stays source-pure and preserves evidence-backed precision mechanics', () => {
   const card = buildDaryaCharacter({ revision, sourceMirrored: true });
   const world = buildDaryaWorldInfo({ revision, sourceMirrored: true });
   const entries = Object.values(world.entries);
@@ -166,7 +175,7 @@ test('canonical migration upgrades Darya-owned fields but preserves local extens
   assert.equal(patched.data.post_history_instructions, canonical.data.post_history_instructions);
   assert.deepEqual(patched.data.alternate_greetings, canonical.data.alternate_greetings);
   assert.deepEqual(patched.data.tags, canonical.data.tags);
-  assert.equal(patched.data.character_version, 'DARYA_ST_V6_GITHUB_REGISTERS');
+  assert.equal(patched.data.character_version, 'DARYA_ST_V7_GITHUB_CALIBRATION');
   assert.equal(patched.data.extensions.fav, true);
   assert.deepEqual(patched.data.extensions.custom_local_extension, { keep: 1 });
   assert.equal(patched.data.extensions.world, 'Darya');
