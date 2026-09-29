@@ -296,6 +296,61 @@ export class SillyTavernClient {
     });
   }
 
+  async appendUserMessage({ avatarUrl, fileName, userText }) {
+    const character = await this.getCharacter(avatarUrl);
+    const fallbackName = String(avatarUrl).replace(/\.png$/i, '');
+    const characterName = String(
+      character?.name || character?.data?.name || fallbackName || 'Assistant',
+    ).trim();
+
+    const existing = await this.getChat({ avatarUrl, fileName });
+    const chat = Array.isArray(existing) ? existing.slice() : [];
+    const first = chat[0];
+    const hasHeader =
+      first &&
+      typeof first === 'object' &&
+      !Array.isArray(first) &&
+      (
+        Object.hasOwn(first, 'chat_metadata') ||
+        Object.hasOwn(first, 'user_name') ||
+        Object.hasOwn(first, 'character_name')
+      );
+
+    if (!hasHeader) {
+      chat.unshift({
+        user_name: 'You',
+        character_name: characterName,
+        create_date: new Date().toISOString(),
+        chat_metadata: {},
+      });
+    }
+
+    chat.push({
+      name: 'You',
+      is_user: true,
+      is_system: false,
+      send_date: new Date().toISOString(),
+      mes: String(userText),
+      extra: {},
+    });
+
+    await this.post('/api/chats/save', {
+      ch_name: characterName,
+      file_name: fileName,
+      chat,
+      avatar_url: avatarUrl,
+    });
+
+    return {
+      ok: true,
+      saved: true,
+      avatarUrl,
+      fileName,
+      characterName,
+      messageCount: chat.length,
+    };
+  }
+
   async generateChatCompletion({ source, model, expected }) {
     const payload = await this.post('/api/backends/chat-completions/generate', {
       chat_completion_source: source,
@@ -432,6 +487,48 @@ function clientFromEnv() {
 
 function delay(ms) {
   return new Promise((resolveDelay) => setTimeout(resolveDelay, ms));
+}
+
+function readJsonRequestBody(req, maxBytes = 64 * 1024) {
+  return new Promise((resolveBody, rejectBody) => {
+    const chunks = [];
+    let size = 0;
+    let tooLarge = false;
+
+    req.on('data', (chunk) => {
+      size += chunk.length;
+      if (size > maxBytes) {
+        tooLarge = true;
+        return;
+      }
+      chunks.push(chunk);
+    });
+
+    req.on('end', () => {
+      if (tooLarge) {
+        rejectBody(new Error('Request body too large.'));
+        return;
+      }
+
+      const text = Buffer.concat(chunks).toString('utf8').trim();
+      if (!text) {
+        resolveBody({});
+        return;
+      }
+
+      try {
+        const value = JSON.parse(text);
+        if (!value || typeof value !== 'object' || Array.isArray(value)) {
+          throw new Error('Invalid JSON body.');
+        }
+        resolveBody(value);
+      } catch {
+        rejectBody(new Error('Invalid JSON body.'));
+      }
+    });
+
+    req.on('error', rejectBody);
+  });
 }
 
 export async function runProviderSmoke({
@@ -730,15 +827,27 @@ export function startHttpServer({
     );
 
     if (mobileRoute.kind !== 'not_found') {
-      if (req.method !== 'GET') {
+      const expectedMethod = mobileRoute.kind === 'turn' ? 'POST' : 'GET';
+      if (req.method !== expectedMethod) {
         res.statusCode = 405;
-        res.setHeader('allow', 'GET');
+        res.setHeader('allow', expectedMethod);
         res.setHeader('content-type', 'application/json; charset=utf-8');
-        res.end(JSON.stringify({ ok: false, error: 'GET required.' }));
+        res.end(JSON.stringify({
+          ok: false,
+          error: `${expectedMethod} required.`,
+        }));
         return;
       }
 
-      void executeMobileRestRoute(mobileRoute, getClient())
+      const runMobileRoute = async () => {
+        const body =
+          expectedMethod === 'POST'
+            ? await readJsonRequestBody(req)
+            : {};
+        return executeMobileRestRoute(mobileRoute, getClient(), body);
+      };
+
+      void runMobileRoute()
         .then((result) => {
           res.statusCode = 200;
           res.setHeader('content-type', 'application/json; charset=utf-8');
@@ -749,7 +858,10 @@ export function startHttpServer({
           const message = error instanceof Error ? error.message : String(error);
           const badRequest =
             message.includes(' is required.') ||
-            message.includes(' are required.');
+            message.includes(' are required.') ||
+            message.includes('must not be empty.') ||
+            message === 'Invalid JSON body.' ||
+            message === 'Request body too large.';
           res.statusCode = badRequest ? 400 : 503;
           res.setHeader('content-type', 'application/json; charset=utf-8');
           res.setHeader('cache-control', 'no-store');
