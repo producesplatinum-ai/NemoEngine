@@ -497,3 +497,46 @@ test('exact Nemo install rejects missing entry id', async () => {
     /entryId is required/,
   );
 });
+
+
+test('classifies exact Nemo activate route and dispatches one catalog entry', async () => {
+  const basePath = '/st-secret/mobile';
+  assert.deepEqual(
+    classifyMobileRestRequest('/st-secret/mobile/nemo-exact-activate', basePath),
+    { kind: 'nemo_exact_activate' },
+  );
+
+  const client = {
+    async activateExactNemoCatalogEntry(entryId) {
+      return {
+        ok: true,
+        entryId,
+        slotName: 'Nemo Exact Active',
+        storedPresetExact: true,
+        activeSettingsExact: true,
+      };
+    },
+  };
+
+  assert.deepEqual(
+    await executeMobileRestRoute(
+      { kind: 'nemo_exact_activate' },
+      client,
+      { entryId: 'canonical-ready-ru-gooner-rp' },
+    ),
+    {
+      ok: true,
+      entryId: 'canonical-ready-ru-gooner-rp',
+      slotName: 'Nemo Exact Active',
+      storedPresetExact: true,
+      activeSettingsExact: true,
+    },
+  );
+});
+
+test('exact Nemo activate rejects missing entry id', async () => {
+  await assert.rejects(
+    () => executeMobileRestRoute({ kind: 'nemo_exact_activate' }, {}, {}),
+    /entryId is required/,
+  );
+});
