@@ -3,7 +3,20 @@ import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 
 const NEMOENGINE_REF = '9a88242471b27670351ebbe2a62226714039964a';
-const ACTIVE_PRESET = 'Nemo Engine 11.5.2 - Ready RU Gooner RP';
+const GOONER_PRESET = 'Nemo Engine 11.5.2 - Ready RU Gooner RP';
+const PSYCHOLOGY_PRESET = 'Nemo Engine 11.5.2 - Ready RU Psychology Humiliation JOI RP';
+const SENSORY_PRESET = 'Nemo Engine 11.5.2 - Ready RU Sensory Psychology Humiliation JOI RP';
+const LUSTFUL_PRESET = 'Nemo Engine 11.5.2 - Ready RU Lustful Psychology Humiliation JOI RP';
+const SUPPORTED_ACTIVE_PRESETS = new Set([
+  GOONER_PRESET,
+  PSYCHOLOGY_PRESET,
+  SENSORY_PRESET,
+  LUSTFUL_PRESET,
+]);
+const ACTIVE_PRESET = String(process.env.NEMO_ACTIVE_PRESET || GOONER_PRESET).trim();
+if (!SUPPORTED_ACTIVE_PRESETS.has(ACTIVE_PRESET)) {
+  throw new Error(`Unsupported NEMO_ACTIVE_PRESET: ${ACTIVE_PRESET}`);
+}
 
 const PRESETS = [
   { name: 'Nemo Engine 11.5.2 - General RP', repoPath: 'Nemo Engine/Nemo Engine 11.5.2 - General RP.json' },
@@ -66,6 +79,69 @@ function validatePreset(name, text) {
   }
 
   return { preset, promptCount, regexCount };
+}
+
+const VEX_INDICES = [43, ...Array.from({ length: 31 }, (_, i) => 45 + i)];
+const PSYCHOLOGY_REQUIRED_INDICES = [287, 288, 406, 407, 410, 443, 455, 456];
+const GOONER_CONFLICT_INDICES = [74, 408, 412, 415, 416];
+
+function derivePsychologyVexVariant(baseItem, name, vexIndex) {
+  const preset = JSON.parse(JSON.stringify(baseItem.preset));
+  const idAt = index => preset.prompts[index]?.identifier;
+  const targetVex = idAt(vexIndex);
+  if (!targetVex || !VEX_INDICES.includes(vexIndex)) {
+    throw new Error(`Cannot derive ${name}: invalid Vex index ${vexIndex}`);
+  }
+
+  const vexIds = new Set(VEX_INDICES.map(idAt).filter(Boolean));
+  for (const profile of preset.prompt_order) {
+    if (!Array.isArray(profile?.order)) {
+      throw new Error(`Cannot derive ${name}: prompt_order is invalid`);
+    }
+    for (const entry of profile.order) {
+      if (vexIds.has(entry.identifier)) entry.enabled = entry.identifier === targetVex;
+    }
+
+    const enabled = new Set(profile.order.filter(entry => entry.enabled).map(entry => entry.identifier));
+    const activeVex = [...vexIds].filter(id => enabled.has(id));
+    if (activeVex.length !== 1 || activeVex[0] !== targetVex) {
+      throw new Error(`Cannot derive ${name}: Vex exclusivity failed`);
+    }
+    for (const index of PSYCHOLOGY_REQUIRED_INDICES) {
+      const id = idAt(index);
+      if (!id || !enabled.has(id)) {
+        throw new Error(`Cannot derive ${name}: required module at index ${index} is disabled`);
+      }
+    }
+    for (const index of GOONER_CONFLICT_INDICES) {
+      const id = idAt(index);
+      if (id && enabled.has(id)) {
+        throw new Error(`Cannot derive ${name}: conflicting Gooner module at index ${index} is enabled`);
+      }
+    }
+  }
+
+  preset.name = name;
+  preset.preset_name = name;
+  preset.nemo_merge_note = [
+    name,
+    `Derived from ${PSYCHOLOGY_PRESET}.`,
+    `Exactly one Vex persona is active: ${preset.prompts[vexIndex]?.name || targetVex}.`,
+    'Psychology, Dirty Talk, Dom Language, NSFW Core, Humiliation and JOI remain active.',
+    'Gooner Vex/Protocol, Proactive Partners, Slop and Masterpiece remain disabled in this profile.',
+  ].join('\n');
+
+  const text = JSON.stringify(preset, null, 2) + '\n';
+  return {
+    name,
+    repoPath: `derived:${name}`,
+    text,
+    preset,
+    promptCount: preset.prompts.length,
+    regexCount: Array.isArray(preset?.extensions?.regex_scripts)
+      ? preset.extensions.regex_scripts.length
+      : 0,
+  };
 }
 
 function writeAtomic(filePath, text, mode = 0o600) {
@@ -160,11 +236,11 @@ function overlayNemoPresetExtInstaller(activePresetText) {
     .replace(/const PRESET_VERSION = '[^']+';/, "const PRESET_VERSION = '11.5.2';")
     .replace(
       /const PRESET_NAME = .*?;\n/,
-      "const PRESET_NAME = 'Nemo Engine 11.5.2 - Ready RU Gooner RP';\n",
+      `const PRESET_NAME = '${ACTIVE_PRESET}';\\n`,
     );
 
   if (!patched.includes("const PRESET_VERSION = '11.5.2';") ||
-      !patched.includes("const PRESET_NAME = 'Nemo Engine 11.5.2 - Ready RU Gooner RP';")) {
+      !patched.includes(`const PRESET_NAME = '${ACTIVE_PRESET}';`)) {
     throw new Error('NemoPresetExt installer overlay could not be applied safely');
   }
 
@@ -172,10 +248,10 @@ function overlayNemoPresetExtInstaller(activePresetText) {
     writeAtomic(installerPath, patched);
   }
 
-  console.log('NemoPresetExt installer overlay: 11.5.2 Ready RU Gooner RP');
+  console.log(`NemoPresetExt installer overlay: 11.5.2 - ${ACTIVE_PRESET.replace('Nemo Engine 11.5.2 - ', '')}`);
 }
 
-function updateSettings() {
+function updateSettings(presetNames) {
   if (!fs.existsSync(settingsPath)) {
     throw new Error(`SillyTavern settings not found at ${settingsPath}`);
   }
@@ -212,7 +288,7 @@ function updateSettings() {
     ? settings.extension_settings.preset_allowed_regex.openai
     : [];
 
-  for (const { name } of PRESETS) {
+  for (const name of presetNames) {
     if (!allowed.includes(name)) {
       allowed.push(name);
       changed = true;
@@ -234,12 +310,21 @@ function updateSettings() {
 async function main() {
   const loaded = [];
 
-  // Fail closed: validate every source before mutating persistent SillyTavern state.
+  // Fail closed: validate every canonical source before mutating persistent SillyTavern state.
   for (const spec of PRESETS) {
     const text = await readPresetSource(spec);
     const validation = validatePreset(spec.name, text);
     loaded.push({ ...spec, text, ...validation });
   }
+
+  const psychology = loaded.find(item => item.name === PSYCHOLOGY_PRESET);
+  if (!psychology) {
+    throw new Error('Psychology/Humiliation/JOI NemoEngine preset was not loaded');
+  }
+  loaded.push(
+    derivePsychologyVexVariant(psychology, SENSORY_PRESET, 65),
+    derivePsychologyVexVariant(psychology, LUSTFUL_PRESET, 58),
+  );
 
   fs.mkdirSync(presetDir, { recursive: true });
   let presetWrites = 0;
@@ -258,10 +343,10 @@ async function main() {
     throw new Error('Active NemoEngine preset was not loaded');
   }
   overlayNemoPresetExtInstaller(active.text);
-  updateSettings();
+  updateSettings([...new Set(loaded.map(item => item.name))]);
 
   console.log(
-    `NemoEngine presets synced: ${PRESETS.map(x => x.name).join(', ')}` +
+    `NemoEngine presets synced: ${[...new Set(loaded.map(x => x.name))].join(', ')}` +
       ` (updated ${presetWrites})`,
   );
   console.log(`NemoPresetExt ready: ${manifest.version}`);
