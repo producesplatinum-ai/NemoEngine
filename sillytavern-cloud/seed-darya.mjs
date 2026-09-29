@@ -728,7 +728,7 @@ export function resolveDaryaAvatarPath({
   return fallbackAvatarPath;
 }
 
-export export async function getDaryaCardBasePng(sourceDir, existingCharacterPath = '') {
+export async function getDaryaCardBasePng(sourceDir, existingCharacterPath = '') {
   const sourceAvatarPath = path.join(
     sourceDir,
     'assets',
