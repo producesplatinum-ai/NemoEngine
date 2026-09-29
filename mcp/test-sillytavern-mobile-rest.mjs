@@ -254,3 +254,63 @@ test('mobile generate rejects missing chat identifiers', async () => {
     /avatarUrl and fileName are required/,
   );
 });
+
+
+test('classifies character create route and dispatches a parsed character card', async () => {
+  const basePath = '/st-secret/mobile';
+  assert.deepEqual(
+    classifyMobileRestRequest('/st-secret/mobile/character-create', basePath),
+    { kind: 'character_create' },
+  );
+
+  const calls = [];
+  const client = {
+    async createCharacter(input) {
+      calls.push(input);
+      return { ok: true, avatarUrl: 'Darya.png', characterName: 'Darya' };
+    },
+  };
+  const card = {
+    spec: 'chara_card_v3',
+    spec_version: '3.0',
+    data: {
+      name: 'Darya',
+      description: 'Darya voice',
+      system_prompt: 'Stay in Darya voice.',
+      tags: ['darya', 'nemo'],
+    },
+  };
+  const result = await executeMobileRestRoute(
+    { kind: 'character_create' },
+    client,
+    {
+      fileName: 'Darya',
+      cardJson: JSON.stringify(card),
+    },
+  );
+
+  assert.equal(result.ok, true);
+  assert.deepEqual(calls, [{ card, fileName: 'Darya' }]);
+});
+
+test('character create rejects missing or invalid card JSON', async () => {
+  const client = {
+    createCharacter() {
+      throw new Error('should not be called');
+    },
+  };
+
+  await assert.rejects(
+    () => executeMobileRestRoute({ kind: 'character_create' }, client, {}),
+    /cardJson is required/,
+  );
+  await assert.rejects(
+    () =>
+      executeMobileRestRoute(
+        { kind: 'character_create' },
+        client,
+        { cardJson: '{not-json}' },
+      ),
+    /cardJson must be valid JSON/,
+  );
+});
