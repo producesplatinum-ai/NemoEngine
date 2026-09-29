@@ -24,11 +24,12 @@ test('sanitizeRelativePath rejects traversal and absolute paths', () => {
   }
 });
 
-test('isAuthorized requires exact bearer token', () => {
-  assert.equal(isAuthorized('Bearer abc123', 'abc123'), true);
-  assert.equal(isAuthorized('Bearer wrong', 'abc123'), false);
-  assert.equal(isAuthorized('', 'abc123'), false);
-  assert.equal(isAuthorized('Bearer abc123', ''), false);
+test('isAuthorized requires exact strong bearer token', () => {
+  const token = '0123456789abcdef0123456789abcdef';
+  assert.equal(isAuthorized(`Bearer ${token}`, token), true);
+  assert.equal(isAuthorized('Bearer wrong', token), false);
+  assert.equal(isAuthorized('', token), false);
+  assert.equal(isAuthorized(`Bearer ${token}`, ''), false);
 });
 
 test('writeUploadedFile verifies sha256 and writes atomically below root', () => {
