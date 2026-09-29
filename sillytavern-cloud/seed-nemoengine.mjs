@@ -24,6 +24,31 @@ const PRESETS = [
   { name: PSYCHOLOGY_PRESET, repoPath: 'Nemo Engine/Ready/Nemo Engine 11.5.2 - Ready RU Psychology Humiliation JOI RP.json' },
 ];
 
+const DEPRECATED_CUSTOM_PRESETS = new Set([
+  'Nemo Engine 11.5.2 - Ready RU Gooner Psychology Humiliation JOI RP',
+  'Nemo Engine 11.5.2 - Ready RU Sensory Psychology Humiliation JOI RP',
+  'Nemo Engine 11.5.2 - Ready RU Lustful Psychology Humiliation JOI RP',
+]);
+
+function isDeprecatedCustomPresetName(name) {
+  const normalized = String(name || '').trim();
+  return DEPRECATED_CUSTOM_PRESETS.has(normalized) ||
+    /^Nemo Engine 11\.5\.2 - Darya(?:\s|$)/.test(normalized);
+}
+
+function purgeDeprecatedCustomPresets() {
+  if (!fs.existsSync(presetDir)) return 0;
+  let removed = 0;
+  for (const entry of fs.readdirSync(presetDir, { withFileTypes: true })) {
+    if (!entry.isFile() || !entry.name.endsWith('.json')) continue;
+    const presetName = entry.name.slice(0, -5);
+    if (!isDeprecatedCustomPresetName(presetName)) continue;
+    fs.rmSync(path.join(presetDir, entry.name), { force: true });
+    removed += 1;
+  }
+  return removed;
+}
+
 const userDataDir = process.env.SILLYTAVERN_USER_DATA_DIR || '/persistent/data/default-user';
 const presetDir = path.join(userDataDir, 'OpenAI Settings');
 const extensionRoot = path.join(userDataDir, 'extensions');
@@ -219,9 +244,11 @@ function updateSettings(presetNames) {
   }
 
   settings.extension_settings.preset_allowed_regex ??= {};
-  const allowed = Array.isArray(settings.extension_settings.preset_allowed_regex.openai)
+  const existingAllowed = Array.isArray(settings.extension_settings.preset_allowed_regex.openai)
     ? settings.extension_settings.preset_allowed_regex.openai
     : [];
+  const allowed = existingAllowed.filter(name => !isDeprecatedCustomPresetName(name));
+  if (allowed.length !== existingAllowed.length) changed = true;
 
   for (const name of presetNames) {
     if (!allowed.includes(name)) {
@@ -253,6 +280,7 @@ async function main() {
   }
 
   fs.mkdirSync(presetDir, { recursive: true });
+  const removedDeprecatedPresets = purgeDeprecatedCustomPresets();
   let presetWrites = 0;
   for (const item of loaded) {
     const target = path.join(presetDir, `${item.name}.json`);
@@ -273,7 +301,7 @@ async function main() {
 
   console.log(
     `NemoEngine presets synced: ${[...new Set(loaded.map(x => x.name))].join(', ')}` +
-      ` (updated ${presetWrites})`,
+      ` (updated ${presetWrites}, removed deprecated ${removedDeprecatedPresets})`,
   );
   console.log(`NemoPresetExt ready: ${manifest.version}`);
   console.log(`NemoEngine active preset: ${ACTIVE_PRESET}`);
