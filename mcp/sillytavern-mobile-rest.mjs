@@ -39,6 +39,7 @@ export function classifyMobileRestRequest(requestTarget, basePath) {
     return { kind: 'recent_chats' };
   }
   if (pathname === `${normalizedBase}/turn`) return { kind: 'turn' };
+  if (pathname === `${normalizedBase}/generate`) return { kind: 'generate' };
   if (pathname === `${normalizedBase}/chat`) {
     return {
       kind: 'chat',
@@ -80,6 +81,22 @@ export async function executeMobileRestRoute(route, client, body = {}) {
       const userText = String(body.userText);
       if (!userText.trim()) throw new Error('userText must not be empty.');
       return client.appendUserMessage({ avatarUrl, fileName, userText });
+    }
+    case 'generate': {
+      const avatarUrl = typeof body?.avatarUrl === 'string' ? body.avatarUrl.trim() : '';
+      const fileName = typeof body?.fileName === 'string' ? body.fileName.trim() : '';
+      const source = typeof body?.source === 'string' ? body.source.trim() : '';
+      const model = typeof body?.model === 'string' ? body.model.trim() : '';
+      if (!avatarUrl || !fileName) {
+        throw new Error('avatarUrl and fileName are required.');
+      }
+      if (!source || !model) {
+        throw new Error('source and model are required.');
+      }
+      if (!['deepseek', 'groq', 'openrouter'].includes(source)) {
+        throw new Error('Unsupported generation source.');
+      }
+      return client.generateAssistantMessage({ avatarUrl, fileName, source, model });
     }
     case 'chat':
       if (!route.avatarUrl || !route.fileName) {
