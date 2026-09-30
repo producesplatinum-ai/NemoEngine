@@ -18,11 +18,41 @@ import {
   mergeDaryaWorldLink,
   mergeDaryaCanonicalProfile,
   verifyLocalDaryaSource,
+  verifyDaryaRuntimeCoverage,
   getDaryaCardBasePng,
   seedDarya,
 } from './seed-darya.mjs';
 
 const revision = '36e967df9f7524ca862bf380087f0ea0494daaad';
+
+test('verifyDaryaRuntimeCoverage fails closed when a canonical GitHub rule is absent from runtime', () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'darya-runtime-coverage-'));
+  fs.mkdirSync(path.join(root, 'references'), { recursive: true });
+  fs.writeFileSync(path.join(root, 'SKILL.md'), 'DARYA_ALPHA_RULE_V1\n');
+  fs.writeFileSync(path.join(root, 'references', 'darya-core.md'), 'ONE_BLOCK_ONE_SHIFT_CROSS_MODAL_RULE\n');
+  fs.writeFileSync(path.join(root, 'references', 'darya-speech-transfer.md'), 'FACT_LOCK_COVERS_VERBS_AND_ADVERBS\n');
+
+  const card = {
+    spec: 'chara_card_v3',
+    spec_version: '3.0',
+    data: {
+      name: 'Дарья',
+      system_prompt: 'DARYA_ALPHA_RULE_V1 ONE_BLOCK_ONE_SHIFT_CROSS_MODAL_RULE',
+      character_book: { entries: [] },
+    },
+  };
+  const world = { entries: {} };
+
+  const bad = verifyDaryaRuntimeCoverage({ sourceDir: root, card, world });
+  assert.equal(bad.ok, false);
+  assert.deepEqual(bad.missing, ['FACT_LOCK_COVERS_VERBS_AND_ADVERBS']);
+
+  card.data.system_prompt += ' FACT_LOCK_COVERS_VERBS_AND_ADVERBS';
+  const good = verifyDaryaRuntimeCoverage({ sourceDir: root, card, world });
+  assert.equal(good.ok, true);
+  assert.deepEqual(good.missing, []);
+  assert.equal(good.sourceMarkerCount, 3);
+});
 
 test('buildDaryaCharacter creates a linked chara_card_v3 Darya card', () => {
   const card = buildDaryaCharacter({ revision });
