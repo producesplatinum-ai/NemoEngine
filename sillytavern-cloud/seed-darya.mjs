@@ -448,6 +448,7 @@ export function mergeDaryaCanonicalProfile(
     darya_card_revision: DARYA_CARD_REVISION,
     darya_speech_passport_id: canonicalExtensions.darya_speech_passport_id,
     darya_corpus_id: canonicalExtensions.darya_corpus_id,
+    darya_full_profile_id: canonicalExtensions.darya_full_profile_id,
     darya_nemo_profile_binding: 'independent',
     depth_prompt: JSON.parse(JSON.stringify(canonicalExtensions.depth_prompt || {})),
   };
