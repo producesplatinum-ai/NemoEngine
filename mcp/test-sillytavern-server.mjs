@@ -975,6 +975,13 @@ test('client creates a character card through the current SillyTavern create end
       alternate_greetings: [],
       extensions: {
         talkativeness: 0.7,
+        fav: true,
+        world: 'Darya',
+        depth_prompt: {
+          prompt: 'DARYA_DEPTH_PROMPT',
+          depth: 4,
+          role: 'system',
+        },
         custom_marker: 'preserve-me',
       },
     },
@@ -998,6 +1005,22 @@ test('client creates a character card through the current SillyTavern create end
   assert.equal(createBody.post_history_instructions, 'Keep role facts grounded.');
   assert.deepEqual(createBody.tags, ['darya', 'nemo']);
   assert.equal(createBody.talkativeness, 0.7);
+  assert.equal(createBody.fav, 'true');
+  assert.equal(createBody.world, 'Darya');
+  assert.equal(createBody.depth_prompt_prompt, 'DARYA_DEPTH_PROMPT');
+  assert.equal(createBody.depth_prompt_depth, 4);
+  assert.equal(createBody.depth_prompt_role, 'system');
+  assert.deepEqual(JSON.parse(createBody.extensions), {
+    talkativeness: 0.7,
+    fav: true,
+    world: 'Darya',
+    depth_prompt: {
+      prompt: 'DARYA_DEPTH_PROMPT',
+      depth: 4,
+      role: 'system',
+    },
+    custom_marker: 'preserve-me',
+  });
   assert.equal(createBody.json_data, JSON.stringify(card));
 });
 
