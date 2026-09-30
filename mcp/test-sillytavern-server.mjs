@@ -1211,3 +1211,65 @@ test('client deletes an inactive Chat Completion preset without rewriting settin
   });
   assert.equal(calls.some((item) => item.path === '/api/settings/save'), false);
 });
+
+test('exact activation never retries an ambiguous settings mutation and recovers by read-only verification', async () => {
+  let savedPreset = null;
+  let attemptedSettings = null;
+  let settingsGetCalls = 0;
+  let settingsSaveCalls = 0;
+  let csrfCalls = 0;
+
+  const fetchImpl = async (url, options = {}) => {
+    const path = new URL(String(url)).pathname;
+    if (path === '/csrf-token') {
+      csrfCalls += 1;
+      return makeJsonResponse({ token: 'csrf-' + csrfCalls });
+    }
+    if (path === '/api/presets/save') {
+      const body = JSON.parse(options.body);
+      savedPreset = body.preset;
+      return makeJsonResponse({ name: 'Nemo Exact Active' });
+    }
+    if (path === '/api/settings/get') {
+      settingsGetCalls += 1;
+      if (settingsGetCalls === 1) {
+        return makeJsonResponse({
+          settings: JSON.stringify({
+            oai_settings: {
+              preset_settings_openai: 'Nemo Engine 11.5.2 - Ready RU RP',
+              temp_openai: 0.7,
+            },
+          }),
+          openai_setting_names: [],
+          openai_settings: [],
+        });
+      }
+      return makeJsonResponse({
+        settings: JSON.stringify(attemptedSettings),
+        openai_setting_names: ['Nemo Exact Active'],
+        openai_settings: [JSON.stringify(savedPreset)],
+      });
+    }
+    if (path === '/api/settings/save') {
+      settingsSaveCalls += 1;
+      attemptedSettings = JSON.parse(options.body);
+      throw new TypeError('fetch failed');
+    }
+    throw new Error('unexpected URL: ' + url);
+  };
+
+  const client = new SillyTavernClient({
+    baseUrl: 'https://st.example.test',
+    fetchImpl,
+  });
+
+  const result = await client.activateExactNemoCatalogEntry(
+    'overlay-fetish-v11-639-fetish-humiliation',
+  );
+
+  assert.equal(settingsSaveCalls, 1, 'ambiguous settings mutation must never be retried');
+  assert.ok(csrfCalls >= 2, 'session should be re-bootstrapped after a restart');
+  assert.equal(result.storedPresetExact, true);
+  assert.equal(result.activeSettingsExact, true);
+  assert.equal(result.recoveredAfterRestart, true);
+});
