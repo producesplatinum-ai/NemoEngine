@@ -180,3 +180,67 @@ test('offline optimizer stores Nemo runtime artifacts in SillyTavern user/files 
 
   assert.equal(fs.existsSync(path.join(user, 'files', 'nemo-runtime-report.json')), false);
 });
+
+test('offline optimizer preserves selected Nemo Exact Active over canonical env fallback', () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'nemo-offline-exact-'));
+  const user = path.join(root, 'default-user');
+  const ext = path.join(user, 'extensions', 'NemoPresetExt');
+  const presetDir = path.join(user, 'OpenAI Settings');
+  const filesDir = path.join(user, 'user', 'files');
+  fs.mkdirSync(presetDir, { recursive: true });
+  fs.mkdirSync(filesDir, { recursive: true });
+  fixtureExtension(ext);
+
+  const fallbackName = 'Nemo Engine 11.5.2 - Ready RU RP';
+  const exactName = 'Nemo Exact Active';
+  const preset = {
+    recipeCandidate: true,
+    vexCandidate: true,
+    prompts: [
+      { identifier: 'cold-1', content: 'Exact active body.' },
+      { identifier: 'hot-1', content: 'Exact active hot prompt.' },
+    ],
+    prompt_order: [{ character_id: 100001, order: [
+      { identifier: 'cold-1', enabled: false },
+      { identifier: 'hot-1', enabled: true },
+    ] }],
+    extensions: { regex_scripts: Array.from({ length: 97 }, (_, i) => ({ id: 'rx-' + i })) },
+  };
+  write(path.join(presetDir, fallbackName + '.json'), JSON.stringify(preset, null, 2));
+  write(path.join(presetDir, exactName + '.json'), JSON.stringify({ ...preset, name: exactName }, null, 2));
+
+  write(path.join(user, 'settings.json'), JSON.stringify({
+    oai_settings: {
+      preset_settings_openai: exactName,
+      chat_completion_source: 'groq',
+      groq_model: 'openai/gpt-oss-120b',
+    },
+    extension_settings: {
+      connectionManager: {
+        selectedProfile: 'groq-profile',
+        profiles: [{ id: 'groq-profile', name: 'Groq' }],
+      },
+      NemoPresetExt: {},
+    },
+  }, null, 2));
+
+  const result = spawnSync(process.execPath, [optimizer], {
+    env: {
+      ...process.env,
+      SILLYTAVERN_USER_DATA_DIR: user,
+      NEMO_PRESET_EXT_DIR: ext,
+      NEMO_ACTIVE_PRESET: fallbackName,
+    },
+    encoding: 'utf8',
+  });
+  assert.equal(result.status, 0, result.stderr);
+
+  const settings = JSON.parse(fs.readFileSync(path.join(user, 'settings.json'), 'utf8'));
+  assert.equal(settings.oai_settings.preset_settings_openai, exactName);
+
+  const report = JSON.parse(fs.readFileSync(path.join(filesDir, 'nemo-runtime-report.json'), 'utf8'));
+  assert.equal(report.preset, exactName);
+
+  const optimizedExact = JSON.parse(fs.readFileSync(path.join(presetDir, exactName + '.json'), 'utf8'));
+  assert.equal(Boolean(optimizedExact.prompts[0].nemoPromptBody), true);
+});
