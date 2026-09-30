@@ -142,6 +142,70 @@ test('buildDaryaWorldInfo preserves canonical transfer geometry without duplicat
   assert.equal(entries.length, 22);
 });
 
+test('buildDaryaWorldInfo preserves canonical execution locks without adding lore layers', () => {
+  const book = buildDaryaWorldInfo({ revision });
+  const entries = Object.values(book.entries);
+  const byComment = new Map(entries.map(x => [x.comment, x]));
+
+  const practice = byComment.get('Darya practice execution lock').content;
+  for (const marker of [
+    'NO_REPORT_AS_ADAPTATION',
+    'TOPIC_ANCHOR_OVER_META',
+    'LIVE_DARYA_BEFORE_ANALYTIC_FRAME',
+    'CONTENT_TARGET_LOCK',
+    'ORAL_BUILD_ORDER',
+    'NO_ANCHOR_ELICITATION',
+    'DIRECT_RESULT',
+  ]) {
+    assert.match(practice, new RegExp(marker));
+  }
+
+  const speech = byComment.get('Darya speech mechanics').content;
+  for (const marker of [
+    'NO_FIXED_OPENING_SIGNATURE',
+    'NEGATION_AS_BOUNDARY_NOT_MOOD',
+    'AUTHENTICITY_CLAIM_LIMIT',
+    'CONCRETE_ANAPHORA_ONLY',
+    'FACT_LOCK_COVERS_VERBS_AND_ADVERBS',
+  ]) {
+    assert.match(speech, new RegExp(marker));
+  }
+
+  const core = byComment.get('Darya core voice').content;
+  for (const marker of [
+    'PLAYFUL_NATURAL_INVOLVED',
+    'REACTION_CATCH_AND_SOCIAL_FINISH',
+    'IMPROVISATIONAL_AMPLIFICATION',
+  ]) {
+    assert.match(core, new RegExp(marker));
+  }
+
+  const humiliation = byComment.get('Darya causal humiliation').content;
+  assert.match(humiliation, /MISSING_EVIDENCE_BEHAVIOR/);
+  assert.match(humiliation, /USER_LABEL_REQUIRED_FOR_STATUS_ATTACK/);
+
+  const adult = byComment.get('Darya adult routing').content;
+  for (const marker of [
+    'APPLICATION_CORRECTION_2026_09_07_R1',
+    'APPLICATION_CORRECTION_2026_09_07_R6_DIRECT_TALK_CONTENT_LOCK',
+    'BOUNDARY_EDGE_SCOPE_LOCK',
+    'DARYA_ADULT_SCENE_PROSE_V1',
+    'DARYA_ADULT_SELF_AUDIT_V1',
+    'DARYA_ADULT_DEFECT_REGISTRY_V1',
+  ]) {
+    assert.match(adult, new RegExp(marker));
+  }
+
+  assert.equal(entries.length, 22);
+});
+
+test('buildDaryaCharacter exposes the V9 GitHub execution-lock profile', () => {
+  const card = buildDaryaCharacter({ revision });
+  assert.equal(card.data.character_version, 'DARYA_ST_V9_GITHUB_EXECUTION_LOCKS');
+  assert.equal(card.data.extensions.darya_card_revision, 'card-v9-github-execution-locks');
+});
+
+
 test('buildDaryaCharacter exposes the V8 GitHub transfer-geometry profile', () => {
   const card = buildDaryaCharacter({ revision });
   assert.equal(card.data.character_version, 'DARYA_ST_V8_GITHUB_TRANSFER_GEOMETRY');
