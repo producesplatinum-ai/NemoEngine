@@ -159,6 +159,142 @@ export function sanitizeNemoRuntimeReport(report) {
   };
 }
 
+export function buildCharacterGenerationMessages({
+  character,
+  characterName = '',
+  conversation = [],
+  linkedWorldInfo = null,
+} = {}) {
+  const data =
+    character?.data && typeof character.data === 'object' && !Array.isArray(character.data)
+      ? character.data
+      : {};
+  const extensions =
+    data?.extensions && typeof data.extensions === 'object' && !Array.isArray(data.extensions)
+      ? data.extensions
+      : {};
+  const resolvedName = String(
+    characterName || data.name || character?.name || 'Assistant',
+  ).trim() || 'Assistant';
+
+  const normalizedConversation = Array.isArray(conversation)
+    ? conversation.filter(
+        (entry) =>
+          entry &&
+          typeof entry === 'object' &&
+          typeof entry.mes === 'string' &&
+          entry.mes.trim(),
+      )
+    : [];
+  const transcript = normalizedConversation.map(entry => String(entry.mes)).join('\n');
+  const transcriptLower = transcript.toLocaleLowerCase('ru-RU');
+
+  const normalizeEntries = (book) => {
+    const entries = book?.entries;
+    if (Array.isArray(entries)) return entries;
+    if (entries && typeof entries === 'object') return Object.values(entries);
+    return [];
+  };
+
+  const books = [];
+  if (data.character_book && typeof data.character_book === 'object') {
+    books.push(data.character_book);
+  }
+  if (linkedWorldInfo && typeof linkedWorldInfo === 'object') {
+    books.push(linkedWorldInfo);
+  }
+
+  const loreContents = [];
+  const seenLore = new Set();
+  for (const book of books) {
+    for (const entry of normalizeEntries(book)) {
+      if (!entry || typeof entry !== 'object' || entry.enabled === false) continue;
+      const content = String(entry.content || '').trim();
+      if (!content || seenLore.has(content)) continue;
+
+      let active = entry.constant === true;
+      if (!active) {
+        const keys = Array.isArray(entry.keys)
+          ? entry.keys
+          : Array.isArray(entry.key)
+            ? entry.key
+            : [];
+        active = keys
+          .map(value => String(value || '').trim())
+          .filter(Boolean)
+          .some((key) => {
+            if (entry.use_regex === true) {
+              try {
+                return new RegExp(key, 'iu').test(transcript);
+              } catch {
+                // Fall back to literal matching.
+              }
+            }
+            return transcriptLower.includes(key.toLocaleLowerCase('ru-RU'));
+          });
+      }
+
+      if (!active) continue;
+      seenLore.add(content);
+      loreContents.push(content);
+    }
+  }
+
+  const systemParts = [
+    `You are ${resolvedName}. Reply as this character and do not speak for the user.`,
+    data.system_prompt || '',
+    character?.description || data.description || '',
+    character?.personality || data.personality || '',
+    character?.scenario || data.scenario || '',
+    data.mes_example
+      ? `Character dialogue examples:\n${String(data.mes_example).trim()}`
+      : '',
+    loreContents.length
+      ? `Active character lore:\n${loreContents.join('\n\n')}`
+      : '',
+  ]
+    .map(value => String(value || '').trim())
+    .filter(Boolean);
+
+  const messages = [];
+  if (systemParts.length) {
+    messages.push({ role: 'system', content: systemParts.join('\n\n') });
+  }
+
+  for (const entry of normalizedConversation) {
+    messages.push({
+      role: entry.is_system ? 'system' : entry.is_user ? 'user' : 'assistant',
+      content: String(entry.mes),
+    });
+  }
+
+  const depthPrompt =
+    extensions?.depth_prompt &&
+    typeof extensions.depth_prompt === 'object' &&
+    !Array.isArray(extensions.depth_prompt)
+      ? extensions.depth_prompt
+      : null;
+  const depthContent = String(depthPrompt?.prompt || '').trim();
+  if (depthContent) {
+    const requestedRole = String(depthPrompt?.role || 'system').trim().toLowerCase();
+    const role = ['system', 'user', 'assistant'].includes(requestedRole)
+      ? requestedRole
+      : 'system';
+    const rawDepth = Number.parseInt(depthPrompt?.depth, 10);
+    const depth = Number.isFinite(rawDepth) && rawDepth >= 0 ? rawDepth : 0;
+    const floor = systemParts.length ? 1 : 0;
+    const insertAt = Math.max(floor, messages.length - depth);
+    messages.splice(insertAt, 0, { role, content: depthContent });
+  }
+
+  const postHistory = String(data.post_history_instructions || '').trim();
+  if (postHistory) {
+    messages.push({ role: 'system', content: postHistory });
+  }
+
+  return messages;
+}
+
 function cookieHeaderFromResponse(headers) {
   let setCookies = [];
   if (typeof headers?.getSetCookie === 'function') {
@@ -834,23 +970,31 @@ export class SillyTavernClient {
     }
 
     const data = character?.data && typeof character.data === 'object' ? character.data : {};
-    const systemParts = [
-      `You are ${characterName}. Reply as this character and do not speak for the user.`,
-      character?.description || data.description || '',
-      character?.personality || data.personality || '',
-      character?.scenario || data.scenario || '',
-    ].map((value) => String(value || '').trim()).filter(Boolean);
+    let linkedWorldInfo = null;
+    const embeddedEntries = data?.character_book?.entries;
+    const hasEmbeddedLore =
+      (Array.isArray(embeddedEntries) && embeddedEntries.length > 0) ||
+      (
+        embeddedEntries &&
+        typeof embeddedEntries === 'object' &&
+        !Array.isArray(embeddedEntries) &&
+        Object.keys(embeddedEntries).length > 0
+      );
+    const linkedWorldName = String(data?.extensions?.world || '').trim();
+    if (!hasEmbeddedLore && linkedWorldName) {
+      try {
+        linkedWorldInfo = await this.getWorldInfo(linkedWorldName);
+      } catch {
+        linkedWorldInfo = null;
+      }
+    }
 
-    const messages = [];
-    if (systemParts.length) {
-      messages.push({ role: 'system', content: systemParts.join('\\n\\n') });
-    }
-    for (const entry of conversation) {
-      messages.push({
-        role: entry.is_system ? 'system' : entry.is_user ? 'user' : 'assistant',
-        content: String(entry.mes),
-      });
-    }
+    const messages = buildCharacterGenerationMessages({
+      character,
+      characterName,
+      conversation,
+      linkedWorldInfo,
+    });
 
     const payload = await this.post('/api/backends/chat-completions/generate', {
       chat_completion_source: source,
