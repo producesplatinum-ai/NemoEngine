@@ -517,6 +517,14 @@ test('combined mobile gateway preserves SillyTavern and routes provider MCP endp
     { kind: 'provider', providerId: 'deepseek' },
   );
   assert.deepEqual(
+    classifyRequestPath('/ai-secret/leonardo/mcp', { sillyPath, aiPrefix }),
+    { kind: 'image_provider', providerId: 'leonardo' },
+  );
+  assert.deepEqual(
+    classifyRequestPath('/ai-secret/ideogram/mcp', { sillyPath, aiPrefix }),
+    { kind: 'image_provider', providerId: 'ideogram' },
+  );
+  assert.deepEqual(
     classifyRequestPath('/ai-secret/unknown/mcp', { sillyPath, aiPrefix }),
     { kind: 'not_found' },
   );
