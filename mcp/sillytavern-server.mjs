@@ -13,12 +13,6 @@ import {
 } from './ai-provider-server.mjs';
 
 import {
-  createIdeogramNodeHandler,
-  imageProviderFromEndpointPath,
-  proxyLeonardoMcpRequest,
-} from './image-provider-server.mjs';
-
-import {
   classifyMobileRestRequest,
   deriveMobileRestBasePath,
   executeMobileRestRoute,
@@ -1408,11 +1402,6 @@ export function classifyRequestPath(
   const providerId = providerFromEndpointPath(pathname, aiPrefix);
   if (providerId) return { kind: 'provider', providerId };
 
-  const imageProviderId = imageProviderFromEndpointPath(pathname, aiPrefix);
-  if (imageProviderId) {
-    return { kind: 'image_provider', providerId: imageProviderId };
-  }
-
   return { kind: 'not_found' };
 }
 
@@ -2079,7 +2068,6 @@ export function startHttpServer({
       return [providerId, toNodeHandler(providerHandler)];
     }),
   );
-  const ideogramNodeHandler = createIdeogramNodeHandler();
 
   const httpServer = createServer((req, res) => {
     const requestTarget = req.url || '/';
@@ -2238,3 +2226,195 @@ export function startHttpServer({
         mobileRoute.kind === 'nemo_profile_install' ||
         mobileRoute.kind === 'nemo_exact_install' ||
         mobileRoute.kind === 'nemo_exact_activate';
+
+      if (mobileWriteRoute && req.method === 'GET') {
+        res.statusCode = 200;
+        res.setHeader('content-type', 'text/html; charset=utf-8');
+        res.setHeader('cache-control', 'no-store');
+        res.setHeader(
+          'content-security-policy',
+          "default-src 'none'; style-src 'unsafe-inline'; form-action 'self'; base-uri 'none'",
+        );
+        res.end(
+          mobileRoute.kind === 'turn'
+            ? mobileTurnFormHtml(`${MOBILE_REST_BASE_PATH}/turn`)
+            : mobileRoute.kind === 'character_create'
+              ? mobileCharacterCreateFormHtml(
+                  `${MOBILE_REST_BASE_PATH}/character-create`,
+                )
+              : mobileRoute.kind === 'preset_save'
+                ? mobilePresetSaveFormHtml(
+                    `${MOBILE_REST_BASE_PATH}/preset-save`,
+                  )
+                : mobileRoute.kind === 'preset_delete'
+                  ? mobilePresetDeleteFormHtml(
+                      `${MOBILE_REST_BASE_PATH}/preset-delete`,
+                    )
+                  : mobileRoute.kind === 'nemo_profile_install'
+                  ? mobileNemoProfileInstallFormHtml(
+                      `${MOBILE_REST_BASE_PATH}/nemo-profile-install`,
+                    )
+                  : mobileRoute.kind === 'nemo_exact_install'
+                    ? mobileNemoExactInstallFormHtml(
+                        `${MOBILE_REST_BASE_PATH}/nemo-exact-install`,
+                      )
+                    : mobileRoute.kind === 'nemo_exact_activate'
+                      ? mobileNemoExactActivateFormHtml(
+                          `${MOBILE_REST_BASE_PATH}/nemo-exact-activate`,
+                        )
+                      : mobileGenerateFormHtml(
+                          `${MOBILE_REST_BASE_PATH}/generate`,
+                        ),
+        );
+        return;
+      }
+
+      const expectedMethod = mobileWriteRoute ? 'POST' : 'GET';
+      if (req.method !== expectedMethod) {
+        res.statusCode = 405;
+        res.setHeader('allow', mobileWriteRoute ? 'GET, POST' : expectedMethod);
+        res.setHeader('content-type', 'application/json; charset=utf-8');
+        res.end(JSON.stringify({
+          ok: false,
+          error: mobileWriteRoute ? 'GET or POST required.' : `${expectedMethod} required.`,
+        }));
+        return;
+      }
+
+      const runMobileRoute = async () => {
+        const body =
+          expectedMethod === 'POST'
+            ? await readMobileWriteRequestBody(req)
+            : {};
+        return executeMobileRestRoute(mobileRoute, getClient(), body);
+      };
+
+      void runMobileRoute()
+        .then((result) => {
+          res.statusCode = 200;
+          res.setHeader('content-type', 'application/json; charset=utf-8');
+          res.setHeader('cache-control', 'no-store');
+          res.end(JSON.stringify(result));
+        })
+        .catch((error) => {
+          const message = error instanceof Error ? error.message : String(error);
+          const badRequest =
+            message.includes(' is required.') ||
+            message.includes(' are required.') ||
+            message.includes('must not be empty.') ||
+            message === 'cardJson must be valid JSON.' ||
+            message === 'presetJson must be valid JSON.' ||
+            message === 'Unsupported generation source.' ||
+            message === 'Invalid JSON body.' ||
+            message === 'Unsupported content type.' ||
+            message === 'Request body too large.';
+          res.statusCode = badRequest ? 400 : 503;
+          res.setHeader('content-type', 'application/json; charset=utf-8');
+          res.setHeader('cache-control', 'no-store');
+          res.end(JSON.stringify({ ok: false, error: message }));
+        });
+      return;
+    }
+
+    if (route.kind === 'health') {
+      res.statusCode = 200;
+      res.setHeader('content-type', 'application/json; charset=utf-8');
+      res.end(
+        JSON.stringify({
+          ok: true,
+          service: 'sillytavern-mcp',
+          mobileProviders: ['groq', 'openrouter', 'deepseek'],
+        }),
+      );
+      return;
+    }
+
+    if (pathname === '/readyz') {
+      void checkReadiness(getClient).then((result) => {
+        res.statusCode = result.ok ? 200 : 503;
+        res.setHeader('content-type', 'application/json; charset=utf-8');
+        res.end(JSON.stringify(result));
+      });
+      return;
+    }
+
+    if (route.kind === 'nemo_full_status') {
+      void getClient().getNemoFullStatus()
+        .then((result) => {
+          res.statusCode = result.ok ? 200 : 503;
+          res.setHeader('content-type', 'application/json; charset=utf-8');
+          res.end(JSON.stringify(result));
+        })
+        .catch((error) => {
+          const message = error instanceof Error ? error.message : String(error);
+          console.error('[sillytavern-mcp:nemo-full-status]', message);
+          res.statusCode = 503;
+          res.setHeader('content-type', 'application/json; charset=utf-8');
+          res.end(JSON.stringify({ ok: false, error: message }));
+        });
+      return;
+    }
+
+    if (route.kind === 'nemo_status') {
+      void getClient().getNemoRuntimeStatus()
+        .then((result) => {
+          res.statusCode = 200;
+          res.setHeader('content-type', 'application/json; charset=utf-8');
+          res.end(JSON.stringify(result));
+        })
+        .catch((error) => {
+          const message = error instanceof Error ? error.message : String(error);
+          console.error('[sillytavern-mcp:nemo-runtime-status]', message);
+          res.statusCode = 503;
+          res.setHeader('content-type', 'application/json; charset=utf-8');
+          res.end(JSON.stringify({
+            ok: false,
+            error: message,
+          }));
+        });
+      return;
+    }
+
+    if (route.kind === 'sillytavern') {
+      void nodeHandler(req, res);
+      return;
+    }
+
+    if (route.kind === 'provider') {
+      void providerHandlers[route.providerId](req, res);
+      return;
+    }
+
+    res.statusCode = 404;
+    res.setHeader('content-type', 'text/plain; charset=utf-8');
+    res.end('Not found');
+  });
+
+  httpServer.listen(port, host, () => {
+    console.error(
+      `[sillytavern-mcp] listening on http://${host}:${port}${MCP_ENDPOINT_PATH} with mobile AI provider routes`,
+    );
+
+    if (process.env.RUN_PROVIDER_SMOKE === '1') {
+      void runProviderSmoke({ getClient })
+        .then((result) => {
+          console.error('[sillytavern-mcp:provider-smoke]', JSON.stringify(result));
+        })
+        .catch((error) => {
+          const message = error instanceof Error ? error.message : String(error);
+          console.error(
+            '[sillytavern-mcp:provider-smoke]',
+            JSON.stringify({ ok: false, error: message }),
+          );
+        });
+    }
+  });
+
+  return httpServer;
+}
+
+const invokedPath = process.argv[1] ? resolve(process.argv[1]) : '';
+const thisPath = resolve(new URL(import.meta.url).pathname);
+if (invokedPath === thisPath) {
+  startHttpServer();
+}
