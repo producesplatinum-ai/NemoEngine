@@ -125,6 +125,30 @@ test('buildDaryaCharacter exposes the V7 GitHub calibration profile', () => {
 });
 
 
+test('buildDaryaWorldInfo preserves canonical transfer geometry without duplicate lore layers', () => {
+  const book = buildDaryaWorldInfo({ revision });
+  const entries = Object.values(book.entries);
+  const byComment = new Map(entries.map(x => [x.comment, x]));
+
+  assert.match(byComment.get('Darya speech mechanics').content, /DARYA_CROSS_MODAL_SPEECH_SYNTHESIS_V3/);
+  assert.match(byComment.get('Darya speech mechanics').content, /DARYA_STRUCTURAL_FINGERPRINT_2026_09_07_R8/);
+  assert.match(byComment.get('Darya causal humiliation').content, /DARYA_HUMILIATION_GEOMETRY_R2/);
+  assert.match(byComment.get('Darya causal humiliation').content, /DARYA_EVIDENCE_TO_STING_CHAIN_V1/);
+  assert.match(byComment.get('Darya causal humiliation').content, /DARYA_FACT_GROUNDED_HUMILIATION_REGISTER_V1/);
+  assert.match(byComment.get('Darya social visibility and sting axis').content, /DARYA_STING_INTENSITY_V1/);
+  assert.match(byComment.get('Darya reaction and social effect').content, /DARYA_FACT_REACTION_SOCIAL_STING_V1/);
+  assert.match(byComment.get('Darya reaction and social effect').content, /DARYA_REACTIONAL_TRANSFER_EXPANSION_V1/);
+  assert.match(byComment.get('Darya address and personalization').content, /DARYA_ORAL_SURFACE_AND_ADDRESS_TRAJECTORY_2026_09_07_R8/);
+  assert.equal(entries.length, 22);
+});
+
+test('buildDaryaCharacter exposes the V8 GitHub transfer-geometry profile', () => {
+  const card = buildDaryaCharacter({ revision });
+  assert.equal(card.data.character_version, 'DARYA_ST_V8_GITHUB_TRANSFER_GEOMETRY');
+  assert.equal(card.data.extensions.darya_card_revision, 'card-v8-github-transfer-geometry');
+});
+
+
 test('shouldRefreshDarya refreshes on source or card revision changes', () => {
   assert.equal(shouldRefreshDarya(null, revision, 'card-v2'), true);
   assert.equal(
