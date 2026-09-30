@@ -4,10 +4,29 @@ import { pathToFileURL } from 'node:url';
 
 const userDataDir = process.env.SILLYTAVERN_USER_DATA_DIR || '/persistent/data/default-user';
 const extensionDir = process.env.NEMO_PRESET_EXT_DIR || path.join(userDataDir, 'extensions', 'NemoPresetExt');
-const activePreset = process.env.NEMO_ACTIVE_PRESET || 'Nemo Engine 11.5.2 - Ready RU Gooner RP';
-
-const presetPath = path.join(userDataDir, 'OpenAI Settings', activePreset + '.json');
+const configuredActivePreset =
+  process.env.NEMO_ACTIVE_PRESET || 'Nemo Engine 11.5.2 - Ready RU Gooner RP';
+const exactActivePreset = 'Nemo Exact Active';
+const presetDir = path.join(userDataDir, 'OpenAI Settings');
 const settingsPath = path.join(userDataDir, 'settings.json');
+
+function resolveActivePreset() {
+  try {
+    if (!fs.existsSync(settingsPath)) return configuredActivePreset;
+    const settings = JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
+    const selected = String(settings?.oai_settings?.preset_settings_openai || '').trim();
+    const exactPath = path.join(presetDir, exactActivePreset + '.json');
+    if (selected === exactActivePreset && fs.existsSync(exactPath)) {
+      return exactActivePreset;
+    }
+  } catch {
+    // Fall back to the configured canonical preset; validation below still fails closed.
+  }
+  return configuredActivePreset;
+}
+
+const activePreset = resolveActivePreset();
+const presetPath = path.join(presetDir, activePreset + '.json');
 const filesDir = path.join(userDataDir, 'user', 'files');
 const backupDir = path.join(userDataDir, 'backups', 'nemo-runtime');
 const backupPath = path.join(backupDir, activePreset + '.portable.json');
