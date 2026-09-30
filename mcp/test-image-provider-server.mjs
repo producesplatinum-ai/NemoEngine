@@ -6,7 +6,7 @@ import {
   IdeogramClient,
   buildLeonardoProxyRequest,
   imageProviderFromEndpointPath,
-} from './image-provider-server.mjs';
+} from './image-provider-core.mjs';
 
 function jsonResponse(body, status = 200) {
   return {
@@ -82,7 +82,7 @@ test('Ideogram client sends a v4 multipart request and never exposes the API key
 
   const result = await client.generate({
     prompt: 'A chrome robot on a rainy Berlin street',
-    aspectRatio: '1x1',
+    resolution: '1024x1024',
     renderingSpeed: 'TURBO',
   });
 
@@ -94,7 +94,7 @@ test('Ideogram client sends a v4 multipart request and never exposes the API key
   assert.equal(calls[0].options.method, 'POST');
   assert.equal(calls[0].options.headers['Api-Key'], 'secret-ideogram-key');
   assert.equal(calls[0].options.body.get('text_prompt'), 'A chrome robot on a rainy Berlin street');
-  assert.equal(calls[0].options.body.get('aspect_ratio'), '1x1');
+  assert.equal(calls[0].options.body.get('resolution'), '1024x1024');
   assert.equal(calls[0].options.body.get('rendering_speed'), 'TURBO');
   assert.equal(JSON.stringify(result).includes('secret-ideogram-key'), false);
 });
