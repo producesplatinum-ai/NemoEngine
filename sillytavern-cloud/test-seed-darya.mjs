@@ -661,6 +661,8 @@ test('seedDarya builds a card from a local avatar without network fetch', async 
   fs.mkdirSync(path.join(sourceDir, 'assets', 'darya-face'), { recursive: true });
   const files = new Map([
     ['SKILL.md', Buffer.from('# local skill')],
+    ['references/darya-core.md', Buffer.from('# local core')],
+    ['references/darya-speech-transfer.md', Buffer.from('# local transfer')],
     ['assets/darya-face/primary-static.jpeg', tinyPng],
   ]);
 
