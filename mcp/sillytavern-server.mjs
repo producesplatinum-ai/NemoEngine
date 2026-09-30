@@ -320,6 +320,11 @@ function safeErrorBody(text) {
   return String(text || '').replace(/\s+/g, ' ').trim().slice(0, 1_000);
 }
 
+function isAmbiguousTransportFailure(error) {
+  const message = error instanceof Error ? error.message : String(error || '');
+  return /fetch failed|ECONNRESET|ECONNREFUSED|socket|UND_ERR/i.test(message);
+}
+
 export function isDaryaImportAuthorized(suppliedToken, expectedToken) {
   const supplied = String(suppliedToken || '').trim();
   const expected = String(expectedToken || '').trim();
@@ -705,9 +710,31 @@ export class SillyTavernClient {
       saved.name || slotName,
     );
 
-    await this.post('/api/settings/save', nextSettings);
+    let recoveredAfterRestart = false;
+    let afterBundle = null;
+    try {
+      await this.post('/api/settings/save', nextSettings);
+      afterBundle = await this.post('/api/settings/get', {});
+    } catch (error) {
+      if (!isAmbiguousTransportFailure(error)) throw error;
 
-    const afterBundle = await this.post('/api/settings/get', {});
+      // The settings mutation may have completed before SillyTavern restarted.
+      // Never resend the mutation. Re-bootstrap and verify with read-only calls.
+      recoveredAfterRestart = true;
+      let lastError = error;
+      for (let attempt = 0; attempt < 20; attempt += 1) {
+        this.csrfToken = '';
+        this.cookie = '';
+        try {
+          afterBundle = await this.post('/api/settings/get', {});
+          break;
+        } catch (readError) {
+          lastError = readError;
+          if (attempt < 19) await delay(500);
+        }
+      }
+      if (!afterBundle) throw lastError;
+    }
     const afterRaw = afterBundle?.settings;
     const afterSettings =
       typeof afterRaw === 'string'
@@ -767,6 +794,7 @@ export class SillyTavernClient {
       presetSemanticSha256: built.presetSemanticSha256,
       storedPresetExact,
       activeSettingsExact,
+      recoveredAfterRestart,
       activePrompts: Array.isArray(built.preset?.prompt_order?.[0]?.order)
         ? built.preset.prompt_order[0].order.filter((entry) => entry.enabled).length
         : null,
@@ -964,6 +992,8 @@ export class SillyTavernClient {
           source,
           model,
           message: String(duplicate.mes),
+          finishReason: String(duplicate?.extra?.provider_finish_reason || ''),
+          truncated: duplicate?.extra?.provider_finish_reason === 'length',
           messageCount: chat.length,
         };
       }
@@ -1007,7 +1037,7 @@ export class SillyTavernClient {
       messages,
       model,
       temperature: 0.7,
-      max_tokens: 512,
+      max_tokens: 2048,
       stream: false,
       presence_penalty: 0,
       frequency_penalty: 0,
@@ -1018,9 +1048,11 @@ export class SillyTavernClient {
       include_reasoning: false,
     });
 
+    const choice = payload?.choices?.[0] || {};
+    const finishReason = String(choice?.finish_reason || '').trim();
     const message = String(
-      payload?.choices?.[0]?.message?.content ||
-      payload?.choices?.[0]?.text ||
+      choice?.message?.content ||
+      choice?.text ||
       '',
     ).trim();
     if (!message) {
@@ -1034,8 +1066,14 @@ export class SillyTavernClient {
       send_date: new Date().toISOString(),
       mes: message,
       extra: normalizedNonce
-        ? { one_shot_nonce: normalizedNonce, one_shot_op: 'generate' }
-        : {},
+        ? {
+            one_shot_nonce: normalizedNonce,
+            one_shot_op: 'generate',
+            provider_finish_reason: finishReason,
+          }
+        : finishReason
+          ? { provider_finish_reason: finishReason }
+          : {},
     });
 
     await this.post('/api/chats/save', {
@@ -1054,6 +1092,8 @@ export class SillyTavernClient {
       source,
       model,
       message,
+      finishReason,
+      truncated: finishReason === 'length',
       messageCount: chat.length,
     };
   }
@@ -2198,210 +2238,3 @@ export function startHttpServer({
         mobileRoute.kind === 'nemo_profile_install' ||
         mobileRoute.kind === 'nemo_exact_install' ||
         mobileRoute.kind === 'nemo_exact_activate';
-
-      if (mobileWriteRoute && req.method === 'GET') {
-        res.statusCode = 200;
-        res.setHeader('content-type', 'text/html; charset=utf-8');
-        res.setHeader('cache-control', 'no-store');
-        res.setHeader(
-          'content-security-policy',
-          "default-src 'none'; style-src 'unsafe-inline'; form-action 'self'; base-uri 'none'",
-        );
-        res.end(
-          mobileRoute.kind === 'turn'
-            ? mobileTurnFormHtml(`${MOBILE_REST_BASE_PATH}/turn`)
-            : mobileRoute.kind === 'character_create'
-              ? mobileCharacterCreateFormHtml(
-                  `${MOBILE_REST_BASE_PATH}/character-create`,
-                )
-              : mobileRoute.kind === 'preset_save'
-                ? mobilePresetSaveFormHtml(
-                    `${MOBILE_REST_BASE_PATH}/preset-save`,
-                  )
-                : mobileRoute.kind === 'preset_delete'
-                  ? mobilePresetDeleteFormHtml(
-                      `${MOBILE_REST_BASE_PATH}/preset-delete`,
-                    )
-                  : mobileRoute.kind === 'nemo_profile_install'
-                  ? mobileNemoProfileInstallFormHtml(
-                      `${MOBILE_REST_BASE_PATH}/nemo-profile-install`,
-                    )
-                  : mobileRoute.kind === 'nemo_exact_install'
-                    ? mobileNemoExactInstallFormHtml(
-                        `${MOBILE_REST_BASE_PATH}/nemo-exact-install`,
-                      )
-                    : mobileRoute.kind === 'nemo_exact_activate'
-                      ? mobileNemoExactActivateFormHtml(
-                          `${MOBILE_REST_BASE_PATH}/nemo-exact-activate`,
-                        )
-                      : mobileGenerateFormHtml(
-                          `${MOBILE_REST_BASE_PATH}/generate`,
-                        ),
-        );
-        return;
-      }
-
-      const expectedMethod = mobileWriteRoute ? 'POST' : 'GET';
-      if (req.method !== expectedMethod) {
-        res.statusCode = 405;
-        res.setHeader('allow', mobileWriteRoute ? 'GET, POST' : expectedMethod);
-        res.setHeader('content-type', 'application/json; charset=utf-8');
-        res.end(JSON.stringify({
-          ok: false,
-          error: mobileWriteRoute ? 'GET or POST required.' : `${expectedMethod} required.`,
-        }));
-        return;
-      }
-
-      const runMobileRoute = async () => {
-        const body =
-          expectedMethod === 'POST'
-            ? await readMobileWriteRequestBody(req)
-            : {};
-        return executeMobileRestRoute(mobileRoute, getClient(), body);
-      };
-
-      void runMobileRoute()
-        .then((result) => {
-          res.statusCode = 200;
-          res.setHeader('content-type', 'application/json; charset=utf-8');
-          res.setHeader('cache-control', 'no-store');
-          res.end(JSON.stringify(result));
-        })
-        .catch((error) => {
-          const message = error instanceof Error ? error.message : String(error);
-          const badRequest =
-            message.includes(' is required.') ||
-            message.includes(' are required.') ||
-            message.includes('must not be empty.') ||
-            message === 'cardJson must be valid JSON.' ||
-            message === 'presetJson must be valid JSON.' ||
-            message === 'Unsupported generation source.' ||
-            message === 'Invalid JSON body.' ||
-            message === 'Unsupported content type.' ||
-            message === 'Request body too large.';
-          res.statusCode = badRequest ? 400 : 503;
-          res.setHeader('content-type', 'application/json; charset=utf-8');
-          res.setHeader('cache-control', 'no-store');
-          res.end(JSON.stringify({ ok: false, error: message }));
-        });
-      return;
-    }
-
-    if (route.kind === 'health') {
-      res.statusCode = 200;
-      res.setHeader('content-type', 'application/json; charset=utf-8');
-      res.end(
-        JSON.stringify({
-          ok: true,
-          service: 'sillytavern-mcp',
-          mobileProviders: ['groq', 'openrouter', 'deepseek'],
-          imageProviders: {
-            leonardo: Boolean(process.env.LEONARDO_API_KEY),
-            ideogram: Boolean(process.env.IDEOGRAM_API_KEY),
-          },
-        }),
-      );
-      return;
-    }
-
-    if (pathname === '/readyz') {
-      void checkReadiness(getClient).then((result) => {
-        res.statusCode = result.ok ? 200 : 503;
-        res.setHeader('content-type', 'application/json; charset=utf-8');
-        res.end(JSON.stringify(result));
-      });
-      return;
-    }
-
-    if (route.kind === 'nemo_full_status') {
-      void getClient().getNemoFullStatus()
-        .then((result) => {
-          res.statusCode = result.ok ? 200 : 503;
-          res.setHeader('content-type', 'application/json; charset=utf-8');
-          res.end(JSON.stringify(result));
-        })
-        .catch((error) => {
-          const message = error instanceof Error ? error.message : String(error);
-          console.error('[sillytavern-mcp:nemo-full-status]', message);
-          res.statusCode = 503;
-          res.setHeader('content-type', 'application/json; charset=utf-8');
-          res.end(JSON.stringify({ ok: false, error: message }));
-        });
-      return;
-    }
-
-    if (route.kind === 'nemo_status') {
-      void getClient().getNemoRuntimeStatus()
-        .then((result) => {
-          res.statusCode = 200;
-          res.setHeader('content-type', 'application/json; charset=utf-8');
-          res.end(JSON.stringify(result));
-        })
-        .catch((error) => {
-          const message = error instanceof Error ? error.message : String(error);
-          console.error('[sillytavern-mcp:nemo-runtime-status]', message);
-          res.statusCode = 503;
-          res.setHeader('content-type', 'application/json; charset=utf-8');
-          res.end(JSON.stringify({
-            ok: false,
-            error: message,
-          }));
-        });
-      return;
-    }
-
-    if (route.kind === 'sillytavern') {
-      void nodeHandler(req, res);
-      return;
-    }
-
-    if (route.kind === 'provider') {
-      void providerHandlers[route.providerId](req, res);
-      return;
-    }
-
-    if (route.kind === 'image_provider') {
-      if (route.providerId === 'ideogram') {
-        void ideogramNodeHandler(req, res);
-        return;
-      }
-      if (route.providerId === 'leonardo') {
-        void proxyLeonardoMcpRequest(req, res);
-        return;
-      }
-    }
-
-    res.statusCode = 404;
-    res.setHeader('content-type', 'text/plain; charset=utf-8');
-    res.end('Not found');
-  });
-
-  httpServer.listen(port, host, () => {
-    console.error(
-      `[sillytavern-mcp] listening on http://${host}:${port}${MCP_ENDPOINT_PATH} with mobile AI and image provider routes`,
-    );
-
-    if (process.env.RUN_PROVIDER_SMOKE === '1') {
-      void runProviderSmoke({ getClient })
-        .then((result) => {
-          console.error('[sillytavern-mcp:provider-smoke]', JSON.stringify(result));
-        })
-        .catch((error) => {
-          const message = error instanceof Error ? error.message : String(error);
-          console.error(
-            '[sillytavern-mcp:provider-smoke]',
-            JSON.stringify({ ok: false, error: message }),
-          );
-        });
-    }
-  });
-
-  return httpServer;
-}
-
-const invokedPath = process.argv[1] ? resolve(process.argv[1]) : '';
-const thisPath = resolve(new URL(import.meta.url).pathname);
-if (invokedPath === thisPath) {
-  startHttpServer();
-}
