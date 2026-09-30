@@ -13,6 +13,12 @@ import {
 } from './ai-provider-server.mjs';
 
 import {
+  createIdeogramNodeHandler,
+  imageProviderFromEndpointPath,
+  proxyLeonardoMcpRequest,
+} from './image-provider-server.mjs';
+
+import {
   classifyMobileRestRequest,
   deriveMobileRestBasePath,
   executeMobileRestRoute,
@@ -1362,6 +1368,11 @@ export function classifyRequestPath(
   const providerId = providerFromEndpointPath(pathname, aiPrefix);
   if (providerId) return { kind: 'provider', providerId };
 
+  const imageProviderId = imageProviderFromEndpointPath(pathname, aiPrefix);
+  if (imageProviderId) {
+    return { kind: 'image_provider', providerId: imageProviderId };
+  }
+
   return { kind: 'not_found' };
 }
 
@@ -2028,6 +2039,7 @@ export function startHttpServer({
       return [providerId, toNodeHandler(providerHandler)];
     }),
   );
+  const ideogramNodeHandler = createIdeogramNodeHandler();
 
   const httpServer = createServer((req, res) => {
     const requestTarget = req.url || '/';
@@ -2284,6 +2296,10 @@ export function startHttpServer({
           ok: true,
           service: 'sillytavern-mcp',
           mobileProviders: ['groq', 'openrouter', 'deepseek'],
+          imageProviders: {
+            leonardo: Boolean(process.env.LEONARDO_API_KEY),
+            ideogram: Boolean(process.env.IDEOGRAM_API_KEY),
+          },
         }),
       );
       return;
@@ -2345,6 +2361,17 @@ export function startHttpServer({
       return;
     }
 
+    if (route.kind === 'image_provider') {
+      if (route.providerId === 'ideogram') {
+        void ideogramNodeHandler(req, res);
+        return;
+      }
+      if (route.providerId === 'leonardo') {
+        void proxyLeonardoMcpRequest(req, res);
+        return;
+      }
+    }
+
     res.statusCode = 404;
     res.setHeader('content-type', 'text/plain; charset=utf-8');
     res.end('Not found');
@@ -2352,7 +2379,7 @@ export function startHttpServer({
 
   httpServer.listen(port, host, () => {
     console.error(
-      `[sillytavern-mcp] listening on http://${host}:${port}${MCP_ENDPOINT_PATH} with mobile AI provider routes`,
+      `[sillytavern-mcp] listening on http://${host}:${port}${MCP_ENDPOINT_PATH} with mobile AI and image provider routes`,
     );
 
     if (process.env.RUN_PROVIDER_SMOKE === '1') {
