@@ -228,6 +228,43 @@ test('installs NemoEngine 11.5.2, enables full NemoPresetExt runtime, and overla
   assert.match(result.stdout, /NemoEngine preset regex allowed/);
 });
 
+
+test('preserves a valid selected Nemo Exact Active preset across startup seeding', () => {
+  const fixture = makeFixture();
+  const exactName = 'Nemo Exact Active';
+  const presetDir = path.join(fixture.userDataDir, 'OpenAI Settings');
+  const exactPreset = fakePreset(exactName);
+  fs.writeFileSync(
+    path.join(presetDir, exactName + '.json'),
+    JSON.stringify(exactPreset),
+  );
+
+  const settingsPath = path.join(fixture.userDataDir, 'settings.json');
+  const settings = JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
+  settings.oai_settings.preset_settings_openai = exactName;
+  fs.writeFileSync(settingsPath, JSON.stringify(settings, null, 2));
+
+  const result = runSeeder(fixture);
+  assert.equal(result.status, 0, result.stderr);
+
+  const after = JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
+  assert.equal(after.oai_settings.preset_settings_openai, exactName);
+
+  const extDir = path.join(fixture.userDataDir, 'extensions', 'NemoPresetExt');
+  const bundled = JSON.parse(
+    fs.readFileSync(path.join(extDir, 'assets', 'nemo-engine-latest.json'), 'utf8'),
+  );
+  assert.equal(bundled.name, exactName);
+
+  const installerRuntime = fs.readFileSync(
+    path.join(extDir, 'features', 'preset-installer', 'runtime.js'),
+    'utf8',
+  );
+  assert.match(installerRuntime, /const PRESET_NAME = 'Nemo Exact Active';/);
+  assert.match(result.stdout, /NemoEngine active preset: Nemo Exact Active/);
+});
+
+
 test('is idempotent and fails closed on structurally invalid Nemo preset input', () => {
   const fixture = makeFixture();
 
