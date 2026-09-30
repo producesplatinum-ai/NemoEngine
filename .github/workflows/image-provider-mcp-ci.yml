@@ -1,0 +1,19 @@
+name: Image Provider MCP CI
+
+on:
+  pull_request:
+    branches:
+      - feat/sillytavern-chatgpt-plugin
+  workflow_dispatch:
+
+jobs:
+  test-image-provider:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: node --test mcp/test-image-provider-server.mjs
