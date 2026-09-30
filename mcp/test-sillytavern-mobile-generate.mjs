@@ -25,7 +25,7 @@ test('generateAssistantMessage uses current chat and persists one assistant repl
     ]);
     if (path === '/api/backends/chat-completions/generate') {
       generated = JSON.parse(options.body);
-      return response({ choices: [{ message: { content: 'Yes. My wards are holding.' } }] });
+      return response({ choices: [{ finish_reason: 'stop', message: { content: 'Yes. My wards are holding.' } }] });
     }
     if (path === '/api/chats/save') {
       saved = JSON.parse(options.body);
@@ -44,6 +44,8 @@ test('generateAssistantMessage uses current chat and persists one assistant repl
   assert.equal(result.message, 'Yes. My wards are holding.');
   assert.equal(generated.chat_completion_source, 'deepseek');
   assert.equal(generated.model, 'deepseek-flash');
+  assert.ok(generated.max_tokens >= 2048, `expected long-form budget, got ${generated.max_tokens}`);
+  assert.equal(result.finishReason, 'stop');
   assert.equal(generated.messages.at(-1).role, 'user');
   assert.equal(generated.messages.at(-1).content, 'Are we safe?');
   assert.equal(saved.chat.at(-1).is_user, false);
