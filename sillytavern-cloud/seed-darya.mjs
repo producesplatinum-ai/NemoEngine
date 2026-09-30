@@ -628,6 +628,60 @@ export function verifyLocalDaryaSource({
   }
 }
 
+const DARYA_RUNTIME_MARKER_PATTERN = /\b(?:DARYA|ONE_BLOCK|ONE_DELTA|VOICE_FIRST|NO_FIXED|NEGATION_AS|AUTHENTICITY|CONCRETE_ANAPHORA|FACT_LOCK|PLAYFUL|REACTION_CATCH|IMPROVISATIONAL|APPLICATION_CORRECTION|BOUNDARY_EDGE|MISSING_EVIDENCE|USER_LABEL|PRACTICE_EXECUTION|REQUESTED_CONTENT|TOPIC_ANCHOR|LIVE_DARYA|CONTENT_TARGET|ORAL_BUILD|NO_ANCHOR|DIRECT_RESULT)[A-Z0-9_]*(?:_V\d+|_R\d+(?:_[A-Z0-9_]+)*)?\b/g;
+
+function extractDaryaRuntimeMarkers(text) {
+  return [...new Set(String(text || '').match(DARYA_RUNTIME_MARKER_PATTERN) || [])]
+    .filter((marker) => marker.includes('_'))
+    .sort();
+}
+
+export function verifyDaryaRuntimeCoverage({
+  sourceDir = DEFAULT_SOURCE_DIR,
+  card,
+  world,
+} = {}) {
+  const canonicalFiles = [
+    'SKILL.md',
+    'references/darya-core.md',
+    'references/darya-speech-transfer.md',
+  ];
+
+  try {
+    const sourceText = canonicalFiles.map((relativePath) => {
+      const filePath = path.join(sourceDir, ...relativePath.split('/'));
+      if (!fs.existsSync(filePath)) {
+        throw new Error(`missing canonical Darya source file: ${relativePath}`);
+      }
+      return fs.readFileSync(filePath, 'utf8');
+    }).join('\n');
+
+    const sourceMarkers = extractDaryaRuntimeMarkers(sourceText);
+    const runtimeMarkers = extractDaryaRuntimeMarkers(
+      JSON.stringify({ card: card || {}, world: world || {} }),
+    );
+    const runtimeSet = new Set(runtimeMarkers);
+    const missing = sourceMarkers.filter((marker) => !runtimeSet.has(marker));
+
+    return {
+      ok: missing.length === 0,
+      sourceMarkerCount: sourceMarkers.length,
+      runtimeMarkerCount: runtimeMarkers.length,
+      missing,
+      canonicalFiles,
+    };
+  } catch (error) {
+    return {
+      ok: false,
+      sourceMarkerCount: 0,
+      runtimeMarkerCount: 0,
+      missing: [],
+      canonicalFiles,
+      reason: error instanceof Error ? error.message : String(error),
+    };
+  }
+}
+
 function validateSnapshotRelativePath(value) {
   if (!value || typeof value !== 'string') {
     throw new Error('Darya snapshot path is required');
@@ -1028,6 +1082,24 @@ export async function seedDarya({
     || !fs.existsSync(worldPath);
 
   const world = buildDaryaWorldInfo({ revision: actualRevision, sourceMirrored });
+  const canonicalCard = buildDaryaCharacter({ revision: actualRevision, sourceMirrored });
+  let runtimeCoverage = null;
+  if (sourceMirrored) {
+    runtimeCoverage = verifyDaryaRuntimeCoverage({
+      sourceDir,
+      card: canonicalCard,
+      world,
+    });
+    if (!runtimeCoverage.ok) {
+      const detail = runtimeCoverage.missing?.length
+        ? `missing markers: ${runtimeCoverage.missing.join(', ')}`
+        : runtimeCoverage.reason || 'unknown coverage mismatch';
+      throw new Error(`Darya runtime coverage verification failed: ${detail}`);
+    }
+    console.log(
+      `Darya runtime coverage verified: ${runtimeCoverage.sourceMarkerCount}/${runtimeCoverage.sourceMarkerCount} canonical markers`,
+    );
+  }
   const worldText = JSON.stringify(world, null, 2);
   const worldChanged = writeTextIfChanged(worldPath, worldText);
 
@@ -1040,8 +1112,7 @@ export async function seedDarya({
       { revision: actualRevision, sourceMirrored },
     );
   } else {
-    const card = buildDaryaCharacter({ revision: actualRevision, sourceMirrored });
-    const cardPng = await buildCardPng(sourceDir, card);
+    const cardPng = await buildCardPng(sourceDir, canonicalCard);
     characterChanged = writeBufferIfChanged(characterPath, cardPng);
   }
 
@@ -1072,6 +1143,7 @@ export async function seedDarya({
     fileCount,
     characterPath,
     worldPath,
+    runtimeCoverage,
     seededAt: new Date().toISOString(),
   };
   writeTextIfChanged(statePath, JSON.stringify(nextState, null, 2));
