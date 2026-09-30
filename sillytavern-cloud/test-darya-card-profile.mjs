@@ -185,6 +185,10 @@ test('canonical migration upgrades Darya-owned fields but preserves local extens
   assert.equal(patched.data.extensions.world, 'Darya');
   assert.equal(patched.data.extensions.darya_speech_passport_id, 'DARYA_SPEECH_PASSPORT_2026_09_12_R4');
   assert.equal(patched.data.extensions.darya_corpus_id, 'DARYA_SPEECH_CORPUS_2026_09_07_R6_ALL5_FORENSIC_AUDIT');
+  assert.equal(
+    patched.data.extensions.darya_full_profile_id,
+    'DARYA_CURRENT_2026_09_07_R29_AUTONOMY_AUDIENCE_LADDER_GENDER_REVERSAL_DIRECT_EXCLUSION',
+  );
   assert.equal(patched.data.extensions.darya_nemo_profile_binding, 'independent');
   assert.equal(patched.data.extensions.depth_prompt.prompt, canonical.data.extensions.depth_prompt.prompt);
   assert.equal(patched.data.character_book.name, 'Darya');
