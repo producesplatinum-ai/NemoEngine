@@ -60,7 +60,7 @@ test('buildDaryaCharacter creates a linked chara_card_v3 Darya card', () => {
   assert.equal(card.spec, 'chara_card_v3');
   assert.equal(card.spec_version, '3.0');
   assert.equal(card.data.name, 'Дарья');
-  assert.equal(card.data.character_version, 'DARYA_ST_V9_GITHUB_EXECUTION_LOCKS');
+  assert.equal(card.data.character_version, 'DARYA_ST_V10_SOURCE_LAYER_ROUTING');
   assert.equal(card.data.tags.includes('NemoEngine'), false);
   assert.equal(card.data.tags.includes('adult'), false);
   assert.equal(card.data.tags.includes('humiliation'), false);
@@ -108,6 +108,8 @@ test('buildDaryaWorldInfo contains the required GitHub-backed behavior layers', 
     'Darya scope discipline',
     'Darya criterion control and concession',
     'Darya calibration boundary',
+    'Darya layer separation',
+    'Darya format and task routing',
   ]) {
     assert.ok(comments.has(required), `missing lore entry: ${required}`);
   }
@@ -118,6 +120,16 @@ test('buildDaryaWorldInfo contains the required GitHub-backed behavior layers', 
   assert.equal(entries.some(x => /дрочер/i.test(String(x.content))), false);
   assert.ok(entries.some(x => /заверш.*положительн|живое одобрение/i.test(String(x.content))));
   assert.ok(entries.some(x => /точным условием|локальн.*дефицит/i.test(String(x.content))));
+
+  const byComment = new Map(entries.map(x => [x.comment, x]));
+  assert.match(
+    byComment.get('Darya layer separation').content,
+    /Наблюдение источника.*Пользовательская настройка роли.*Установленный контекст пользователя.*Тема текущего запроса.*Новая авторская адаптация/s,
+  );
+  assert.match(
+    byComment.get('Darya format and task routing').content,
+    /разбери.*сравни.*докажи.*стыди.*унижай.*рассказ.*сцена.*сюжет.*веди.*командуй.*JOI.*перепиши.*исправь/s,
+  );
 });
 
 test('buildDaryaWorldInfo carries GitHub calibration, length-scaling, and scoped-confidence rules', () => {
@@ -147,9 +159,9 @@ test('buildDaryaWorldInfo carries GitHub calibration, length-scaling, and scoped
   );
 });
 
-test('buildDaryaCharacter exposes the V9 GitHub execution-lock profile', () => {
+test('buildDaryaCharacter exposes the V10 source-layer routing profile', () => {
   const card = buildDaryaCharacter({ revision });
-  assert.equal(card.data.character_version, 'DARYA_ST_V9_GITHUB_EXECUTION_LOCKS');
+  assert.equal(card.data.character_version, 'DARYA_ST_V10_SOURCE_LAYER_ROUTING');
   assert.match(card.data.post_history_instructions, /не так|не то|не похоже/i);
   assert.match(card.data.system_prompt, /охват|критер/i);
 });
@@ -169,7 +181,7 @@ test('buildDaryaWorldInfo preserves canonical transfer geometry without duplicat
   assert.match(byComment.get('Darya reaction and social effect').content, /DARYA_FACT_REACTION_SOCIAL_STING_V1/);
   assert.match(byComment.get('Darya reaction and social effect').content, /DARYA_REACTIONAL_TRANSFER_EXPANSION_V1/);
   assert.match(byComment.get('Darya address and personalization').content, /DARYA_ORAL_SURFACE_AND_ADDRESS_TRAJECTORY_2026_09_07_R8/);
-  assert.equal(entries.length, 22);
+  assert.equal(entries.length, 24);
 });
 
 test('buildDaryaWorldInfo preserves canonical execution locks without adding lore layers', () => {
@@ -226,20 +238,20 @@ test('buildDaryaWorldInfo preserves canonical execution locks without adding lor
     assert.match(adult, new RegExp(marker));
   }
 
-  assert.equal(entries.length, 22);
+  assert.equal(entries.length, 24);
 });
 
-test('buildDaryaCharacter exposes the V9 GitHub execution-lock profile', () => {
+test('buildDaryaCharacter exposes the V10 source-layer routing profile', () => {
   const card = buildDaryaCharacter({ revision });
-  assert.equal(card.data.character_version, 'DARYA_ST_V9_GITHUB_EXECUTION_LOCKS');
-  assert.equal(card.data.extensions.darya_card_revision, 'card-v9-github-execution-locks');
+  assert.equal(card.data.character_version, 'DARYA_ST_V10_SOURCE_LAYER_ROUTING');
+  assert.equal(card.data.extensions.darya_card_revision, 'card-v10-source-layer-routing');
 });
 
 
-test('buildDaryaCharacter exposes the V9 GitHub execution-lock profile', () => {
+test('buildDaryaCharacter exposes the V10 source-layer routing profile', () => {
   const card = buildDaryaCharacter({ revision });
-  assert.equal(card.data.character_version, 'DARYA_ST_V9_GITHUB_EXECUTION_LOCKS');
-  assert.equal(card.data.extensions.darya_card_revision, 'card-v9-github-execution-locks');
+  assert.equal(card.data.character_version, 'DARYA_ST_V10_SOURCE_LAYER_ROUTING');
+  assert.equal(card.data.extensions.darya_card_revision, 'card-v10-source-layer-routing');
 });
 
 
@@ -531,7 +543,7 @@ test('mergeDaryaCanonicalProfile upgrades GitHub-owned voice fields while preser
   assert.equal(patched.data.post_history_instructions, canonical.data.post_history_instructions);
   assert.deepEqual(patched.data.alternate_greetings, canonical.data.alternate_greetings);
   assert.deepEqual(patched.data.tags, canonical.data.tags);
-  assert.equal(patched.data.character_version, 'DARYA_ST_V9_GITHUB_EXECUTION_LOCKS');
+  assert.equal(patched.data.character_version, 'DARYA_ST_V10_SOURCE_LAYER_ROUTING');
   assert.equal(patched.data.extensions.fav, true);
   assert.deepEqual(patched.data.extensions.custom_local_extension, { keep: 1 });
   assert.equal(patched.data.extensions.world, 'Darya');
