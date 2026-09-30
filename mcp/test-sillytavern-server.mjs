@@ -18,6 +18,7 @@ import {
   sanitizeNemoRuntimeReport,
   sanitizeNemoClientRuntimeReport,
   isDaryaImportAuthorized,
+  createSerialTaskQueue,
 } from './sillytavern-server.mjs';
 import { classifyMobileRestRequest, executeMobileRestRoute } from './sillytavern-mobile-rest.mjs';
 
@@ -1272,4 +1273,55 @@ test('exact activation never retries an ambiguous settings mutation and recovers
   assert.equal(result.storedPresetExact, true);
   assert.equal(result.activeSettingsExact, true);
   assert.equal(result.recoveredAfterRestart, true);
+});
+
+test('serial task queue runs concurrent mutations in FIFO order and recovers after failure', async () => {
+  const enqueue = createSerialTaskQueue();
+  const events = [];
+  let releaseFirst;
+  const firstGate = new Promise((resolve) => {
+    releaseFirst = resolve;
+  });
+
+  const first = enqueue(async () => {
+    events.push('first:start');
+    await firstGate;
+    events.push('first:end');
+    return 'first-result';
+  });
+  const second = enqueue(async () => {
+    events.push('second:start');
+    events.push('second:end');
+    return 'second-result';
+  });
+
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.deepEqual(events, ['first:start']);
+
+  releaseFirst();
+  assert.deepEqual(await Promise.all([first, second]), [
+    'first-result',
+    'second-result',
+  ]);
+  assert.deepEqual(events, [
+    'first:start',
+    'first:end',
+    'second:start',
+    'second:end',
+  ]);
+
+  await assert.rejects(
+    () => enqueue(async () => {
+      events.push('third:start');
+      throw new Error('intentional queue failure');
+    }),
+    /intentional queue failure/,
+  );
+
+  const fourth = await enqueue(async () => {
+    events.push('fourth:start');
+    return 'fourth-result';
+  });
+  assert.equal(fourth, 'fourth-result');
+  assert.deepEqual(events.slice(-2), ['third:start', 'fourth:start']);
 });
