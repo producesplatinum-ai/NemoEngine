@@ -148,6 +148,71 @@ test('card-aware server generation assembly uses V3 prompt, lore, depth prompt, 
   assert.deepEqual(userMessages, ['Мы снова за гаражами.', 'Точнее.']);
 });
 
+
+test('generateAssistantMessage actually sends card-aware messages to the configured provider', async () => {
+  let generationBody = null;
+  let savedChat = null;
+  const card = {
+    data: {
+      name: 'Дарья',
+      description: 'CARD_DESCRIPTION',
+      personality: 'CARD_PERSONALITY',
+      scenario: 'CARD_SCENARIO',
+      system_prompt: 'CARD_SYSTEM_PROMPT',
+      post_history_instructions: 'CARD_POST_HISTORY',
+      extensions: { depth_prompt: { prompt: 'CARD_DEPTH_PROMPT', depth: 1, role: 'system' } },
+      character_book: {
+        entries: [{
+          id: 0,
+          content: 'CARD_CONSTANT_LORE',
+          enabled: true,
+          constant: true,
+          selective: false,
+          keys: [],
+        }],
+      },
+    },
+  };
+  const chat = [
+    { user_name: 'You', character_name: 'Дарья', chat_metadata: {} },
+    { name: 'You', is_user: true, is_system: false, mes: 'Проверка карточки.' },
+  ];
+
+  const fetchImpl = async (url, options = {}) => {
+    const path = new URL(String(url)).pathname;
+    if (path === '/csrf-token') return makeJsonResponse({ token: 'csrf-card-aware' });
+    if (path === '/api/characters/get') return makeJsonResponse(card);
+    if (path === '/api/chats/get') return makeJsonResponse(chat);
+    if (path === '/api/backends/chat-completions/generate') {
+      generationBody = JSON.parse(options.body);
+      return makeJsonResponse({ choices: [{ message: { content: 'CARD_AWARE_REPLY' } }] });
+    }
+    if (path === '/api/chats/save') {
+      savedChat = JSON.parse(options.body);
+      return makeJsonResponse({ ok: true });
+    }
+    throw new Error('unexpected URL: ' + url);
+  };
+
+  const client = new SillyTavernClient({ baseUrl: 'https://st.example.test', fetchImpl });
+  const result = await client.generateAssistantMessage({
+    avatarUrl: 'Darya.png',
+    fileName: 'Darya card-aware test',
+    source: 'deepseek',
+    model: 'deepseek-flash',
+    nonce: 'card-aware-nonce',
+  });
+
+  const joined = generationBody.messages.map(x => `[${x.role}] ${x.content}`).join('\n');
+  assert.match(joined, /CARD_SYSTEM_PROMPT/);
+  assert.match(joined, /CARD_CONSTANT_LORE/);
+  assert.match(joined, /CARD_DEPTH_PROMPT/);
+  assert.equal(generationBody.messages.at(-1).content, 'CARD_POST_HISTORY');
+  assert.equal(result.message, 'CARD_AWARE_REPLY');
+  assert.equal(savedChat.chat.at(-1).mes, 'CARD_AWARE_REPLY');
+});
+
+
 test('client obtains a CSRF token, preserves the session cookie, and lists characters', async () => {
   const calls = [];
   const fetchImpl = async (url, options = {}) => {
