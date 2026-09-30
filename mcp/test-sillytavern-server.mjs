@@ -3,6 +3,7 @@ import test from 'node:test';
 
 import {
   SillyTavernClient,
+  buildCharacterGenerationMessages,
   checkReadiness,
   classifyRequestPath,
   normalizeBaseUrl,
@@ -63,6 +64,88 @@ test('Railway deployments prefer the private SillyTavern hostname while local ru
     }),
     'https://public.example.test',
   );
+});
+
+
+test('card-aware server generation assembly uses V3 prompt, lore, depth prompt, and post-history instructions', () => {
+  const character = {
+    spec: 'chara_card_v3',
+    spec_version: '3.0',
+    data: {
+      name: 'Дарья',
+      description: 'DARYA_DESCRIPTION',
+      personality: 'DARYA_PERSONALITY',
+      scenario: 'DARYA_SCENARIO',
+      mes_example: '<START>\n{{user}}: EXAMPLE_USER\n{{char}}: EXAMPLE_DARYA',
+      system_prompt: 'DARYA_SYSTEM_PROMPT',
+      post_history_instructions: 'DARYA_POST_HISTORY',
+      extensions: {
+        depth_prompt: {
+          prompt: 'DARYA_DEPTH_PROMPT',
+          depth: 2,
+          role: 'system',
+        },
+      },
+      character_book: {
+        entries: [
+          {
+            id: 0,
+            comment: 'constant',
+            content: 'DARYA_CONSTANT_LORE',
+            enabled: true,
+            constant: true,
+            selective: false,
+            keys: [],
+          },
+          {
+            id: 1,
+            comment: 'matched',
+            content: 'DARYA_MATCHED_LORE',
+            enabled: true,
+            constant: false,
+            selective: true,
+            keys: ['гараж'],
+          },
+          {
+            id: 2,
+            comment: 'unmatched',
+            content: 'DARYA_UNMATCHED_LORE',
+            enabled: true,
+            constant: false,
+            selective: true,
+            keys: ['салон'],
+          },
+        ],
+      },
+    },
+  };
+  const conversation = [
+    { is_user: true, is_system: false, mes: 'Мы снова за гаражами.' },
+    { is_user: false, is_system: false, mes: 'Продолжай.' },
+    { is_user: true, is_system: false, mes: 'Точнее.' },
+  ];
+
+  const messages = buildCharacterGenerationMessages({
+    character,
+    characterName: 'Дарья',
+    conversation,
+  });
+
+  const joined = messages.map(x => `[${x.role}] ${x.content}`).join('\n');
+  assert.match(joined, /DARYA_SYSTEM_PROMPT/);
+  assert.match(joined, /DARYA_DESCRIPTION/);
+  assert.match(joined, /DARYA_PERSONALITY/);
+  assert.match(joined, /DARYA_SCENARIO/);
+  assert.match(joined, /EXAMPLE_DARYA/);
+  assert.match(joined, /DARYA_CONSTANT_LORE/);
+  assert.match(joined, /DARYA_MATCHED_LORE/);
+  assert.doesNotMatch(joined, /DARYA_UNMATCHED_LORE/);
+  assert.match(joined, /DARYA_DEPTH_PROMPT/);
+  assert.equal(messages.at(-1).role, 'system');
+  assert.equal(messages.at(-1).content, 'DARYA_POST_HISTORY');
+
+  const userMessages = messages.filter(x => x.role === 'user').map(x => x.content);
+  assert.deepEqual(userMessages, ['Мы снова за гаражами.', 'Точнее.']);
 });
 
 test('client obtains a CSRF token, preserves the session cookie, and lists characters', async () => {
