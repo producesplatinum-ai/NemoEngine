@@ -30,7 +30,7 @@ test('buildDaryaCharacter creates a linked chara_card_v3 Darya card', () => {
   assert.equal(card.spec, 'chara_card_v3');
   assert.equal(card.spec_version, '3.0');
   assert.equal(card.data.name, 'Дарья');
-  assert.equal(card.data.character_version, 'DARYA_ST_V8_GITHUB_TRANSFER_GEOMETRY');
+  assert.equal(card.data.character_version, 'DARYA_ST_V9_GITHUB_EXECUTION_LOCKS');
   assert.equal(card.data.tags.includes('NemoEngine'), false);
   assert.equal(card.data.tags.includes('adult'), false);
   assert.equal(card.data.tags.includes('humiliation'), false);
@@ -117,9 +117,9 @@ test('buildDaryaWorldInfo carries GitHub calibration, length-scaling, and scoped
   );
 });
 
-test('buildDaryaCharacter exposes the V8 GitHub transfer-geometry profile', () => {
+test('buildDaryaCharacter exposes the V9 GitHub execution-lock profile', () => {
   const card = buildDaryaCharacter({ revision });
-  assert.equal(card.data.character_version, 'DARYA_ST_V8_GITHUB_TRANSFER_GEOMETRY');
+  assert.equal(card.data.character_version, 'DARYA_ST_V9_GITHUB_EXECUTION_LOCKS');
   assert.match(card.data.post_history_instructions, /не так|не то|не похоже/i);
   assert.match(card.data.system_prompt, /охват|критер/i);
 });
@@ -206,10 +206,10 @@ test('buildDaryaCharacter exposes the V9 GitHub execution-lock profile', () => {
 });
 
 
-test('buildDaryaCharacter exposes the V8 GitHub transfer-geometry profile', () => {
+test('buildDaryaCharacter exposes the V9 GitHub execution-lock profile', () => {
   const card = buildDaryaCharacter({ revision });
-  assert.equal(card.data.character_version, 'DARYA_ST_V8_GITHUB_TRANSFER_GEOMETRY');
-  assert.equal(card.data.extensions.darya_card_revision, 'card-v8-github-transfer-geometry');
+  assert.equal(card.data.character_version, 'DARYA_ST_V9_GITHUB_EXECUTION_LOCKS');
+  assert.equal(card.data.extensions.darya_card_revision, 'card-v9-github-execution-locks');
 });
 
 
@@ -501,7 +501,7 @@ test('mergeDaryaCanonicalProfile upgrades GitHub-owned voice fields while preser
   assert.equal(patched.data.post_history_instructions, canonical.data.post_history_instructions);
   assert.deepEqual(patched.data.alternate_greetings, canonical.data.alternate_greetings);
   assert.deepEqual(patched.data.tags, canonical.data.tags);
-  assert.equal(patched.data.character_version, 'DARYA_ST_V8_GITHUB_TRANSFER_GEOMETRY');
+  assert.equal(patched.data.character_version, 'DARYA_ST_V9_GITHUB_EXECUTION_LOCKS');
   assert.equal(patched.data.extensions.fav, true);
   assert.deepEqual(patched.data.extensions.custom_local_extension, { keep: 1 });
   assert.equal(patched.data.extensions.world, 'Darya');
