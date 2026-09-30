@@ -319,6 +319,20 @@ function isAmbiguousTransportFailure(error) {
   return /fetch failed|ECONNRESET|ECONNREFUSED|socket|UND_ERR/i.test(message);
 }
 
+export function createSerialTaskQueue() {
+  let tail = Promise.resolve();
+
+  return function enqueue(task) {
+    if (typeof task !== 'function') {
+      throw new TypeError('Queued task must be a function.');
+    }
+
+    const run = tail.then(() => task());
+    tail = run.catch(() => undefined);
+    return run;
+  };
+}
+
 export function isDaryaImportAuthorized(suppliedToken, expectedToken) {
   const supplied = String(suppliedToken || '').trim();
   const expected = String(expectedToken || '').trim();
@@ -2054,6 +2068,7 @@ export function startHttpServer({
     },
   });
   const nodeHandler = toNodeHandler(handler);
+  const enqueueMobileMutation = createSerialTaskQueue();
 
   const providerHandlers = Object.fromEntries(
     ['groq', 'openrouter', 'deepseek'].map((providerId) => {
@@ -2286,7 +2301,11 @@ export function startHttpServer({
           expectedMethod === 'POST'
             ? await readMobileWriteRequestBody(req)
             : {};
-        return executeMobileRestRoute(mobileRoute, getClient(), body);
+        const executeRoute = () =>
+          executeMobileRestRoute(mobileRoute, getClient(), body);
+        return mobileWriteRoute
+          ? enqueueMobileMutation(executeRoute)
+          : executeRoute();
       };
 
       void runMobileRoute()
