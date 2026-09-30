@@ -11,9 +11,12 @@ const SUPPORTED_ACTIVE_PRESETS = new Set([
   GOONER_PRESET,
   PSYCHOLOGY_PRESET,
 ]);
-const ACTIVE_PRESET = String(process.env.NEMO_ACTIVE_PRESET || READY_RU_PRESET).trim();
-if (!SUPPORTED_ACTIVE_PRESETS.has(ACTIVE_PRESET)) {
-  throw new Error(`Unsupported NEMO_ACTIVE_PRESET: ${ACTIVE_PRESET}`);
+const EXACT_ACTIVE_PRESET = 'Nemo Exact Active';
+const CONFIGURED_ACTIVE_PRESET = String(
+  process.env.NEMO_ACTIVE_PRESET || READY_RU_PRESET,
+).trim();
+if (!SUPPORTED_ACTIVE_PRESETS.has(CONFIGURED_ACTIVE_PRESET)) {
+  throw new Error(`Unsupported NEMO_ACTIVE_PRESET: ${CONFIGURED_ACTIVE_PRESET}`);
 }
 
 const PRESETS = [
@@ -43,6 +46,19 @@ function purgeDeprecatedCustomPresets() {
     if (!entry.isFile() || !entry.name.endsWith('.json')) continue;
     const presetName = entry.name.slice(0, -5);
     if (!isDeprecatedCustomPresetName(presetName)) continue;
+    fs.rmSync(path.join(presetDir, entry.name), { force: true });
+    removed += 1;
+  }
+  return removed;
+}
+
+function purgeGeneratedExactCachePresets() {
+  if (!fs.existsSync(presetDir)) return 0;
+  let removed = 0;
+  for (const entry of fs.readdirSync(presetDir, { withFileTypes: true })) {
+    if (!entry.isFile() || !entry.name.endsWith('.json')) continue;
+    const presetName = entry.name.slice(0, -5);
+    if (!presetName.startsWith('Nemo Exact · ')) continue;
     fs.rmSync(path.join(presetDir, entry.name), { force: true });
     removed += 1;
   }
@@ -181,7 +197,7 @@ function installExtension() {
   return manifest;
 }
 
-function overlayNemoPresetExtInstaller(activePresetText) {
+function overlayNemoPresetExtInstaller(activePresetName, activePresetText) {
   const assetPath = path.join(extensionDir, 'assets', 'nemo-engine-latest.json');
   const installerPath = path.join(extensionDir, 'features', 'preset-installer', 'runtime.js');
 
@@ -196,11 +212,11 @@ function overlayNemoPresetExtInstaller(activePresetText) {
     .replace(/const PRESET_VERSION = '[^']+';/, "const PRESET_VERSION = '11.5.2';")
     .replace(
       /const PRESET_NAME = .*?;\n/,
-      `const PRESET_NAME = '${ACTIVE_PRESET}';\n`,
+      `const PRESET_NAME = '${activePresetName}';\n`,
     );
 
   if (!patched.includes("const PRESET_VERSION = '11.5.2';") ||
-      !patched.includes(`const PRESET_NAME = '${ACTIVE_PRESET}';`)) {
+      !patched.includes(`const PRESET_NAME = '${activePresetName}';`)) {
     throw new Error('NemoPresetExt installer overlay could not be applied safely');
   }
 
@@ -208,10 +224,10 @@ function overlayNemoPresetExtInstaller(activePresetText) {
     writeAtomic(installerPath, patched);
   }
 
-  console.log(`NemoPresetExt installer overlay: 11.5.2 - ${ACTIVE_PRESET.replace('Nemo Engine 11.5.2 - ', '')}`);
+  console.log(`NemoPresetExt installer overlay: 11.5.2 - ${activePresetName.replace('Nemo Engine 11.5.2 - ', '')}`);
 }
 
-function updateSettings(presetNames) {
+function updateSettings(presetNames, activePresetName) {
   if (!fs.existsSync(settingsPath)) {
     throw new Error(`SillyTavern settings not found at ${settingsPath}`);
   }
@@ -221,8 +237,8 @@ function updateSettings(presetNames) {
   let changed = false;
 
   settings.oai_settings ??= {};
-  if (settings.oai_settings.preset_settings_openai !== ACTIVE_PRESET) {
-    settings.oai_settings.preset_settings_openai = ACTIVE_PRESET;
+  if (settings.oai_settings.preset_settings_openai !== activePresetName) {
+    settings.oai_settings.preset_settings_openai = activePresetName;
     changed = true;
   }
 
@@ -280,7 +296,31 @@ async function main() {
   }
 
   fs.mkdirSync(presetDir, { recursive: true });
+
+  let selectedExact = null;
+  if (fs.existsSync(settingsPath)) {
+    const currentSettings = JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
+    const selectedName = String(
+      currentSettings?.oai_settings?.preset_settings_openai || '',
+    ).trim();
+    const exactPath = path.join(presetDir, EXACT_ACTIVE_PRESET + '.json');
+    if (selectedName === EXACT_ACTIVE_PRESET && fs.existsSync(exactPath)) {
+      const text = fs.readFileSync(exactPath, 'utf8');
+      const validation = validatePreset(EXACT_ACTIVE_PRESET, text);
+      selectedExact = {
+        name: EXACT_ACTIVE_PRESET,
+        text,
+        ...validation,
+      };
+    }
+  }
+
+  const activePresetName = selectedExact
+    ? EXACT_ACTIVE_PRESET
+    : CONFIGURED_ACTIVE_PRESET;
+
   const removedDeprecatedPresets = purgeDeprecatedCustomPresets();
+  const removedExactCachePresets = purgeGeneratedExactCachePresets();
   let presetWrites = 0;
   for (const item of loaded) {
     const target = path.join(presetDir, `${item.name}.json`);
@@ -292,19 +332,27 @@ async function main() {
   }
 
   const manifest = installExtension();
-  const active = loaded.find(item => item.name === ACTIVE_PRESET);
+  const active =
+    selectedExact ||
+    loaded.find(item => item.name === activePresetName);
   if (!active) {
     throw new Error('Active NemoEngine preset was not loaded');
   }
-  overlayNemoPresetExtInstaller(active.text);
-  updateSettings([...new Set(loaded.map(item => item.name))]);
+  overlayNemoPresetExtInstaller(activePresetName, active.text);
+  updateSettings(
+    [
+      ...new Set(loaded.map(item => item.name)),
+      ...(selectedExact ? [EXACT_ACTIVE_PRESET] : []),
+    ],
+    activePresetName,
+  );
 
   console.log(
     `NemoEngine presets synced: ${[...new Set(loaded.map(x => x.name))].join(', ')}` +
-      ` (updated ${presetWrites}, removed deprecated ${removedDeprecatedPresets})`,
+      ` (updated ${presetWrites}, removed deprecated ${removedDeprecatedPresets}, removed exact cache ${removedExactCachePresets})`,
   );
   console.log(`NemoPresetExt ready: ${manifest.version}`);
-  console.log(`NemoEngine active preset: ${ACTIVE_PRESET}`);
+  console.log(`NemoEngine active preset: ${activePresetName}`);
   console.log('NemoEngine preset regex allowed');
 }
 
