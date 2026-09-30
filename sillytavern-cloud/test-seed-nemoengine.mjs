@@ -238,6 +238,11 @@ test('preserves a valid selected Nemo Exact Active preset across startup seeding
     path.join(presetDir, exactName + '.json'),
     JSON.stringify(exactPreset),
   );
+  const cachedExactName = 'Nemo Exact · NSFW · 🔞 Dirty Talk [V6]';
+  fs.writeFileSync(
+    path.join(presetDir, cachedExactName + '.json'),
+    JSON.stringify(fakePreset(cachedExactName)),
+  );
 
   const settingsPath = path.join(fixture.userDataDir, 'settings.json');
   const settings = JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
@@ -262,6 +267,16 @@ test('preserves a valid selected Nemo Exact Active preset across startup seeding
   );
   assert.match(installerRuntime, /const PRESET_NAME = 'Nemo Exact Active';/);
   assert.match(result.stdout, /NemoEngine active preset: Nemo Exact Active/);
+  assert.equal(
+    fs.existsSync(path.join(presetDir, cachedExactName + '.json')),
+    false,
+    'generated exact cache preset should be purged on startup',
+  );
+  assert.equal(
+    fs.existsSync(path.join(presetDir, exactName + '.json')),
+    true,
+    'active exact slot must be preserved',
+  );
 });
 
 
@@ -306,6 +321,7 @@ test('production Nemo Full Bootstrap follows the selected supported preset inste
   assert.match(script, /Ready RU RP/);
   assert.match(script, /Ready RU Gooner RP/);
   assert.match(script, /Ready RU Psychology Humiliation JOI RP/);
+  assert.match(script, /Nemo Exact Active/);
   assert.doesNotMatch(script, /Ready RU Sensory Psychology Humiliation JOI RP/);
   assert.doesNotMatch(script, /Ready RU Lustful Psychology Humiliation JOI RP/);
 });
