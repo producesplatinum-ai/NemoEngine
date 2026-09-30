@@ -15,11 +15,15 @@ test('canonical Darya card uses the GitHub-owned visible identity without profil
   assert.equal(card.spec, 'chara_card_v3');
   assert.equal(card.spec_version, '3.0');
   assert.equal(card.data.name, 'Дарья');
-  assert.equal(card.data.character_version, 'DARYA_ST_V7_GITHUB_CALIBRATION');
+  assert.equal(card.data.character_version, 'DARYA_ST_V8_GITHUB_TRANSFER_GEOMETRY');
   assert.equal(card.data.extensions.world, 'Darya');
   assert.equal(card.data.extensions.darya_source_revision, revision);
   assert.equal(card.data.extensions.darya_speech_passport_id, 'DARYA_SPEECH_PASSPORT_2026_09_12_R4');
   assert.equal(card.data.extensions.darya_corpus_id, 'DARYA_SPEECH_CORPUS_2026_09_07_R6_ALL5_FORENSIC_AUDIT');
+  assert.equal(
+    card.data.extensions.darya_full_profile_id,
+    'DARYA_CURRENT_2026_09_07_R29_AUTONOMY_AUDIENCE_LADDER_GENDER_REVERSAL_DIRECT_EXCLUSION',
+  );
   assert.equal(card.data.extensions.darya_nemo_profile_binding, 'independent');
   assert.equal(card.data.tags.includes('NemoEngine'), false);
   assert.equal(card.data.tags.includes('adult'), false);
@@ -109,7 +113,7 @@ test('canonical Darya lorebook includes execution lock, voice continuity and lon
   assert.ok(entries.length >= 22);
 });
 
-test('canonical Darya V7 stays source-pure and preserves evidence-backed precision mechanics', () => {
+test('canonical Darya V8 stays source-pure and preserves evidence-backed precision mechanics', () => {
   const card = buildDaryaCharacter({ revision, sourceMirrored: true });
   const world = buildDaryaWorldInfo({ revision, sourceMirrored: true });
   const entries = Object.values(world.entries);
@@ -175,7 +179,7 @@ test('canonical migration upgrades Darya-owned fields but preserves local extens
   assert.equal(patched.data.post_history_instructions, canonical.data.post_history_instructions);
   assert.deepEqual(patched.data.alternate_greetings, canonical.data.alternate_greetings);
   assert.deepEqual(patched.data.tags, canonical.data.tags);
-  assert.equal(patched.data.character_version, 'DARYA_ST_V7_GITHUB_CALIBRATION');
+  assert.equal(patched.data.character_version, 'DARYA_ST_V8_GITHUB_TRANSFER_GEOMETRY');
   assert.equal(patched.data.extensions.fav, true);
   assert.deepEqual(patched.data.extensions.custom_local_extension, { keep: 1 });
   assert.equal(patched.data.extensions.world, 'Darya');
