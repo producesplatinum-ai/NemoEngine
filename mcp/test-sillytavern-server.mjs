@@ -2778,3 +2778,119 @@ test('character world bind refuses replacing a different existing world link wit
   assert.equal(editCalls, 0);
 });
 
+test('world info update rejects a false-positive 200 when new data did not persist', async () => {
+  const existing = { entries: { 0: { uid: 0, key: ['probe'], content: 'OLD' } } };
+  const requested = { entries: { 0: { uid: 0, key: ['probe'], content: 'NEW' } } };
+
+  const fetchImpl = async (url, options = {}) => {
+    const path = new URL(String(url)).pathname;
+    if (path === '/csrf-token') return makeJsonResponse({ token: 'csrf-world-update-verify' });
+    if (path === '/api/worldinfo/list') {
+      return makeJsonResponse([{ file_id: 'Probe Lore', name: 'Probe Lore', extensions: {} }]);
+    }
+    if (path === '/api/worldinfo/get') return makeJsonResponse(existing);
+    if (path === '/api/worldinfo/edit') return makeJsonResponse({ ok: true });
+    throw new Error('unexpected URL: ' + url);
+  };
+
+  const client = new SillyTavernClient({ baseUrl: 'https://st.example.test', fetchImpl });
+  await assert.rejects(
+    () => client.updateWorldInfo({ name: 'Probe Lore', data: requested }),
+    /did not persist|persisted with different data/i,
+  );
+});
+
+test('world info save rejects a false-positive 200 when new data did not persist', async () => {
+  const existing = { entries: { 0: { uid: 0, key: ['probe'], content: 'OLD' } } };
+  const requested = { entries: { 0: { uid: 0, key: ['probe'], content: 'NEW' } } };
+
+  const fetchImpl = async (url, options = {}) => {
+    const path = new URL(String(url)).pathname;
+    if (path === '/csrf-token') return makeJsonResponse({ token: 'csrf-world-save-verify' });
+    if (path === '/api/worldinfo/list') {
+      return makeJsonResponse([{ file_id: 'Probe Lore', name: 'Probe Lore', extensions: {} }]);
+    }
+    if (path === '/api/worldinfo/get') return makeJsonResponse(existing);
+    if (path === '/api/worldinfo/edit') return makeJsonResponse({ ok: true });
+    throw new Error('unexpected URL: ' + url);
+  };
+
+  const client = new SillyTavernClient({ baseUrl: 'https://st.example.test', fetchImpl });
+  await assert.rejects(
+    () => client.saveWorldInfo({ name: 'Probe Lore', data: requested }),
+    /did not persist|persisted with different data/i,
+  );
+});
+
+test('world info entry upsert rejects a false-positive 200 when entry did not persist', async () => {
+  const existing = {
+    extensions: { marker: 'keep-me' },
+    entries: { 0: { uid: 0, key: ['base'], content: 'BASE' } },
+  };
+
+  const fetchImpl = async (url, options = {}) => {
+    const path = new URL(String(url)).pathname;
+    if (path === '/csrf-token') return makeJsonResponse({ token: 'csrf-world-upsert-verify' });
+    if (path === '/api/worldinfo/list') {
+      return makeJsonResponse([{ file_id: 'Probe Lore', name: 'Probe Lore', extensions: existing.extensions }]);
+    }
+    if (path === '/api/worldinfo/get') return makeJsonResponse(existing);
+    if (path === '/api/worldinfo/edit') return makeJsonResponse({ ok: true });
+    throw new Error('unexpected URL: ' + url);
+  };
+
+  const client = new SillyTavernClient({ baseUrl: 'https://st.example.test', fetchImpl });
+  await assert.rejects(
+    () => client.upsertWorldInfoEntry({
+      name: 'Probe Lore',
+      uid: 7,
+      entry: { key: ['new'], content: 'NEW' },
+    }),
+    /did not persist|persisted with different data/i,
+  );
+});
+
+test('world info entry delete rejects a false-positive 200 when entry remains stored', async () => {
+  const existing = {
+    entries: {
+      0: { uid: 0, key: ['base'], content: 'BASE' },
+      7: { uid: 7, key: ['remove'], content: 'REMOVE' },
+    },
+  };
+
+  const fetchImpl = async (url, options = {}) => {
+    const path = new URL(String(url)).pathname;
+    if (path === '/csrf-token') return makeJsonResponse({ token: 'csrf-world-entry-delete-verify' });
+    if (path === '/api/worldinfo/list') {
+      return makeJsonResponse([{ file_id: 'Probe Lore', name: 'Probe Lore', extensions: {} }]);
+    }
+    if (path === '/api/worldinfo/get') return makeJsonResponse(existing);
+    if (path === '/api/worldinfo/edit') return makeJsonResponse({ ok: true });
+    throw new Error('unexpected URL: ' + url);
+  };
+
+  const client = new SillyTavernClient({ baseUrl: 'https://st.example.test', fetchImpl });
+  await assert.rejects(
+    () => client.deleteWorldInfoEntry({ name: 'Probe Lore', uid: 7 }),
+    /did not persist|persisted with different data/i,
+  );
+});
+
+test('world info delete rejects a false-positive 200 when the book still exists', async () => {
+  const fetchImpl = async (url, options = {}) => {
+    const path = new URL(String(url)).pathname;
+    if (path === '/csrf-token') return makeJsonResponse({ token: 'csrf-world-delete-verify' });
+    if (path === '/api/worldinfo/list') {
+      return makeJsonResponse([{ file_id: 'Probe Lore', name: 'Probe Lore', extensions: {} }]);
+    }
+    if (path === '/api/worldinfo/delete') return new Response('', { status: 200 });
+    throw new Error('unexpected URL: ' + url);
+  };
+
+  const client = new SillyTavernClient({ baseUrl: 'https://st.example.test', fetchImpl });
+  await assert.rejects(
+    () => client.deleteWorldInfo({ name: 'Probe Lore' }),
+    /did not persist|still exists/i,
+  );
+});
+
