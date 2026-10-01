@@ -29,6 +29,12 @@ const MOBILE_REST_WRITE_ROUTE_KINDS = new Set([
   'character_duplicate',
   'character_rename',
   'character_import_json',
+  'world_info_entry_delete',
+  'world_info_entry_upsert',
+  'world_info_delete',
+  'world_info_save',
+  'world_info_update',
+  'world_info_create',
   'preset_save',
   'preset_delete',
   'nemo_profile_install',
@@ -42,6 +48,7 @@ const MOBILE_REST_POST_ONLY_ROUTE_KINDS = new Set([
   'character_duplicate',
   'character_rename',
   'character_import_json',
+  'world_info_create',
 ]);
 
 export function isMobileRestWriteRoute(route) {
@@ -82,6 +89,12 @@ export function classifyMobileRestRequest(requestTarget, basePath) {
   if (pathname === `${normalizedBase}/world-info-entry`) {
     return { kind: 'world_info_entry', name: one(url.searchParams, 'name') };
   }
+  if (pathname === `${normalizedBase}/world-info-create`) return { kind: 'world_info_create' };
+  if (pathname === `${normalizedBase}/world-info-update`) return { kind: 'world_info_update' };
+  if (pathname === `${normalizedBase}/world-info-save`) return { kind: 'world_info_save' };
+  if (pathname === `${normalizedBase}/world-info-delete`) return { kind: 'world_info_delete' };
+  if (pathname === `${normalizedBase}/world-info-entry-upsert`) return { kind: 'world_info_entry_upsert' };
+  if (pathname === `${normalizedBase}/world-info-entry-delete`) return { kind: 'world_info_entry_delete' };
   if (pathname === `${normalizedBase}/recent-chats`) {
     return { kind: 'recent_chats' };
   }
@@ -258,6 +271,64 @@ export async function executeMobileRestRoute(route, client, body = {}) {
     case 'world_info_entry':
       if (!route.name) throw new Error('name is required.');
       return client.getWorldInfo(route.name);
+    case 'world_info_create': {
+      const name = typeof body?.name === 'string' ? body.name.trim() : '';
+      const worldJson = typeof body?.worldJson === 'string' ? body.worldJson.trim() : '';
+      if (!name) throw new Error('name is required.');
+      if (!worldJson) throw new Error('worldJson is required.');
+      let data;
+      try { data = JSON.parse(worldJson); } catch { throw new Error('worldJson must be valid JSON.'); }
+      if (!data || typeof data !== 'object' || Array.isArray(data) || !data.entries || typeof data.entries !== 'object' || Array.isArray(data.entries)) {
+        throw new Error('worldJson must contain an entries object.');
+      }
+      return client.createWorldInfo({ name, data });
+    }
+    case 'world_info_update': {
+      const name = typeof body?.name === 'string' ? body.name.trim() : '';
+      const worldJson = typeof body?.worldJson === 'string' ? body.worldJson.trim() : '';
+      if (!name) throw new Error('name is required.');
+      if (!worldJson) throw new Error('worldJson is required.');
+      let data;
+      try { data = JSON.parse(worldJson); } catch { throw new Error('worldJson must be valid JSON.'); }
+      if (!data || typeof data !== 'object' || Array.isArray(data) || !data.entries || typeof data.entries !== 'object' || Array.isArray(data.entries)) {
+        throw new Error('worldJson must contain an entries object.');
+      }
+      return client.updateWorldInfo({ name, data });
+    }
+    case 'world_info_save': {
+      const name = typeof body?.name === 'string' ? body.name.trim() : '';
+      const dataJson = typeof body?.dataJson === 'string' ? body.dataJson.trim() : '';
+      if (!name) throw new Error('name is required.');
+      if (!dataJson) throw new Error('dataJson is required.');
+      let data;
+      try { data = JSON.parse(dataJson); } catch { throw new Error('dataJson must be valid JSON.'); }
+      if (!data || typeof data !== 'object' || Array.isArray(data) || !data.entries || typeof data.entries !== 'object' || Array.isArray(data.entries)) {
+        throw new Error('dataJson must contain an entries object.');
+      }
+      return client.saveWorldInfo({ name, data });
+    }
+    case 'world_info_delete': {
+      const name = typeof body?.name === 'string' ? body.name.trim() : '';
+      if (!name) throw new Error('name is required.');
+      return client.deleteWorldInfo({ name });
+    }
+    case 'world_info_entry_upsert': {
+      const name = typeof body?.name === 'string' ? body.name.trim() : '';
+      if (!name) throw new Error('name is required.');
+      if (!Number.isInteger(body?.uid) || body.uid < 0) throw new Error('uid must be a non-negative integer.');
+      const entryJson = typeof body?.entryJson === 'string' ? body.entryJson.trim() : '';
+      if (!entryJson) throw new Error('entryJson is required.');
+      let entry;
+      try { entry = JSON.parse(entryJson); } catch { throw new Error('entryJson must be valid JSON.'); }
+      if (!entry || typeof entry !== 'object' || Array.isArray(entry)) throw new Error('entryJson must be a JSON object.');
+      return client.upsertWorldInfoEntry({ name, uid: body.uid, entry });
+    }
+    case 'world_info_entry_delete': {
+      const name = typeof body?.name === 'string' ? body.name.trim() : '';
+      if (!name) throw new Error('name is required.');
+      if (!Number.isInteger(body?.uid) || body.uid < 0) throw new Error('uid must be a non-negative integer.');
+      return client.deleteWorldInfoEntry({ name, uid: body.uid });
+    }
     case 'recent_chats':
       return client.recentChats();
     case 'client_generation_status':
