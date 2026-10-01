@@ -800,3 +800,44 @@ test('character rename rejects missing identifiers', async () => {
   );
 });
 
+test('classifies character export JSON route and dispatches avatarUrl', async () => {
+  const basePath = '/st-secret/mobile';
+  assert.deepEqual(
+    classifyMobileRestRequest('/st-secret/mobile/character-export-json?avatarUrl=Darya.png', basePath),
+    { kind: 'character_export_json', avatarUrl: 'Darya.png' },
+  );
+
+  const calls = [];
+  const client = {
+    async exportCharacterJson(avatarUrl) {
+      calls.push(avatarUrl);
+      return {
+        spec: 'chara_card_v3',
+        spec_version: '3.0',
+        data: { name: 'Darya' },
+      };
+    },
+  };
+
+  const result = await executeMobileRestRoute(
+    { kind: 'character_export_json', avatarUrl: 'Darya.png' },
+    client,
+  );
+
+  assert.deepEqual(calls, ['Darya.png']);
+  assert.equal(result.data.name, 'Darya');
+});
+
+test('character export JSON rejects missing avatarUrl', async () => {
+  const client = {
+    exportCharacterJson() { throw new Error('should not be called'); },
+  };
+  await assert.rejects(
+    () => executeMobileRestRoute(
+      { kind: 'character_export_json', avatarUrl: '' },
+      client,
+    ),
+    /avatarUrl is required/,
+  );
+});
+
