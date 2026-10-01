@@ -2333,7 +2333,7 @@ test('client saves world info with state idempotency', async () => {
 
 test('client writes changed world info through native edit', async () => {
   let editBody = null;
-  const existing = { entries: { 0: { uid: 0, key: ['probe'], content: 'OLD' } } };
+  let stored = { entries: { 0: { uid: 0, key: ['probe'], content: 'OLD' } } };
   const data = { entries: { 0: { uid: 0, key: ['probe'], content: 'NEW' } } };
 
   const fetchImpl = async (url, options = {}) => {
@@ -2342,9 +2342,10 @@ test('client writes changed world info through native edit', async () => {
     if (path === '/api/worldinfo/list') {
       return makeJsonResponse([{ file_id: 'Probe Lore', name: 'Probe Lore', extensions: {} }]);
     }
-    if (path === '/api/worldinfo/get') return makeJsonResponse(existing);
+    if (path === '/api/worldinfo/get') return makeJsonResponse(stored);
     if (path === '/api/worldinfo/edit') {
       editBody = JSON.parse(options.body);
+      stored = editBody.data;
       return makeJsonResponse({ ok: true });
     }
     throw new Error('unexpected URL: ' + url);
