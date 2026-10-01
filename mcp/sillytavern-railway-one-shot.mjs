@@ -27,6 +27,9 @@ const SUPPORTED_OPS = new Set([
   'world_info_create',
   'recent_chats',
   'chat',
+  'chat_delete',
+  'chat_rename',
+  'chat_create',
   'turn',
   'generate',
 ]);
@@ -74,7 +77,7 @@ export function parseOneShotCommand(raw) {
   const command = { ...value, op };
   if (value.nonce != null) command.nonce = requiredString(value.nonce, 'nonce');
 
-  if (['character', 'character_update', 'character_delete', 'character_duplicate', 'character_rename', 'character_export_json', 'character_world_bind', 'character_world_unbind', 'chat', 'turn', 'generate'].includes(op)) {
+  if (['character', 'character_update', 'character_delete', 'character_duplicate', 'character_rename', 'character_export_json', 'character_world_bind', 'character_world_unbind', 'chat', 'chat_create', 'chat_rename', 'chat_delete', 'turn', 'generate'].includes(op)) {
     command.avatarUrl = requiredString(value.avatarUrl, 'avatarUrl');
   }
   if (['character_create', 'character_update', 'character_import_json'].includes(op)) {
@@ -119,6 +122,12 @@ export function parseOneShotCommand(raw) {
   }
   if (['chat', 'turn', 'generate'].includes(op)) {
     command.fileName = requiredString(value.fileName, 'fileName');
+  }
+  if (['chat_create', 'chat_rename', 'chat_delete'].includes(op)) {
+    command.fileName = requiredString(value.fileName, 'fileName').replace(/\.jsonl$/i, '');
+  }
+  if (op === 'chat_rename') {
+    command.newFileName = requiredString(value.newFileName, 'newFileName').replace(/\.jsonl$/i, '');
   }
   if (['world_info_entry', 'world_info_create', 'world_info_update', 'world_info_save', 'world_info_delete', 'world_info_entry_upsert', 'world_info_entry_delete'].includes(op)) {
     command.name = requiredString(value.name, 'name');
@@ -352,6 +361,35 @@ function routeFor(command) {
       });
       return { method: 'GET', suffix: `/chat?${q}` };
     }
+    case 'chat_create':
+      return {
+        method: 'POST',
+        suffix: '/chat-create',
+        body: {
+          ...(command.nonce ? { nonce: command.nonce } : {}),
+          avatarUrl: command.avatarUrl,
+          fileName: command.fileName,
+        },
+      };
+    case 'chat_rename':
+      return {
+        method: 'POST',
+        suffix: '/chat-rename',
+        body: {
+          avatarUrl: command.avatarUrl,
+          fileName: command.fileName,
+          newFileName: command.newFileName,
+        },
+      };
+    case 'chat_delete':
+      return {
+        method: 'POST',
+        suffix: '/chat-delete',
+        body: {
+          avatarUrl: command.avatarUrl,
+          fileName: command.fileName,
+        },
+      };
     case 'turn':
       return {
         method: 'POST',
