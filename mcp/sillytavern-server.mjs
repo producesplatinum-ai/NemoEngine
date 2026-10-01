@@ -1082,6 +1082,144 @@ export class SillyTavernClient {
     };
   }
 
+  async bindCharacterWorld({ avatarUrl, name }) {
+    const normalizedAvatarUrl = String(avatarUrl || '').trim();
+    const worldName = String(name || '').trim();
+    if (!normalizedAvatarUrl) throw new Error('avatarUrl is required.');
+    if (!worldName) throw new Error('name is required.');
+
+    if (!(await this.worldInfoExists(worldName))) {
+      throw new Error(`World info ${worldName} does not exist.`);
+    }
+
+    const existing = await this.getCharacter(normalizedAvatarUrl);
+    const next = JSON.parse(JSON.stringify(existing || {}));
+    for (const key of [
+      'avatar',
+      'chat',
+      'create_date',
+      'date_added',
+      'chat_size',
+      'date_last_chat',
+      'data_size',
+    ]) {
+      delete next[key];
+    }
+
+    const data =
+      next?.data && typeof next.data === 'object' && !Array.isArray(next.data)
+        ? next.data
+        : null;
+    let currentWorld = '';
+    if (data) {
+      if (
+        !data.extensions ||
+        typeof data.extensions !== 'object' ||
+        Array.isArray(data.extensions)
+      ) {
+        data.extensions = {};
+      }
+      currentWorld = String(data.extensions.world ?? '').trim();
+      if (currentWorld === worldName) {
+        return {
+          ok: true,
+          avatarUrl: normalizedAvatarUrl,
+          characterName: String(data.name || next.name || '').trim(),
+          world: worldName,
+          deduplicated: true,
+        };
+      }
+      data.extensions.world = worldName;
+    } else {
+      currentWorld = String(next.world ?? '').trim();
+      if (currentWorld === worldName) {
+        return {
+          ok: true,
+          avatarUrl: normalizedAvatarUrl,
+          characterName: String(next.name || '').trim(),
+          world: worldName,
+          deduplicated: true,
+        };
+      }
+      next.world = worldName;
+    }
+
+    const updated = await this.updateCharacter({
+      avatarUrl: normalizedAvatarUrl,
+      card: next,
+    });
+    return {
+      ...updated,
+      world: worldName,
+    };
+  }
+
+  async unbindCharacterWorld({ avatarUrl }) {
+    const normalizedAvatarUrl = String(avatarUrl || '').trim();
+    if (!normalizedAvatarUrl) throw new Error('avatarUrl is required.');
+
+    const existing = await this.getCharacter(normalizedAvatarUrl);
+    const next = JSON.parse(JSON.stringify(existing || {}));
+    for (const key of [
+      'avatar',
+      'chat',
+      'create_date',
+      'date_added',
+      'chat_size',
+      'date_last_chat',
+      'data_size',
+    ]) {
+      delete next[key];
+    }
+
+    const data =
+      next?.data && typeof next.data === 'object' && !Array.isArray(next.data)
+        ? next.data
+        : null;
+    let currentWorld = '';
+    if (data) {
+      if (
+        !data.extensions ||
+        typeof data.extensions !== 'object' ||
+        Array.isArray(data.extensions)
+      ) {
+        data.extensions = {};
+      }
+      currentWorld = String(data.extensions.world ?? '').trim();
+      if (!currentWorld) {
+        return {
+          ok: true,
+          avatarUrl: normalizedAvatarUrl,
+          characterName: String(data.name || next.name || '').trim(),
+          world: '',
+          deduplicated: true,
+        };
+      }
+      data.extensions.world = '';
+    } else {
+      currentWorld = String(next.world ?? '').trim();
+      if (!currentWorld) {
+        return {
+          ok: true,
+          avatarUrl: normalizedAvatarUrl,
+          characterName: String(next.name || '').trim(),
+          world: '',
+          deduplicated: true,
+        };
+      }
+      next.world = '';
+    }
+
+    const updated = await this.updateCharacter({
+      avatarUrl: normalizedAvatarUrl,
+      card: next,
+    });
+    return {
+      ...updated,
+      world: '',
+    };
+  }
+
   async deleteCharacter({ avatarUrl, deleteChats = false }) {
     const normalizedAvatarUrl = String(avatarUrl || '').trim();
     if (!normalizedAvatarUrl) throw new Error('avatarUrl is required.');
