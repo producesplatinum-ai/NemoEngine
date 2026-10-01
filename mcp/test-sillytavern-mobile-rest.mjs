@@ -6,6 +6,7 @@ import {
   deriveMobileRestBasePath,
   executeMobileRestRoute,
   isMobileRestWriteRoute,
+  isMobileRestPostOnlyRoute,
 } from './sillytavern-mobile-rest.mjs';
 
 test('derives mobile REST base from secret MCP path', () => {
@@ -912,5 +913,21 @@ test('mobile write-route classification includes every character mutation includ
 
   assert.equal(isMobileRestWriteRoute({ kind: 'character_export_json' }), false);
   assert.equal(isMobileRestWriteRoute({ kind: 'character' }), false);
+});
+
+test('POST-only mobile route classification covers character mutations without HTML forms', () => {
+  for (const kind of [
+    'character_update',
+    'character_delete',
+    'character_duplicate',
+    'character_rename',
+    'character_import_json',
+  ]) {
+    assert.equal(isMobileRestPostOnlyRoute({ kind }), true, kind);
+  }
+
+  assert.equal(isMobileRestPostOnlyRoute({ kind: 'character_create' }), false);
+  assert.equal(isMobileRestPostOnlyRoute({ kind: 'turn' }), false);
+  assert.equal(isMobileRestPostOnlyRoute({ kind: 'generate' }), false);
 });
 
