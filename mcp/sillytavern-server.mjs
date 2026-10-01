@@ -13,6 +13,12 @@ import {
 } from './ai-provider-server.mjs';
 
 import {
+  createIdeogramNodeHandler,
+  imageProviderFromEndpointPath,
+  proxyLeonardoMcpRequest,
+} from './image-provider-server.mjs';
+
+import {
   classifyMobileRestRequest,
   deriveMobileRestBasePath,
   executeMobileRestRoute,
@@ -1431,6 +1437,9 @@ export function classifyRequestPath(
   const providerId = providerFromEndpointPath(pathname, aiPrefix);
   if (providerId) return { kind: 'provider', providerId };
 
+  const imageProviderId = imageProviderFromEndpointPath(pathname, aiPrefix);
+  if (imageProviderId) return { kind: 'image_provider', providerId: imageProviderId };
+
   return { kind: 'not_found' };
 }
 
@@ -2098,6 +2107,7 @@ export function startHttpServer({
       return [providerId, toNodeHandler(providerHandler)];
     }),
   );
+  const ideogramHandler = createIdeogramNodeHandler();
 
   const httpServer = createServer((req, res) => {
     const requestTarget = req.url || '/';
@@ -2416,6 +2426,19 @@ export function startHttpServer({
 
     if (route.kind === 'provider') {
       void providerHandlers[route.providerId](req, res);
+      return;
+    }
+
+    if (route.kind === 'image_provider') {
+      if (route.providerId === 'ideogram') {
+        void ideogramHandler(req, res);
+      } else if (route.providerId === 'leonardo') {
+        void proxyLeonardoMcpRequest(req, res);
+      } else {
+        res.statusCode = 404;
+        res.setHeader('content-type', 'text/plain; charset=utf-8');
+        res.end('Not found');
+      }
       return;
     }
 
