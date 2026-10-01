@@ -1002,3 +1002,100 @@ test('character_world_bind/unbind reject missing required identifiers', () => {
   );
 });
 
+test('character_world_bind validates exact identifiers and performs one POST', async () => {
+  const parsed = parseOneShotCommand(JSON.stringify({
+    op: 'character_world_bind',
+    nonce: 'world-bind-1',
+    avatarUrl: 'Darya.png',
+    worldName: 'Darya Lore',
+  }));
+  assert.equal(parsed.avatarUrl, 'Darya.png');
+  assert.equal(parsed.worldName, 'Darya Lore');
+
+  const calls = [];
+  const fetchImpl = async (url, init = {}) => {
+    calls.push({ url: String(url), init });
+    return new Response(JSON.stringify({
+      ok: true,
+      avatarUrl: 'Darya.png',
+      worldName: 'Darya Lore',
+      bound: true,
+    }), {
+      status: 200,
+      headers: { 'content-type': 'application/json' },
+    });
+  };
+
+  const result = await executeOneShot({
+    command: parsed,
+    publicDomain: 'example.up.railway.app',
+    mcpPath: '/secret/mcp',
+    fetchImpl,
+  });
+
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].url, 'https://example.up.railway.app/secret/mobile/character-world-bind');
+  assert.equal(calls[0].init.method, 'POST');
+  assert.deepEqual(JSON.parse(calls[0].init.body), {
+    avatarUrl: 'Darya.png',
+    worldName: 'Darya Lore',
+  });
+  assert.equal(result.bound, true);
+});
+
+test('character_world_unbind validates avatarUrl and performs one POST', async () => {
+  const parsed = parseOneShotCommand(JSON.stringify({
+    op: 'character_world_unbind',
+    nonce: 'world-unbind-1',
+    avatarUrl: 'Darya.png',
+  }));
+
+  const calls = [];
+  const fetchImpl = async (url, init = {}) => {
+    calls.push({ url: String(url), init });
+    return new Response(JSON.stringify({
+      ok: true,
+      avatarUrl: 'Darya.png',
+      worldName: '',
+      bound: false,
+    }), {
+      status: 200,
+      headers: { 'content-type': 'application/json' },
+    });
+  };
+
+  const result = await executeOneShot({
+    command: parsed,
+    publicDomain: 'example.up.railway.app',
+    mcpPath: '/secret/mcp',
+    fetchImpl,
+  });
+
+  assert.equal(calls[0].url, 'https://example.up.railway.app/secret/mobile/character-world-unbind');
+  assert.deepEqual(JSON.parse(calls[0].init.body), { avatarUrl: 'Darya.png' });
+  assert.equal(result.bound, false);
+});
+
+test('character world bind/unbind reject missing identifiers', () => {
+  assert.throws(
+    () => parseOneShotCommand(JSON.stringify({
+      op: 'character_world_bind',
+      worldName: 'Lore',
+    })),
+    /avatarUrl is required/,
+  );
+  assert.throws(
+    () => parseOneShotCommand(JSON.stringify({
+      op: 'character_world_bind',
+      avatarUrl: 'Darya.png',
+    })),
+    /worldName is required/,
+  );
+  assert.throws(
+    () => parseOneShotCommand(JSON.stringify({
+      op: 'character_world_unbind',
+    })),
+    /avatarUrl is required/,
+  );
+});
+
