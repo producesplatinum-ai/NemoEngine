@@ -22,6 +22,8 @@ import {
   classifyMobileRestRequest,
   deriveMobileRestBasePath,
   executeMobileRestRoute,
+  isMobileRestWriteRoute,
+  isMobileRestPostOnlyRoute,
 } from './sillytavern-mobile-rest.mjs';
 
 import {
@@ -2611,27 +2613,12 @@ export function startHttpServer({
     );
 
     if (mobileRoute.kind !== 'not_found') {
-      const mobileWriteRoute =
-        mobileRoute.kind === 'turn' ||
-        mobileRoute.kind === 'generate' ||
-        mobileRoute.kind === 'character_create' ||
-        mobileRoute.kind === 'character_update' ||
-        mobileRoute.kind === 'character_delete' ||
-        mobileRoute.kind === 'character_duplicate' ||
-        mobileRoute.kind === 'character_rename' ||
-        mobileRoute.kind === 'preset_save' ||
-        mobileRoute.kind === 'preset_delete' ||
-        mobileRoute.kind === 'nemo_profile_install' ||
-        mobileRoute.kind === 'nemo_exact_install' ||
-        mobileRoute.kind === 'nemo_exact_activate';
+      const mobileWriteRoute = isMobileRestWriteRoute(mobileRoute);
 
       if (
         mobileWriteRoute &&
         req.method === 'GET' &&
-        (mobileRoute.kind === 'character_update' ||
-          mobileRoute.kind === 'character_delete' ||
-          mobileRoute.kind === 'character_duplicate' ||
-          mobileRoute.kind === 'character_rename')
+        isMobileRestPostOnlyRoute(mobileRoute)
       ) {
         res.statusCode = 405;
         res.setHeader('allow', 'POST');
