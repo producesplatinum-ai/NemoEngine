@@ -428,3 +428,18 @@ test('character_update and character_delete validate inputs before network use',
   );
 });
 
+test('character_create derives deterministic fileName from card name when omitted', () => {
+  const card = {
+    spec: 'chara_card_v3',
+    spec_version: '3.0',
+    data: { name: 'Deterministic Character', description: 'probe' },
+  };
+  const parsed = parseOneShotCommand(JSON.stringify({
+    op: 'character_create',
+    nonce: 'character-create-derived-name',
+    cardJson: JSON.stringify(card),
+  }));
+
+  assert.equal(parsed.fileName, 'Deterministic Character');
+});
+
