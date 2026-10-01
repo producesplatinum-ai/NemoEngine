@@ -17,6 +17,12 @@ const SUPPORTED_OPS = new Set([
   'character_import_json',
   'world_info',
   'world_info_entry',
+  'world_info_entry_delete',
+  'world_info_entry_upsert',
+  'world_info_delete',
+  'world_info_save',
+  'world_info_update',
+  'world_info_create',
   'recent_chats',
   'chat',
   'turn',
@@ -109,8 +115,65 @@ export function parseOneShotCommand(raw) {
   if (['chat', 'turn', 'generate'].includes(op)) {
     command.fileName = requiredString(value.fileName, 'fileName');
   }
-  if (op === 'world_info_entry') {
+  if (['world_info_entry', 'world_info_create', 'world_info_update', 'world_info_save', 'world_info_delete', 'world_info_entry_upsert', 'world_info_entry_delete'].includes(op)) {
     command.name = requiredString(value.name, 'name');
+  }
+  if (op === 'world_info_create') {
+    command.worldJson = value.worldJson == null
+      ? JSON.stringify({ entries: {} })
+      : requiredString(value.worldJson, 'worldJson');
+  }
+  if (op === 'world_info_update') {
+    command.worldJson = requiredString(value.worldJson, 'worldJson');
+  }
+  if (op === 'world_info_save') {
+    command.dataJson = requiredString(value.dataJson, 'dataJson');
+  }
+  if (['world_info_create', 'world_info_update'].includes(op)) {
+    let world;
+    try {
+      world = JSON.parse(command.worldJson);
+    } catch {
+      throw new Error('worldJson must be valid JSON.');
+    }
+    if (!world || typeof world !== 'object' || Array.isArray(world)) {
+      throw new Error('worldJson must be a JSON object.');
+    }
+    if (!world.entries || typeof world.entries !== 'object' || Array.isArray(world.entries)) {
+      throw new Error('worldJson must contain an entries object.');
+    }
+  }
+  if (op === 'world_info_save') {
+    let world;
+    try {
+      world = JSON.parse(command.dataJson);
+    } catch {
+      throw new Error('dataJson must be valid JSON.');
+    }
+    if (!world || typeof world !== 'object' || Array.isArray(world)) {
+      throw new Error('dataJson must be a JSON object.');
+    }
+    if (!world.entries || typeof world.entries !== 'object' || Array.isArray(world.entries)) {
+      throw new Error('dataJson must contain an entries object.');
+    }
+  }
+  if (['world_info_entry_upsert', 'world_info_entry_delete'].includes(op)) {
+    if (!Number.isInteger(value.uid) || value.uid < 0) {
+      throw new Error('uid must be a non-negative integer.');
+    }
+    command.uid = value.uid;
+  }
+  if (op === 'world_info_entry_upsert') {
+    command.entryJson = requiredString(value.entryJson, 'entryJson');
+    let entry;
+    try {
+      entry = JSON.parse(command.entryJson);
+    } catch {
+      throw new Error('entryJson must be valid JSON.');
+    }
+    if (!entry || typeof entry !== 'object' || Array.isArray(entry)) {
+      throw new Error('entryJson must be a JSON object.');
+    }
   }
   if (['nemo_exact_install', 'nemo_exact_activate'].includes(op)) {
     command.entryId = requiredString(value.entryId, 'entryId');
@@ -227,6 +290,42 @@ function routeFor(command) {
       const q = new URLSearchParams({ name: command.name });
       return { method: 'GET', suffix: `/world-info-entry?${q}` };
     }
+    case 'world_info_create':
+      return {
+        method: 'POST',
+        suffix: '/world-info-create',
+        body: { name: command.name, worldJson: command.worldJson },
+      };
+    case 'world_info_update':
+      return {
+        method: 'POST',
+        suffix: '/world-info-update',
+        body: { name: command.name, worldJson: command.worldJson },
+      };
+    case 'world_info_save':
+      return {
+        method: 'POST',
+        suffix: '/world-info-save',
+        body: { name: command.name, dataJson: command.dataJson },
+      };
+    case 'world_info_delete':
+      return {
+        method: 'POST',
+        suffix: '/world-info-delete',
+        body: { name: command.name },
+      };
+    case 'world_info_entry_upsert':
+      return {
+        method: 'POST',
+        suffix: '/world-info-entry-upsert',
+        body: { name: command.name, uid: command.uid, entryJson: command.entryJson },
+      };
+    case 'world_info_entry_delete':
+      return {
+        method: 'POST',
+        suffix: '/world-info-entry-delete',
+        body: { name: command.name, uid: command.uid },
+      };
     case 'recent_chats':
       return { method: 'GET', suffix: '/recent-chats' };
     case 'chat': {
