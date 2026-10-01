@@ -8,6 +8,7 @@ const SUPPORTED_OPS = new Set([
   'client_generation_status',
   'characters',
   'character',
+  'character_create',
   'world_info',
   'world_info_entry',
   'recent_chats',
@@ -61,6 +62,21 @@ export function parseOneShotCommand(raw) {
 
   if (['character', 'chat', 'turn', 'generate'].includes(op)) {
     command.avatarUrl = requiredString(value.avatarUrl, 'avatarUrl');
+  }
+  if (op === 'character_create') {
+    command.cardJson = requiredString(value.cardJson, 'cardJson');
+    let card;
+    try {
+      card = JSON.parse(command.cardJson);
+    } catch {
+      throw new Error('cardJson must be valid JSON.');
+    }
+    if (!card || typeof card !== 'object' || Array.isArray(card)) {
+      throw new Error('cardJson must be a JSON object.');
+    }
+    if (value.fileName != null) {
+      command.fileName = requiredString(value.fileName, 'fileName');
+    }
   }
   if (['chat', 'turn', 'generate'].includes(op)) {
     command.fileName = requiredString(value.fileName, 'fileName');
@@ -118,6 +134,15 @@ function routeFor(command) {
       const q = new URLSearchParams({ avatarUrl: command.avatarUrl });
       return { method: 'GET', suffix: `/character?${q}` };
     }
+    case 'character_create':
+      return {
+        method: 'POST',
+        suffix: '/character-create',
+        body: {
+          ...(command.fileName ? { fileName: command.fileName } : {}),
+          cardJson: command.cardJson,
+        },
+      };
     case 'world_info':
       return { method: 'GET', suffix: '/world-info' };
     case 'world_info_entry': {
