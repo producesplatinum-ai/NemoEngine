@@ -318,3 +318,113 @@ test('character_create rejects missing or malformed cardJson before any network 
   );
 });
 
+test('character_update validates a V3 card and performs exactly one POST', async () => {
+  const card = {
+    spec: 'chara_card_v3',
+    spec_version: '3.0',
+    data: { name: 'Mobile CRUD Probe', description: 'updated' },
+  };
+  const cardJson = JSON.stringify(card);
+  const parsed = parseOneShotCommand(JSON.stringify({
+    op: 'character_update',
+    nonce: 'character-update-1',
+    avatarUrl: 'Mobile CRUD Probe.png',
+    cardJson,
+  }));
+
+  assert.equal(parsed.op, 'character_update');
+  assert.equal(parsed.avatarUrl, 'Mobile CRUD Probe.png');
+  assert.equal(parsed.cardJson, cardJson);
+
+  const calls = [];
+  const fetchImpl = async (url, init = {}) => {
+    calls.push({ url: String(url), init });
+    return new Response(JSON.stringify({
+      ok: true,
+      avatarUrl: 'Mobile CRUD Probe.png',
+      characterName: 'Mobile CRUD Probe',
+    }), {
+      status: 200,
+      headers: { 'content-type': 'application/json' },
+    });
+  };
+
+  const result = await executeOneShot({
+    command: parsed,
+    publicDomain: 'example.up.railway.app',
+    mcpPath: '/secret/mcp',
+    fetchImpl,
+  });
+
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].url, 'https://example.up.railway.app/secret/mobile/character-update');
+  assert.equal(calls[0].init.method, 'POST');
+  assert.deepEqual(JSON.parse(calls[0].init.body), {
+    avatarUrl: 'Mobile CRUD Probe.png',
+    cardJson,
+  });
+  assert.equal(result.characterName, 'Mobile CRUD Probe');
+});
+
+test('character_delete defaults to preserving chats and performs exactly one POST', async () => {
+  const parsed = parseOneShotCommand(JSON.stringify({
+    op: 'character_delete',
+    nonce: 'character-delete-1',
+    avatarUrl: 'Mobile CRUD Probe.png',
+  }));
+  assert.equal(parsed.deleteChats, false);
+
+  const calls = [];
+  const fetchImpl = async (url, init = {}) => {
+    calls.push({ url: String(url), init });
+    return new Response(JSON.stringify({
+      ok: true,
+      deleted: true,
+      avatarUrl: 'Mobile CRUD Probe.png',
+      deleteChats: false,
+    }), {
+      status: 200,
+      headers: { 'content-type': 'application/json' },
+    });
+  };
+
+  const result = await executeOneShot({
+    command: parsed,
+    publicDomain: 'example.up.railway.app',
+    mcpPath: '/secret/mcp',
+    fetchImpl,
+  });
+
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].url, 'https://example.up.railway.app/secret/mobile/character-delete');
+  assert.equal(calls[0].init.method, 'POST');
+  assert.deepEqual(JSON.parse(calls[0].init.body), {
+    avatarUrl: 'Mobile CRUD Probe.png',
+    deleteChats: false,
+  });
+  assert.equal(result.deleted, true);
+});
+
+test('character_update and character_delete validate inputs before network use', () => {
+  assert.throws(
+    () => parseOneShotCommand(JSON.stringify({ op: 'character_update' })),
+    /avatarUrl is required/,
+  );
+  assert.throws(
+    () => parseOneShotCommand(JSON.stringify({
+      op: 'character_update',
+      avatarUrl: 'Darya.png',
+      cardJson: '{bad}',
+    })),
+    /cardJson must be valid JSON/,
+  );
+  assert.throws(
+    () => parseOneShotCommand(JSON.stringify({
+      op: 'character_delete',
+      avatarUrl: 'Darya.png',
+      deleteChats: 'yes',
+    })),
+    /deleteChats must be a boolean/,
+  );
+});
+
