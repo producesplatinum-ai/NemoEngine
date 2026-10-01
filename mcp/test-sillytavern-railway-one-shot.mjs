@@ -737,3 +737,114 @@ test('character_import_json rejects malformed or nameless cards without explicit
   );
 });
 
+test('world-info mutations parse deterministic payloads and route to POST endpoints', async () => {
+  const cases = [
+    {
+      raw: { op: 'world_info_create', nonce: 'wi-create-1', name: 'Probe World' },
+      expectedPath: '/world-info-create',
+      expectedBody: { name: 'Probe World', worldJson: '{"entries":{}}' },
+    },
+    {
+      raw: {
+        op: 'world_info_update',
+        nonce: 'wi-update-1',
+        name: 'Probe World',
+        worldJson: JSON.stringify({ entries: { 0: { uid: 0, content: 'updated' } } }),
+      },
+      expectedPath: '/world-info-update',
+      expectedBody: {
+        name: 'Probe World',
+        worldJson: JSON.stringify({ entries: { 0: { uid: 0, content: 'updated' } } }),
+      },
+    },
+    {
+      raw: { op: 'world_info_delete', nonce: 'wi-delete-1', name: 'Probe World' },
+      expectedPath: '/world-info-delete',
+      expectedBody: { name: 'Probe World' },
+    },
+    {
+      raw: {
+        op: 'world_info_entry_upsert',
+        nonce: 'wi-entry-upsert-1',
+        name: 'Probe World',
+        uid: 7,
+        entryJson: JSON.stringify({ content: 'entry', key: ['probe'] }),
+      },
+      expectedPath: '/world-info-entry-upsert',
+      expectedBody: {
+        name: 'Probe World',
+        uid: 7,
+        entryJson: JSON.stringify({ content: 'entry', key: ['probe'] }),
+      },
+    },
+    {
+      raw: {
+        op: 'world_info_entry_delete',
+        nonce: 'wi-entry-delete-1',
+        name: 'Probe World',
+        uid: 7,
+      },
+      expectedPath: '/world-info-entry-delete',
+      expectedBody: { name: 'Probe World', uid: 7 },
+    },
+  ];
+
+  for (const item of cases) {
+    const parsed = parseOneShotCommand(JSON.stringify(item.raw));
+    const calls = [];
+    const fetchImpl = async (url, init = {}) => {
+      calls.push({ url: String(url), init });
+      return new Response(JSON.stringify({ ok: true }), {
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+      });
+    };
+    await executeOneShot({
+      command: parsed,
+      publicDomain: 'example.up.railway.app',
+      mcpPath: '/secret/mcp',
+      fetchImpl,
+    });
+    assert.equal(calls.length, 1);
+    assert.equal(calls[0].url, 'https://example.up.railway.app/secret/mobile' + item.expectedPath);
+    assert.equal(calls[0].init.method, 'POST');
+    assert.deepEqual(JSON.parse(calls[0].init.body), item.expectedBody);
+  }
+});
+
+test('world-info mutations validate JSON and deterministic integer UIDs', () => {
+  assert.throws(
+    () => parseOneShotCommand(JSON.stringify({
+      op: 'world_info_update',
+      name: 'Probe',
+      worldJson: '{bad}',
+    })),
+    /worldJson must be valid JSON/,
+  );
+  assert.throws(
+    () => parseOneShotCommand(JSON.stringify({
+      op: 'world_info_update',
+      name: 'Probe',
+      worldJson: JSON.stringify({ nope: {} }),
+    })),
+    /worldJson must contain an entries object/,
+  );
+  assert.throws(
+    () => parseOneShotCommand(JSON.stringify({
+      op: 'world_info_entry_upsert',
+      name: 'Probe',
+      uid: -1,
+      entryJson: JSON.stringify({ content: 'x' }),
+    })),
+    /uid must be a non-negative integer/,
+  );
+  assert.throws(
+    () => parseOneShotCommand(JSON.stringify({
+      op: 'world_info_entry_delete',
+      name: 'Probe',
+      uid: '7',
+    })),
+    /uid must be a non-negative integer/,
+  );
+});
+
