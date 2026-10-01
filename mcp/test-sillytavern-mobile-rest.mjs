@@ -624,3 +624,66 @@ test('character update/delete reject invalid payloads', async () => {
   );
 });
 
+test('classifies character duplicate route and dispatches exact source/target identifiers', async () => {
+  const basePath = '/st-secret/mobile';
+  assert.deepEqual(
+    classifyMobileRestRequest('/st-secret/mobile/character-duplicate', basePath),
+    { kind: 'character_duplicate' },
+  );
+
+  const calls = [];
+  const client = {
+    async duplicateCharacter(input) {
+      calls.push(input);
+      return {
+        ok: true,
+        sourceAvatarUrl: input.avatarUrl,
+        avatarUrl: 'Darya Copy.png',
+        characterName: input.newName,
+      };
+    },
+  };
+
+  const result = await executeMobileRestRoute(
+    { kind: 'character_duplicate' },
+    client,
+    {
+      avatarUrl: 'Darya.png',
+      newName: 'Darya Copy',
+      fileName: 'Darya Copy',
+    },
+  );
+
+  assert.equal(result.ok, true);
+  assert.deepEqual(calls, [{
+    avatarUrl: 'Darya.png',
+    newName: 'Darya Copy',
+    fileName: 'Darya Copy',
+  }]);
+});
+
+test('character duplicate rejects missing identifiers', async () => {
+  const client = {
+    duplicateCharacter() {
+      throw new Error('should not be called');
+    },
+  };
+
+  await assert.rejects(
+    () => executeMobileRestRoute(
+      { kind: 'character_duplicate' },
+      client,
+      { newName: 'Copy' },
+    ),
+    /avatarUrl is required/,
+  );
+  await assert.rejects(
+    () => executeMobileRestRoute(
+      { kind: 'character_duplicate' },
+      client,
+      { avatarUrl: 'Darya.png' },
+    ),
+    /newName is required/,
+  );
+});
+
