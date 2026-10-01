@@ -2035,3 +2035,113 @@ test('client character JSON export rejects a missing avatarUrl before network us
   );
 });
 
+test('client imports exported JSON through deterministic native create semantics', async () => {
+  let createBody = null;
+  const exported = {
+    spec: 'chara_card_v2',
+    spec_version: '2.0',
+    data: {
+      name: 'Imported Probe',
+      description: 'exported description',
+      personality: 'exported personality',
+      scenario: 'exported scenario',
+      first_mes: 'hello',
+      mes_example: '<START>\\nImported Probe: example',
+      creator_notes: 'notes',
+      system_prompt: 'system',
+      post_history_instructions: 'post',
+      tags: ['imported'],
+      creator: 'tester',
+      character_version: '2.1',
+      alternate_greetings: ['alt'],
+      extensions: {
+        talkativeness: 0.66,
+        fav: true,
+        world: 'ImportedWorld',
+        depth_prompt: { prompt: 'IMPORT_DEPTH', depth: 3, role: 'system' },
+        custom_marker: 'preserve-import',
+      },
+      character_book: {
+        name: 'Imported Book',
+        entries: [{ id: 1, keys: ['key'], content: 'content' }],
+      },
+    },
+  };
+
+  const fetchImpl = async (url, options = {}) => {
+    const path = new URL(String(url)).pathname;
+    if (path === '/csrf-token') return makeJsonResponse({ token: 'csrf-import-json' });
+    if (path === '/api/characters/get') {
+      return makeJsonResponse({ error: 'not found' }, { status: 404 });
+    }
+    if (path === '/api/characters/create') {
+      createBody = JSON.parse(options.body);
+      return makeJsonResponse('Imported Probe.png');
+    }
+    throw new Error('unexpected URL: ' + url);
+  };
+
+  const client = new SillyTavernClient({
+    baseUrl: 'https://st.example.test',
+    fetchImpl,
+  });
+  const result = await client.importCharacterJson({
+    card: exported,
+    fileName: 'Imported Probe',
+  });
+
+  assert.deepEqual(result, {
+    ok: true,
+    imported: true,
+    avatarUrl: 'Imported Probe.png',
+    characterName: 'Imported Probe',
+  });
+  assert.equal(createBody.file_name, 'Imported Probe');
+  assert.equal(createBody.ch_name, 'Imported Probe');
+  assert.equal(createBody.description, 'exported description');
+  assert.equal(createBody.depth_prompt_prompt, 'IMPORT_DEPTH');
+
+  const stored = JSON.parse(createBody.json_data);
+  assert.equal(stored.spec, 'chara_card_v2');
+  assert.equal(stored.spec_version, '2.0');
+  assert.equal(stored.data.extensions.custom_marker, 'preserve-import');
+  assert.deepEqual(stored.data.character_book, exported.data.character_book);
+});
+
+test('character JSON import inherits create idempotency', async () => {
+  let createCalls = 0;
+  const card = {
+    spec: 'chara_card_v3',
+    spec_version: '3.0',
+    data: { name: 'Import Dedupe', description: 'same data' },
+  };
+
+  const fetchImpl = async (url, options = {}) => {
+    const path = new URL(String(url)).pathname;
+    if (path === '/csrf-token') return makeJsonResponse({ token: 'csrf-import-dedupe' });
+    if (path === '/api/characters/get') return makeJsonResponse({
+      ...card,
+      avatar: 'Import Dedupe.png',
+    });
+    if (path === '/api/characters/create') {
+      createCalls += 1;
+      return makeJsonResponse('Import Dedupe.png');
+    }
+    throw new Error('unexpected URL: ' + url);
+  };
+
+  const client = new SillyTavernClient({
+    baseUrl: 'https://st.example.test',
+    fetchImpl,
+  });
+  const result = await client.importCharacterJson({
+    card,
+    fileName: 'Import Dedupe',
+  });
+
+  assert.equal(createCalls, 0);
+  assert.equal(result.imported, true);
+  assert.equal(result.deduplicated, true);
+  assert.equal(result.avatarUrl, 'Import Dedupe.png');
+});
+
