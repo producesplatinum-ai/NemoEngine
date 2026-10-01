@@ -1677,6 +1677,286 @@ export class SillyTavernClient {
     return this.post('/api/chats/recent', {});
   }
 
+  normalizeChatFileName(value) {
+    return String(value || '').trim().replace(/\.jsonl$/i, '');
+  }
+
+  async findCharacterChat({ avatarUrl, fileName }) {
+    const normalizedAvatarUrl = String(avatarUrl || '').trim();
+    const normalizedFileName = this.normalizeChatFileName(fileName);
+    if (!normalizedAvatarUrl || !normalizedFileName) return null;
+
+    const chats = await this.recentChats();
+    if (!Array.isArray(chats)) return null;
+
+    return chats.find((item) => {
+      const avatar = String(item?.avatar || '').trim();
+      const fileId = this.normalizeChatFileName(item?.file_id || '');
+      const fileNameValue = this.normalizeChatFileName(item?.file_name || '');
+      return (
+        avatar === normalizedAvatarUrl &&
+        (fileId === normalizedFileName || fileNameValue === normalizedFileName)
+      );
+    }) || null;
+  }
+
+  async createChat({ avatarUrl, fileName, nonce = '' }) {
+    const normalizedAvatarUrl = String(avatarUrl || '').trim();
+    const normalizedFileName = this.normalizeChatFileName(fileName);
+    const normalizedNonce = String(nonce || '').trim();
+    if (!normalizedAvatarUrl || !normalizedFileName) {
+      throw new Error('avatarUrl and fileName are required.');
+    }
+
+    const character = await this.getCharacter(normalizedAvatarUrl);
+    const characterName = String(
+      character?.data?.name ?? character?.name ?? normalizedAvatarUrl.replace(/\.png$/i, ''),
+    ).trim() || 'Assistant';
+
+    const existingInfo = await this.findCharacterChat({
+      avatarUrl: normalizedAvatarUrl,
+      fileName: normalizedFileName,
+    });
+    if (existingInfo) {
+      const existing = await this.getChat({
+        avatarUrl: normalizedAvatarUrl,
+        fileName: normalizedFileName,
+      });
+      const header = Array.isArray(existing) ? existing[0] : null;
+      if (
+        normalizedNonce &&
+        header?.chat_metadata?.one_shot_nonce === normalizedNonce &&
+        header?.chat_metadata?.one_shot_op === 'chat_create'
+      ) {
+        return {
+          ok: true,
+          created: false,
+          deduplicated: true,
+          avatarUrl: normalizedAvatarUrl,
+          fileName: normalizedFileName,
+        };
+      }
+      throw new Error(
+        `Chat ${normalizedFileName} already exists for ${normalizedAvatarUrl}.`,
+      );
+    }
+
+    const chat = [{
+      user_name: 'You',
+      character_name: characterName,
+      create_date: new Date().toISOString(),
+      chat_metadata: normalizedNonce
+        ? {
+            one_shot_nonce: normalizedNonce,
+            one_shot_op: 'chat_create',
+          }
+        : {},
+    }];
+
+    await this.post('/api/chats/save', {
+      ch_name: characterName,
+      file_name: normalizedFileName,
+      chat,
+      avatar_url: normalizedAvatarUrl,
+    });
+
+    const persisted = await this.findCharacterChat({
+      avatarUrl: normalizedAvatarUrl,
+      fileName: normalizedFileName,
+    });
+    if (!persisted) {
+      throw new Error(
+        `Chat ${normalizedFileName} save returned success but the file did not persist.`,
+      );
+    }
+
+    const stored = await this.getChat({
+      avatarUrl: normalizedAvatarUrl,
+      fileName: normalizedFileName,
+    });
+    const storedHeader = Array.isArray(stored) ? stored[0] : null;
+    if (
+      normalizedNonce &&
+      (
+        storedHeader?.chat_metadata?.one_shot_nonce !== normalizedNonce ||
+        storedHeader?.chat_metadata?.one_shot_op !== 'chat_create'
+      )
+    ) {
+      throw new Error(
+        `Chat ${normalizedFileName} persisted without the expected create nonce.`,
+      );
+    }
+
+    return {
+      ok: true,
+      created: true,
+      avatarUrl: normalizedAvatarUrl,
+      fileName: normalizedFileName,
+    };
+  }
+
+  async renameChat({ avatarUrl, fileName, newFileName }) {
+    const normalizedAvatarUrl = String(avatarUrl || '').trim();
+    const oldName = this.normalizeChatFileName(fileName);
+    const newName = this.normalizeChatFileName(newFileName);
+    if (!normalizedAvatarUrl || !oldName || !newName) {
+      throw new Error('avatarUrl, fileName, and newFileName are required.');
+    }
+    if (oldName === newName) {
+      return {
+        ok: true,
+        renamed: false,
+        deduplicated: true,
+        alreadyRenamed: true,
+        avatarUrl: normalizedAvatarUrl,
+        fileName: newName,
+        oldFileName: oldName,
+      };
+    }
+
+    let source = await this.findCharacterChat({
+      avatarUrl: normalizedAvatarUrl,
+      fileName: oldName,
+    });
+    let target = await this.findCharacterChat({
+      avatarUrl: normalizedAvatarUrl,
+      fileName: newName,
+    });
+
+    if (!source) {
+      if (target) {
+        return {
+          ok: true,
+          renamed: false,
+          deduplicated: true,
+          alreadyRenamed: true,
+          avatarUrl: normalizedAvatarUrl,
+          fileName: newName,
+          oldFileName: oldName,
+        };
+      }
+      throw new Error(`Source chat ${oldName} does not exist.`);
+    }
+    if (target) {
+      throw new Error(`Target chat ${newName} already exists.`);
+    }
+
+    try {
+      await this.post('/api/chats/rename', {
+        avatar_url: normalizedAvatarUrl,
+        original_file: `${oldName}.jsonl`,
+        renamed_file: `${newName}.jsonl`,
+        is_group: false,
+      });
+    } catch (error) {
+      source = await this.findCharacterChat({
+        avatarUrl: normalizedAvatarUrl,
+        fileName: oldName,
+      });
+      target = await this.findCharacterChat({
+        avatarUrl: normalizedAvatarUrl,
+        fileName: newName,
+      });
+      if (!source && target) {
+        return {
+          ok: true,
+          renamed: false,
+          deduplicated: true,
+          alreadyRenamed: true,
+          avatarUrl: normalizedAvatarUrl,
+          fileName: newName,
+          oldFileName: oldName,
+        };
+      }
+      throw error;
+    }
+
+    source = await this.findCharacterChat({
+      avatarUrl: normalizedAvatarUrl,
+      fileName: oldName,
+    });
+    target = await this.findCharacterChat({
+      avatarUrl: normalizedAvatarUrl,
+      fileName: newName,
+    });
+    if (source || !target) {
+      throw new Error(
+        `Chat rename ${oldName} -> ${newName} returned success but the final state did not persist.`,
+      );
+    }
+
+    return {
+      ok: true,
+      renamed: true,
+      avatarUrl: normalizedAvatarUrl,
+      fileName: newName,
+      oldFileName: oldName,
+    };
+  }
+
+  async deleteChat({ avatarUrl, fileName }) {
+    const normalizedAvatarUrl = String(avatarUrl || '').trim();
+    const normalizedFileName = this.normalizeChatFileName(fileName);
+    if (!normalizedAvatarUrl || !normalizedFileName) {
+      throw new Error('avatarUrl and fileName are required.');
+    }
+
+    let existing = await this.findCharacterChat({
+      avatarUrl: normalizedAvatarUrl,
+      fileName: normalizedFileName,
+    });
+    if (!existing) {
+      return {
+        ok: true,
+        deleted: false,
+        deduplicated: true,
+        alreadyAbsent: true,
+        avatarUrl: normalizedAvatarUrl,
+        fileName: normalizedFileName,
+      };
+    }
+
+    try {
+      await this.post('/api/chats/delete', {
+        avatar_url: normalizedAvatarUrl,
+        chatfile: `${normalizedFileName}.jsonl`,
+      });
+    } catch (error) {
+      existing = await this.findCharacterChat({
+        avatarUrl: normalizedAvatarUrl,
+        fileName: normalizedFileName,
+      });
+      if (!existing) {
+        return {
+          ok: true,
+          deleted: false,
+          deduplicated: true,
+          alreadyAbsent: true,
+          avatarUrl: normalizedAvatarUrl,
+          fileName: normalizedFileName,
+        };
+      }
+      throw error;
+    }
+
+    existing = await this.findCharacterChat({
+      avatarUrl: normalizedAvatarUrl,
+      fileName: normalizedFileName,
+    });
+    if (existing) {
+      throw new Error(
+        `Chat ${normalizedFileName} delete returned success but the file still exists.`,
+      );
+    }
+
+    return {
+      ok: true,
+      deleted: true,
+      avatarUrl: normalizedAvatarUrl,
+      fileName: normalizedFileName,
+    };
+  }
+
   getChat({ avatarUrl, fileName }) {
     return this.post('/api/chats/get', {
       avatar_url: avatarUrl,
