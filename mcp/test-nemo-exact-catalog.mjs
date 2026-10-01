@@ -33,6 +33,7 @@ test('exact catalog covers canonical presets, every mutual-exclusive option, eve
     'canonical-ready-ru-rp',
     'canonical-ready-ru-gooner-rp',
     'canonical-ready-ru-psychology-humiliation-joi-rp',
+    'canonical-ready-ru-gooner-humiliation-joi-rp',
   ]) assert(ids.has(required), `missing canonical preset ${required}`);
 
   for (const { group, identifier } of mutualOptions) {
@@ -107,4 +108,30 @@ test('overlay variants change only prompt_order and preserve every prompt defini
       assert.equal(profile.order.find((entry) => entry.identifier === sample.identifier)?.enabled, true);
     }
   }
+});
+
+
+test('Ready RU Gooner Humiliation JOI combines the requested modules in one exact preset', async () => {
+  const built = await buildExactNemoPreset('canonical-ready-ru-gooner-humiliation-joi-rp');
+  const enabled = new Set(
+    built.preset.prompt_order[0].order
+      .filter((entry) => entry.enabled)
+      .map((entry) => entry.identifier),
+  );
+
+  for (const required of [
+    'v11-329-vex-gooner-vex',
+    'v11-178-nsfw-gooner-protocol',
+    'v11-182-nsfw-proactive-partners',
+    'v11-639-fetish-humiliation',
+    'v11-640-fetish-joi',
+    'v11-176-nsfw-dirty-talk',
+    'v11-177-nsfw-dom-language',
+    'v11-611-augment-manipulation-realism',
+    'v11-613-augment-psychological-emotional-realism',
+  ]) {
+    assert.equal(enabled.has(required), true, `expected enabled prompt ${required}`);
+  }
+
+  assert.equal(enabled.has('v11-305-vex-narrative-vex'), false);
 });
