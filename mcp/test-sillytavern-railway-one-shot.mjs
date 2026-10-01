@@ -669,3 +669,71 @@ test('character_export_json rejects missing avatarUrl', () => {
   );
 });
 
+test('character_import_json validates card JSON and derives deterministic filename', async () => {
+  const card = {
+    spec: 'chara_card_v2',
+    spec_version: '2.0',
+    data: {
+      name: 'Imported Probe',
+      description: 'from exported JSON',
+    },
+  };
+  const cardJson = JSON.stringify(card);
+  const parsed = parseOneShotCommand(JSON.stringify({
+    op: 'character_import_json',
+    nonce: 'import-json-1',
+    cardJson,
+  }));
+
+  assert.equal(parsed.op, 'character_import_json');
+  assert.equal(parsed.cardJson, cardJson);
+  assert.equal(parsed.fileName, 'Imported Probe');
+
+  const calls = [];
+  const fetchImpl = async (url, init = {}) => {
+    calls.push({ url: String(url), init });
+    return new Response(JSON.stringify({
+      ok: true,
+      imported: true,
+      avatarUrl: 'Imported Probe.png',
+      characterName: 'Imported Probe',
+    }), {
+      status: 200,
+      headers: { 'content-type': 'application/json' },
+    });
+  };
+
+  const result = await executeOneShot({
+    command: parsed,
+    publicDomain: 'example.up.railway.app',
+    mcpPath: '/secret/mcp',
+    fetchImpl,
+  });
+
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].url, 'https://example.up.railway.app/secret/mobile/character-import-json');
+  assert.equal(calls[0].init.method, 'POST');
+  assert.deepEqual(JSON.parse(calls[0].init.body), {
+    fileName: 'Imported Probe',
+    cardJson,
+  });
+  assert.equal(result.imported, true);
+});
+
+test('character_import_json rejects malformed or nameless cards without explicit filename', () => {
+  assert.throws(
+    () => parseOneShotCommand(JSON.stringify({
+      op: 'character_import_json',
+      cardJson: '{bad}',
+    })),
+    /cardJson must be valid JSON/,
+  );
+  assert.throws(
+    () => parseOneShotCommand(JSON.stringify({
+      op: 'character_import_json',
+      cardJson: JSON.stringify({ spec: 'chara_card_v3', spec_version: '3.0', data: {} }),
+    })),
+    /Character card name is required/,
+  );
+});
+
