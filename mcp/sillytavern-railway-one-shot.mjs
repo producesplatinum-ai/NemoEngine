@@ -13,6 +13,7 @@ const SUPPORTED_OPS = new Set([
   'character_delete',
   'character_duplicate',
   'character_rename',
+  'character_export_json',
   'world_info',
   'world_info_entry',
   'recent_chats',
@@ -64,7 +65,7 @@ export function parseOneShotCommand(raw) {
   const command = { ...value, op };
   if (value.nonce != null) command.nonce = requiredString(value.nonce, 'nonce');
 
-  if (['character', 'character_update', 'character_delete', 'character_duplicate', 'character_rename', 'chat', 'turn', 'generate'].includes(op)) {
+  if (['character', 'character_update', 'character_delete', 'character_duplicate', 'character_rename', 'character_export_json', 'chat', 'turn', 'generate'].includes(op)) {
     command.avatarUrl = requiredString(value.avatarUrl, 'avatarUrl');
   }
   if (['character_create', 'character_update'].includes(op)) {
@@ -159,6 +160,10 @@ function routeFor(command) {
     case 'character': {
       const q = new URLSearchParams({ avatarUrl: command.avatarUrl });
       return { method: 'GET', suffix: `/character?${q}` };
+    }
+    case 'character_export_json': {
+      const q = new URLSearchParams({ avatarUrl: command.avatarUrl });
+      return { method: 'GET', suffix: `/character-export-json?${q}` };
     }
     case 'character_create':
       return {
