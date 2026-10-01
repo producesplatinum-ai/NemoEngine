@@ -38,6 +38,7 @@ export function classifyMobileRestRequest(requestTarget, basePath) {
   if (pathname === `${normalizedBase}/character-update`) return { kind: 'character_update' };
   if (pathname === `${normalizedBase}/character-delete`) return { kind: 'character_delete' };
   if (pathname === `${normalizedBase}/character-duplicate`) return { kind: 'character_duplicate' };
+  if (pathname === `${normalizedBase}/character-rename`) return { kind: 'character_rename' };
   if (pathname === `${normalizedBase}/character`) {
     return { kind: 'character', avatarUrl: one(url.searchParams, 'avatarUrl') };
   }
@@ -184,6 +185,15 @@ export async function executeMobileRestRoute(route, client, body = {}) {
         newName,
         fileName: fileName || newName.replace(/\.png$/i, ''),
       });
+    }
+    case 'character_rename': {
+      const avatarUrl =
+        typeof body?.avatarUrl === 'string' ? body.avatarUrl.trim() : '';
+      const newName =
+        typeof body?.newName === 'string' ? body.newName.trim() : '';
+      if (!avatarUrl) throw new Error('avatarUrl is required.');
+      if (!newName) throw new Error('newName is required.');
+      return client.renameCharacter({ avatarUrl, newName });
     }
     case 'world_info':
       return client.listWorldInfo();
