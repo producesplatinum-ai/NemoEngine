@@ -76,8 +76,14 @@ export function parseOneShotCommand(raw) {
     if (!card || typeof card !== 'object' || Array.isArray(card)) {
       throw new Error('cardJson must be a JSON object.');
     }
-    if (op === 'character_create' && value.fileName != null) {
-      command.fileName = requiredString(value.fileName, 'fileName');
+    if (op === 'character_create') {
+      if (value.fileName != null) {
+        command.fileName = requiredString(value.fileName, 'fileName').replace(/\.png$/i, '');
+      } else {
+        const cardName = String(card?.data?.name ?? card?.name ?? '').trim();
+        if (!cardName) throw new Error('Character card name is required.');
+        command.fileName = cardName.replace(/\.png$/i, '');
+      }
     }
   }
   if (op === 'character_delete') {
@@ -147,7 +153,7 @@ function routeFor(command) {
         method: 'POST',
         suffix: '/character-create',
         body: {
-          ...(command.fileName ? { fileName: command.fileName } : {}),
+          fileName: command.fileName,
           cardJson: command.cardJson,
         },
       };
