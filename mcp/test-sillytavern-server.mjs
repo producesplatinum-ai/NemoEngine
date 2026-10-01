@@ -1325,3 +1325,112 @@ test('serial task queue runs concurrent mutations in FIFO order and recovers aft
   assert.equal(fourth, 'fourth-result');
   assert.deepEqual(events.slice(-2), ['third:start', 'fourth:start']);
 });
+
+test('client updates a character through native edit while preserving chat metadata', async () => {
+  const calls = [];
+  const fetchImpl = async (url, options = {}) => {
+    const path = new URL(String(url)).pathname;
+    if (path === '/csrf-token') return makeJsonResponse({ token: 'csrf-update-character' });
+    if (path === '/api/characters/get') {
+      calls.push({ path, body: JSON.parse(options.body) });
+      return makeJsonResponse({
+        name: 'Mobile CRUD Probe',
+        avatar: 'Mobile CRUD Probe.png',
+        chat: 'existing-chat',
+        create_date: '2026-10-01T12:00:00.000Z',
+      });
+    }
+    if (path === '/api/characters/edit') {
+      calls.push({ path, body: JSON.parse(options.body) });
+      return new Response('', { status: 200 });
+    }
+    throw new Error('unexpected URL: ' + url);
+  };
+
+  const card = {
+    spec: 'chara_card_v3',
+    spec_version: '3.0',
+    data: {
+      name: 'Mobile CRUD Probe',
+      description: 'updated description',
+      personality: 'updated personality',
+      scenario: 'updated scenario',
+      first_mes: 'Updated hello',
+      mes_example: '<START>\nProbe: example',
+      system_prompt: 'Updated system prompt.',
+      post_history_instructions: 'Updated post-history.',
+      tags: ['probe'],
+      alternate_greetings: ['Alt hello'],
+      extensions: {
+        talkativeness: 0.65,
+        fav: true,
+        world: 'ProbeWorld',
+        depth_prompt: { prompt: 'PROBE_DEPTH', depth: 3, role: 'system' },
+        custom_marker: 'keep-this',
+      },
+    },
+  };
+
+  const client = new SillyTavernClient({
+    baseUrl: 'https://st.example.test',
+    fetchImpl,
+  });
+  const result = await client.updateCharacter({
+    avatarUrl: 'Mobile CRUD Probe.png',
+    card,
+  });
+
+  assert.deepEqual(result, {
+    ok: true,
+    avatarUrl: 'Mobile CRUD Probe.png',
+    characterName: 'Mobile CRUD Probe',
+  });
+
+  const edit = calls.find(x => x.path === '/api/characters/edit');
+  assert(edit);
+  assert.equal(edit.body.avatar_url, 'Mobile CRUD Probe.png');
+  assert.equal(edit.body.ch_name, 'Mobile CRUD Probe');
+  assert.equal(edit.body.description, 'updated description');
+  assert.equal(edit.body.chat, 'existing-chat');
+  assert.equal(edit.body.create_date, '2026-10-01T12:00:00.000Z');
+  assert.equal(edit.body.fav, 'true');
+  assert.equal(edit.body.world, 'ProbeWorld');
+  assert.equal(edit.body.depth_prompt_prompt, 'PROBE_DEPTH');
+  assert.equal(edit.body.depth_prompt_depth, 3);
+  assert.equal(edit.body.depth_prompt_role, 'system');
+  assert.equal(edit.body.json_data, JSON.stringify(card));
+});
+
+test('client deletes a character through native delete without chats by default', async () => {
+  let deleteBody = null;
+  const fetchImpl = async (url, options = {}) => {
+    const path = new URL(String(url)).pathname;
+    if (path === '/csrf-token') return makeJsonResponse({ token: 'csrf-delete-character' });
+    if (path === '/api/characters/delete') {
+      deleteBody = JSON.parse(options.body);
+      return new Response('', { status: 200 });
+    }
+    throw new Error('unexpected URL: ' + url);
+  };
+
+  const client = new SillyTavernClient({
+    baseUrl: 'https://st.example.test',
+    fetchImpl,
+  });
+  const result = await client.deleteCharacter({
+    avatarUrl: 'Mobile CRUD Probe.png',
+    deleteChats: false,
+  });
+
+  assert.deepEqual(deleteBody, {
+    avatar_url: 'Mobile CRUD Probe.png',
+    delete_chats: false,
+  });
+  assert.deepEqual(result, {
+    ok: true,
+    deleted: true,
+    avatarUrl: 'Mobile CRUD Probe.png',
+    deleteChats: false,
+  });
+});
+
