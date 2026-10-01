@@ -1681,13 +1681,12 @@ export class SillyTavernClient {
     return String(value || '').trim().replace(/\.jsonl$/i, '');
   }
 
-  async findCharacterChat({ avatarUrl, fileName }) {
+  findCharacterChatInList(chats, { avatarUrl, fileName }) {
     const normalizedAvatarUrl = String(avatarUrl || '').trim();
     const normalizedFileName = this.normalizeChatFileName(fileName);
-    if (!normalizedAvatarUrl || !normalizedFileName) return null;
-
-    const chats = await this.recentChats();
-    if (!Array.isArray(chats)) return null;
+    if (!normalizedAvatarUrl || !normalizedFileName || !Array.isArray(chats)) {
+      return null;
+    }
 
     return chats.find((item) => {
       const avatar = String(item?.avatar || '').trim();
@@ -1698,6 +1697,11 @@ export class SillyTavernClient {
         (fileId === normalizedFileName || fileNameValue === normalizedFileName)
       );
     }) || null;
+  }
+
+  async findCharacterChat({ avatarUrl, fileName }) {
+    const chats = await this.recentChats();
+    return this.findCharacterChatInList(chats, { avatarUrl, fileName });
   }
 
   async createChat({ avatarUrl, fileName, nonce = '' }) {
@@ -1814,11 +1818,12 @@ export class SillyTavernClient {
       };
     }
 
-    let source = await this.findCharacterChat({
+    let chats = await this.recentChats();
+    let source = this.findCharacterChatInList(chats, {
       avatarUrl: normalizedAvatarUrl,
       fileName: oldName,
     });
-    let target = await this.findCharacterChat({
+    let target = this.findCharacterChatInList(chats, {
       avatarUrl: normalizedAvatarUrl,
       fileName: newName,
     });
@@ -1849,11 +1854,12 @@ export class SillyTavernClient {
         is_group: false,
       });
     } catch (error) {
-      source = await this.findCharacterChat({
+      chats = await this.recentChats();
+      source = this.findCharacterChatInList(chats, {
         avatarUrl: normalizedAvatarUrl,
         fileName: oldName,
       });
-      target = await this.findCharacterChat({
+      target = this.findCharacterChatInList(chats, {
         avatarUrl: normalizedAvatarUrl,
         fileName: newName,
       });
@@ -1871,11 +1877,12 @@ export class SillyTavernClient {
       throw error;
     }
 
-    source = await this.findCharacterChat({
+    chats = await this.recentChats();
+    source = this.findCharacterChatInList(chats, {
       avatarUrl: normalizedAvatarUrl,
       fileName: oldName,
     });
-    target = await this.findCharacterChat({
+    target = this.findCharacterChatInList(chats, {
       avatarUrl: normalizedAvatarUrl,
       fileName: newName,
     });
