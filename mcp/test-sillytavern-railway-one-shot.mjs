@@ -242,3 +242,79 @@ test('new exact Nemo write operations require entryId', () => {
     /entryId is required/,
   );
 });
+
+test('character_create validates a V3 card and performs exactly one POST', async () => {
+  const card = {
+    spec: 'chara_card_v3',
+    spec_version: '3.0',
+    data: {
+      name: 'Mobile Character Probe',
+      description: 'Created through the iOS one-shot bridge.',
+    },
+  };
+  const cardJson = JSON.stringify(card);
+  const parsed = parseOneShotCommand(JSON.stringify({
+    op: 'character_create',
+    nonce: 'character-create-1',
+    fileName: 'Mobile Character Probe',
+    cardJson,
+  }));
+
+  assert.equal(parsed.op, 'character_create');
+  assert.equal(parsed.fileName, 'Mobile Character Probe');
+  assert.equal(parsed.cardJson, cardJson);
+
+  const calls = [];
+  const fetchImpl = async (url, init = {}) => {
+    calls.push({ url: String(url), init });
+    return new Response(JSON.stringify({
+      ok: true,
+      avatarUrl: 'Mobile Character Probe.png',
+      characterName: 'Mobile Character Probe',
+    }), {
+      status: 200,
+      headers: { 'content-type': 'application/json' },
+    });
+  };
+
+  const result = await executeOneShot({
+    command: parsed,
+    publicDomain: 'example.up.railway.app',
+    mcpPath: '/secret/mcp',
+    fetchImpl,
+  });
+
+  assert.equal(calls.length, 1);
+  assert.equal(
+    calls[0].url,
+    'https://example.up.railway.app/secret/mobile/character-create',
+  );
+  assert.equal(calls[0].init.method, 'POST');
+  assert.deepEqual(JSON.parse(calls[0].init.body), {
+    fileName: 'Mobile Character Probe',
+    cardJson,
+  });
+  assert.equal(result.avatarUrl, 'Mobile Character Probe.png');
+});
+
+test('character_create rejects missing or malformed cardJson before any network call', () => {
+  assert.throws(
+    () => parseOneShotCommand(JSON.stringify({ op: 'character_create' })),
+    /cardJson is required/,
+  );
+  assert.throws(
+    () => parseOneShotCommand(JSON.stringify({
+      op: 'character_create',
+      cardJson: '{not-json}',
+    })),
+    /cardJson must be valid JSON/,
+  );
+  assert.throws(
+    () => parseOneShotCommand(JSON.stringify({
+      op: 'character_create',
+      cardJson: '[]',
+    })),
+    /cardJson must be a JSON object/,
+  );
+});
+
