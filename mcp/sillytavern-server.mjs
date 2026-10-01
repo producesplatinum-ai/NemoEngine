@@ -2350,11 +2350,26 @@ export function startHttpServer({
         mobileRoute.kind === 'turn' ||
         mobileRoute.kind === 'generate' ||
         mobileRoute.kind === 'character_create' ||
+        mobileRoute.kind === 'character_update' ||
+        mobileRoute.kind === 'character_delete' ||
         mobileRoute.kind === 'preset_save' ||
         mobileRoute.kind === 'preset_delete' ||
         mobileRoute.kind === 'nemo_profile_install' ||
         mobileRoute.kind === 'nemo_exact_install' ||
         mobileRoute.kind === 'nemo_exact_activate';
+
+      if (
+        mobileWriteRoute &&
+        req.method === 'GET' &&
+        (mobileRoute.kind === 'character_update' ||
+          mobileRoute.kind === 'character_delete')
+      ) {
+        res.statusCode = 405;
+        res.setHeader('allow', 'POST');
+        res.setHeader('content-type', 'application/json; charset=utf-8');
+        res.end(JSON.stringify({ ok: false, error: 'POST required.' }));
+        return;
+      }
 
       if (mobileWriteRoute && req.method === 'GET') {
         res.statusCode = 200;
@@ -2436,6 +2451,7 @@ export function startHttpServer({
             message.includes(' are required.') ||
             message.includes('must not be empty.') ||
             message === 'cardJson must be valid JSON.' ||
+            message === 'deleteChats must be a boolean.' ||
             message === 'presetJson must be valid JSON.' ||
             message === 'Unsupported generation source.' ||
             message === 'Invalid JSON body.' ||
