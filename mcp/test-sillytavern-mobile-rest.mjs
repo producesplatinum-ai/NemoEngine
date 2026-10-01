@@ -841,3 +841,59 @@ test('character export JSON rejects missing avatarUrl', async () => {
   );
 });
 
+test('classifies character JSON import route and dispatches parsed card', async () => {
+  const basePath = '/st-secret/mobile';
+  assert.deepEqual(
+    classifyMobileRestRequest('/st-secret/mobile/character-import-json', basePath),
+    { kind: 'character_import_json' },
+  );
+
+  const calls = [];
+  const client = {
+    async importCharacterJson(input) {
+      calls.push(input);
+      return {
+        ok: true,
+        imported: true,
+        avatarUrl: 'Imported Probe.png',
+        characterName: input.card.data.name,
+      };
+    },
+  };
+  const card = {
+    spec: 'chara_card_v2',
+    spec_version: '2.0',
+    data: { name: 'Imported Probe', description: 'from JSON' },
+  };
+
+  const result = await executeMobileRestRoute(
+    { kind: 'character_import_json' },
+    client,
+    {
+      fileName: 'Imported Probe',
+      cardJson: JSON.stringify(card),
+    },
+  );
+
+  assert.equal(result.imported, true);
+  assert.deepEqual(calls, [{
+    card,
+    fileName: 'Imported Probe',
+  }]);
+});
+
+test('character JSON import rejects malformed input before client mutation', async () => {
+  const client = {
+    importCharacterJson() { throw new Error('should not be called'); },
+  };
+
+  await assert.rejects(
+    () => executeMobileRestRoute(
+      { kind: 'character_import_json' },
+      client,
+      { cardJson: '{bad}' },
+    ),
+    /cardJson must be valid JSON/,
+  );
+});
+
