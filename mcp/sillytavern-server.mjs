@@ -891,6 +891,95 @@ export class SillyTavernClient {
     };
   }
 
+  async updateCharacter({ avatarUrl, card }) {
+    const normalizedAvatarUrl = String(avatarUrl || '').trim();
+    if (!normalizedAvatarUrl) throw new Error('avatarUrl is required.');
+    if (!card || typeof card !== 'object' || Array.isArray(card)) {
+      throw new Error('Character card must be an object.');
+    }
+
+    const existing = await this.getCharacter(normalizedAvatarUrl);
+    const data =
+      card?.data && typeof card.data === 'object' && !Array.isArray(card.data)
+        ? card.data
+        : {};
+    const extensions =
+      data?.extensions &&
+      typeof data.extensions === 'object' &&
+      !Array.isArray(data.extensions)
+        ? data.extensions
+        : {};
+    const name = String(data.name || card.name || '').trim();
+    if (!name) throw new Error('Character card name is required.');
+
+    const depthPrompt =
+      extensions?.depth_prompt &&
+      typeof extensions.depth_prompt === 'object' &&
+      !Array.isArray(extensions.depth_prompt)
+        ? extensions.depth_prompt
+        : {};
+
+    const payload = {
+      avatar_url: normalizedAvatarUrl,
+      ch_name: name,
+      description: data.description ?? card.description ?? '',
+      personality: data.personality ?? card.personality ?? '',
+      scenario: data.scenario ?? card.scenario ?? '',
+      first_mes: data.first_mes ?? card.first_mes ?? '',
+      mes_example: data.mes_example ?? card.mes_example ?? '',
+      creator_notes:
+        data.creator_notes ?? card.creator_notes ?? card.creatorcomment ?? '',
+      system_prompt: data.system_prompt ?? '',
+      post_history_instructions: data.post_history_instructions ?? '',
+      tags: data.tags ?? card.tags ?? [],
+      creator: data.creator ?? card.creator ?? '',
+      character_version:
+        data.character_version ?? card.character_version ?? '',
+      alternate_greetings:
+        data.alternate_greetings ?? card.alternate_greetings ?? [],
+      talkativeness:
+        extensions.talkativeness ?? card.talkativeness ?? 0.5,
+      fav: String(Boolean(extensions.fav ?? card.fav ?? false)),
+      world: String(extensions.world ?? card.world ?? ''),
+      depth_prompt_prompt: String(depthPrompt.prompt ?? ''),
+      depth_prompt_depth: Number.isFinite(Number(depthPrompt.depth))
+        ? Number(depthPrompt.depth)
+        : 4,
+      depth_prompt_role: String(depthPrompt.role ?? 'system'),
+      extensions: JSON.stringify(extensions),
+      json_data: JSON.stringify(card),
+      chat: existing?.chat ?? '',
+      create_date: existing?.create_date ?? '',
+    };
+
+    await this.post('/api/characters/edit', payload);
+    return {
+      ok: true,
+      avatarUrl: normalizedAvatarUrl,
+      characterName: name,
+    };
+  }
+
+  async deleteCharacter({ avatarUrl, deleteChats = false }) {
+    const normalizedAvatarUrl = String(avatarUrl || '').trim();
+    if (!normalizedAvatarUrl) throw new Error('avatarUrl is required.');
+    if (typeof deleteChats !== 'boolean') {
+      throw new Error('deleteChats must be a boolean.');
+    }
+
+    await this.post('/api/characters/delete', {
+      avatar_url: normalizedAvatarUrl,
+      delete_chats: deleteChats,
+    });
+
+    return {
+      ok: true,
+      deleted: true,
+      avatarUrl: normalizedAvatarUrl,
+      deleteChats,
+    };
+  }
+
   listWorldInfo() {
     return this.post('/api/worldinfo/list', {});
   }
