@@ -843,6 +843,15 @@ export class SillyTavernClient {
     return this.post('/api/characters/get', { avatar_url: avatarUrl });
   }
 
+  async exportCharacterJson(avatarUrl) {
+    const normalizedAvatarUrl = String(avatarUrl || '').trim();
+    if (!normalizedAvatarUrl) throw new Error('avatarUrl is required.');
+    return this.post('/api/characters/export', {
+      format: 'json',
+      avatar_url: normalizedAvatarUrl,
+    });
+  }
+
   async createCharacter({ card, fileName = '' }) {
     if (!card || typeof card !== 'object' || Array.isArray(card)) {
       throw new Error('Character card must be an object.');
