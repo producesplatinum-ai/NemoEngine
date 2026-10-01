@@ -29,6 +29,8 @@ const MOBILE_REST_WRITE_ROUTE_KINDS = new Set([
   'character_duplicate',
   'character_rename',
   'character_import_json',
+  'character_world_unbind',
+  'character_world_bind',
   'world_info_entry_delete',
   'world_info_entry_upsert',
   'world_info_delete',
@@ -54,6 +56,8 @@ const MOBILE_REST_POST_ONLY_ROUTE_KINDS = new Set([
   'world_info_delete',
   'world_info_entry_upsert',
   'world_info_entry_delete',
+  'character_world_bind',
+  'character_world_unbind',
 ]);
 
 export function isMobileRestWriteRoute(route) {
@@ -87,6 +91,8 @@ export function classifyMobileRestRequest(requestTarget, basePath) {
     return { kind: 'character_export_json', avatarUrl: one(url.searchParams, 'avatarUrl') };
   }
   if (pathname === `${normalizedBase}/character-import-json`) return { kind: 'character_import_json' };
+  if (pathname === `${normalizedBase}/character-world-bind`) return { kind: 'character_world_bind' };
+  if (pathname === `${normalizedBase}/character-world-unbind`) return { kind: 'character_world_unbind' };
   if (pathname === `${normalizedBase}/character`) {
     return { kind: 'character', avatarUrl: one(url.searchParams, 'avatarUrl') };
   }
@@ -270,6 +276,21 @@ export async function executeMobileRestRoute(route, client, body = {}) {
       if (!avatarUrl) throw new Error('avatarUrl is required.');
       if (!newName) throw new Error('newName is required.');
       return client.renameCharacter({ avatarUrl, newName });
+    }
+    case 'character_world_bind': {
+      const avatarUrl =
+        typeof body?.avatarUrl === 'string' ? body.avatarUrl.trim() : '';
+      const name =
+        typeof body?.name === 'string' ? body.name.trim() : '';
+      if (!avatarUrl) throw new Error('avatarUrl is required.');
+      if (!name) throw new Error('name is required.');
+      return client.bindCharacterWorld({ avatarUrl, name });
+    }
+    case 'character_world_unbind': {
+      const avatarUrl =
+        typeof body?.avatarUrl === 'string' ? body.avatarUrl.trim() : '';
+      if (!avatarUrl) throw new Error('avatarUrl is required.');
+      return client.unbindCharacterWorld({ avatarUrl });
     }
     case 'world_info':
       return client.listWorldInfo();
