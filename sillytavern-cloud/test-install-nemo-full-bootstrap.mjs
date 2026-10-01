@@ -140,3 +140,19 @@ test('recovers a missing configured bootstrap source from a bundled fallback sou
     'fallback bootstrap\n',
   );
 });
+
+
+test('production Nemo Full Bootstrap is syntactically complete and starts exactly once', () => {
+  const sourceDir = process.env.NEMO_BOOTSTRAP_PRODUCTION_SOURCE || '/usr/local/share/nemo-full-bootstrap';
+  const scriptPath = path.join(sourceDir, 'index.js');
+  assert.equal(fs.existsSync(scriptPath), true, 'production bootstrap source missing');
+
+  const syntax = spawnSync(process.execPath, ['--check', scriptPath], { encoding: 'utf8' });
+  assert.equal(syntax.status, 0, syntax.stderr || syntax.stdout);
+
+  const script = fs.readFileSync(scriptPath, 'utf8');
+  assert.match(script, /const EXACT_ACTIVE_PRESET = 'Nemo Exact Active'/);
+  assert.match(script, /async function bootstrap\(\)\s*\{[\s\S]*function startOnce\(\)/);
+  assert.match(script, /eventSource\.on\(event_types\.APP_READY, startOnce\)/);
+  assert.match(script, /setTimeout\(startOnce, 1500\)/);
+});
