@@ -1138,3 +1138,102 @@ test('character world bind/unbind validate payloads before client mutation', asy
     /avatarUrl is required/,
   );
 });
+
+test('classifies chat lifecycle routes as POST-only mutations', () => {
+  const basePath = '/st-secret/mobile';
+  assert.deepEqual(
+    classifyMobileRestRequest('/st-secret/mobile/chat-create', basePath),
+    { kind: 'chat_create' },
+  );
+  assert.deepEqual(
+    classifyMobileRestRequest('/st-secret/mobile/chat-rename', basePath),
+    { kind: 'chat_rename' },
+  );
+  assert.deepEqual(
+    classifyMobileRestRequest('/st-secret/mobile/chat-delete', basePath),
+    { kind: 'chat_delete' },
+  );
+
+  for (const kind of ['chat_create', 'chat_rename', 'chat_delete']) {
+    assert.equal(isMobileRestWriteRoute({ kind }), true, kind);
+    assert.equal(isMobileRestPostOnlyRoute({ kind }), true, kind);
+  }
+});
+
+test('dispatches chat create rename and delete with exact identifiers', async () => {
+  const calls = [];
+  const client = {
+    async createChat(input) {
+      calls.push({ op: 'create', input });
+      return { ok: true, created: true, ...input };
+    },
+    async renameChat(input) {
+      calls.push({ op: 'rename', input });
+      return { ok: true, renamed: true, ...input };
+    },
+    async deleteChat(input) {
+      calls.push({ op: 'delete', input });
+      return { ok: true, deleted: true, ...input };
+    },
+  };
+
+  await executeMobileRestRoute(
+    { kind: 'chat_create' },
+    client,
+    { nonce: 'chat-create-1', avatarUrl: 'Darya.png', fileName: 'Probe Chat' },
+  );
+  await executeMobileRestRoute(
+    { kind: 'chat_rename' },
+    client,
+    { avatarUrl: 'Darya.png', fileName: 'Probe Chat', newFileName: 'Renamed Chat' },
+  );
+  await executeMobileRestRoute(
+    { kind: 'chat_delete' },
+    client,
+    { avatarUrl: 'Darya.png', fileName: 'Renamed Chat' },
+  );
+
+  assert.deepEqual(calls, [
+    {
+      op: 'create',
+      input: { nonce: 'chat-create-1', avatarUrl: 'Darya.png', fileName: 'Probe Chat' },
+    },
+    {
+      op: 'rename',
+      input: { avatarUrl: 'Darya.png', fileName: 'Probe Chat', newFileName: 'Renamed Chat' },
+    },
+    {
+      op: 'delete',
+      input: { avatarUrl: 'Darya.png', fileName: 'Renamed Chat' },
+    },
+  ]);
+});
+
+test('chat lifecycle routes reject incomplete payloads before client mutation', async () => {
+  const client = {
+    createChat() { throw new Error('should not be called'); },
+    renameChat() { throw new Error('should not be called'); },
+    deleteChat() { throw new Error('should not be called'); },
+  };
+  await assert.rejects(
+    () => executeMobileRestRoute({ kind: 'chat_create' }, client, { fileName: 'Probe' }),
+    /avatarUrl and fileName are required/,
+  );
+  await assert.rejects(
+    () => executeMobileRestRoute(
+      { kind: 'chat_rename' },
+      client,
+      { avatarUrl: 'Darya.png', fileName: 'Old' },
+    ),
+    /avatarUrl, fileName, and newFileName are required/,
+  );
+  await assert.rejects(
+    () => executeMobileRestRoute(
+      { kind: 'chat_delete' },
+      client,
+      { avatarUrl: 'Darya.png' },
+    ),
+    /avatarUrl and fileName are required/,
+  );
+});
+
