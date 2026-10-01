@@ -23,6 +23,9 @@ function one(searchParams, key) {
 const MOBILE_REST_WRITE_ROUTE_KINDS = new Set([
   'turn',
   'generate',
+  'chat_delete',
+  'chat_rename',
+  'chat_create',
   'character_create',
   'character_update',
   'character_delete',
@@ -58,6 +61,9 @@ const MOBILE_REST_POST_ONLY_ROUTE_KINDS = new Set([
   'world_info_entry_delete',
   'character_world_bind',
   'character_world_unbind',
+  'chat_create',
+  'chat_rename',
+  'chat_delete',
 ]);
 
 export function isMobileRestWriteRoute(route) {
@@ -109,6 +115,9 @@ export function classifyMobileRestRequest(requestTarget, basePath) {
   if (pathname === `${normalizedBase}/recent-chats`) {
     return { kind: 'recent_chats' };
   }
+  if (pathname === `${normalizedBase}/chat-create`) return { kind: 'chat_create' };
+  if (pathname === `${normalizedBase}/chat-rename`) return { kind: 'chat_rename' };
+  if (pathname === `${normalizedBase}/chat-delete`) return { kind: 'chat_delete' };
   if (pathname === `${normalizedBase}/turn`) return { kind: 'turn' };
   if (pathname === `${normalizedBase}/generate`) return { kind: 'generate' };
   if (pathname === `${normalizedBase}/client-generation-status`) {
@@ -357,6 +366,36 @@ export async function executeMobileRestRoute(route, client, body = {}) {
     }
     case 'recent_chats':
       return client.recentChats();
+    case 'chat_create': {
+      const avatarUrl = typeof body?.avatarUrl === 'string' ? body.avatarUrl.trim() : '';
+      const fileName = typeof body?.fileName === 'string' ? body.fileName.trim() : '';
+      if (!avatarUrl || !fileName) {
+        throw new Error('avatarUrl and fileName are required.');
+      }
+      const nonce = typeof body?.nonce === 'string' ? body.nonce.trim() : '';
+      return client.createChat({
+        ...(nonce ? { nonce } : {}),
+        avatarUrl,
+        fileName,
+      });
+    }
+    case 'chat_rename': {
+      const avatarUrl = typeof body?.avatarUrl === 'string' ? body.avatarUrl.trim() : '';
+      const fileName = typeof body?.fileName === 'string' ? body.fileName.trim() : '';
+      const newFileName = typeof body?.newFileName === 'string' ? body.newFileName.trim() : '';
+      if (!avatarUrl || !fileName || !newFileName) {
+        throw new Error('avatarUrl, fileName, and newFileName are required.');
+      }
+      return client.renameChat({ avatarUrl, fileName, newFileName });
+    }
+    case 'chat_delete': {
+      const avatarUrl = typeof body?.avatarUrl === 'string' ? body.avatarUrl.trim() : '';
+      const fileName = typeof body?.fileName === 'string' ? body.fileName.trim() : '';
+      if (!avatarUrl || !fileName) {
+        throw new Error('avatarUrl and fileName are required.');
+      }
+      return client.deleteChat({ avatarUrl, fileName });
+    }
     case 'client_generation_status':
       return client.getNemoClientGenerationStatus(route.marker || '');
     case 'turn': {
