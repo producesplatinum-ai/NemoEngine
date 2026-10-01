@@ -5,6 +5,7 @@ import {
   classifyMobileRestRequest,
   deriveMobileRestBasePath,
   executeMobileRestRoute,
+  isMobileRestWriteRoute,
 } from './sillytavern-mobile-rest.mjs';
 
 test('derives mobile REST base from secret MCP path', () => {
@@ -895,5 +896,21 @@ test('character JSON import rejects malformed input before client mutation', asy
     ),
     /cardJson must be valid JSON/,
   );
+});
+
+test('mobile write-route classification includes every character mutation including JSON import', () => {
+  for (const kind of [
+    'character_create',
+    'character_update',
+    'character_delete',
+    'character_duplicate',
+    'character_rename',
+    'character_import_json',
+  ]) {
+    assert.equal(isMobileRestWriteRoute({ kind }), true, kind);
+  }
+
+  assert.equal(isMobileRestWriteRoute({ kind: 'character_export_json' }), false);
+  assert.equal(isMobileRestWriteRoute({ kind: 'character' }), false);
 });
 
