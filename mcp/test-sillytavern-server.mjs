@@ -1784,7 +1784,6 @@ test('client renames a character through native rename and verifies the new card
   assert.deepEqual(calls, [{ avatar_url: 'Old Name.png', new_name: 'New Name' }]);
   assert.deepEqual(result, {
     ok: true,
-    renamed: true,
     oldAvatarUrl: 'Old Name.png',
     avatarUrl: 'New Name.png',
     characterName: 'New Name',
@@ -1832,9 +1831,7 @@ test('character rename deduplicates after a concurrent rename already reached th
   assert.equal(renameCalls, 0);
   assert.deepEqual(result, {
     ok: true,
-    renamed: false,
     deduplicated: true,
-    alreadyRenamed: true,
     oldAvatarUrl: 'Old Name.png',
     avatarUrl: 'New Name.png',
     characterName: 'New Name',
@@ -1913,7 +1910,6 @@ test('client renames a native character and returns the new avatar filename', as
 
   assert.deepEqual(result, {
     ok: true,
-    renamed: true,
     oldAvatarUrl: 'Old Name.png',
     avatarUrl: 'New Name.png',
     characterName: 'New Name',
@@ -1959,9 +1955,7 @@ test('character rename is idempotent when source is absent and exactly one targe
 
   assert.deepEqual(result, {
     ok: true,
-    renamed: false,
     deduplicated: true,
-    alreadyRenamed: true,
     oldAvatarUrl: 'Old Name.png',
     avatarUrl: 'New Name.png',
     characterName: 'New Name',
