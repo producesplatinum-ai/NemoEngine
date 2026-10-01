@@ -742,3 +742,61 @@ test('character rename rejects missing identifiers', async () => {
   );
 });
 
+test('classifies character rename route and dispatches exact identifiers', async () => {
+  const basePath = '/st-secret/mobile';
+  assert.deepEqual(
+    classifyMobileRestRequest('/st-secret/mobile/character-rename', basePath),
+    { kind: 'character_rename' },
+  );
+
+  const calls = [];
+  const client = {
+    async renameCharacter(input) {
+      calls.push(input);
+      return {
+        ok: true,
+        oldAvatarUrl: input.avatarUrl,
+        avatarUrl: 'New Name.png',
+        characterName: input.newName,
+      };
+    },
+  };
+
+  const result = await executeMobileRestRoute(
+    { kind: 'character_rename' },
+    client,
+    { avatarUrl: 'Old Name.png', newName: 'New Name' },
+  );
+
+  assert.equal(result.ok, true);
+  assert.deepEqual(calls, [{
+    avatarUrl: 'Old Name.png',
+    newName: 'New Name',
+  }]);
+});
+
+test('character rename rejects missing identifiers', async () => {
+  const client = {
+    renameCharacter() {
+      throw new Error('should not be called');
+    },
+  };
+
+  await assert.rejects(
+    () => executeMobileRestRoute(
+      { kind: 'character_rename' },
+      client,
+      { newName: 'New Name' },
+    ),
+    /avatarUrl is required/,
+  );
+  await assert.rejects(
+    () => executeMobileRestRoute(
+      { kind: 'character_rename' },
+      client,
+      { avatarUrl: 'Old Name.png' },
+    ),
+    /newName is required/,
+  );
+});
+
