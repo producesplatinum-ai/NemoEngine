@@ -20,6 +20,38 @@ function one(searchParams, key) {
   return typeof value === 'string' && value.trim() ? value.trim() : '';
 }
 
+const MOBILE_REST_WRITE_ROUTE_KINDS = new Set([
+  'turn',
+  'generate',
+  'character_create',
+  'character_update',
+  'character_delete',
+  'character_duplicate',
+  'character_rename',
+  'character_import_json',
+  'preset_save',
+  'preset_delete',
+  'nemo_profile_install',
+  'nemo_exact_install',
+  'nemo_exact_activate',
+]);
+
+const MOBILE_REST_POST_ONLY_ROUTE_KINDS = new Set([
+  'character_update',
+  'character_delete',
+  'character_duplicate',
+  'character_rename',
+  'character_import_json',
+]);
+
+export function isMobileRestWriteRoute(route) {
+  return MOBILE_REST_WRITE_ROUTE_KINDS.has(route?.kind);
+}
+
+export function isMobileRestPostOnlyRoute(route) {
+  return MOBILE_REST_POST_ONLY_ROUTE_KINDS.has(route?.kind);
+}
+
 export function classifyMobileRestRequest(requestTarget, basePath) {
   const normalizedBase = normalizeAbsolutePath(basePath, 'Mobile REST base path');
   const url = new URL(String(requestTarget || '/'), 'https://local.invalid');
