@@ -2145,3 +2145,150 @@ test('character JSON import inherits create idempotency', async () => {
   assert.equal(result.avatarUrl, 'Import Dedupe.png');
 });
 
+test('client creates a lorebook without overwriting an existing different book', async () => {
+  const edits = [];
+  let listMode = 'absent';
+  const fetchImpl = async (url, options = {}) => {
+    const path = new URL(String(url)).pathname;
+    if (path === '/csrf-token') return makeJsonResponse({ token: 'csrf-wi-create' });
+    if (path === '/api/worldinfo/list') {
+      return makeJsonResponse(listMode === 'absent' ? [] : [{ name: 'Probe World', file_id: 'Probe World' }]);
+    }
+    if (path === '/api/worldinfo/get') {
+      return makeJsonResponse({ entries: { 0: { uid: 0, content: 'existing' } } });
+    }
+    if (path === '/api/worldinfo/edit') {
+      edits.push(JSON.parse(options.body));
+      listMode = 'present';
+      return makeJsonResponse({ ok: true });
+    }
+    throw new Error('unexpected URL: ' + url);
+  };
+
+  const client = new SillyTavernClient({ baseUrl: 'https://st.example.test', fetchImpl });
+  const created = await client.createWorldInfo({
+    name: 'Probe World',
+    data: { entries: {} },
+  });
+  assert.equal(created.created, true);
+  assert.deepEqual(edits, [{ name: 'Probe World', data: { entries: {} } }]);
+
+  await assert.rejects(
+    () => client.createWorldInfo({
+      name: 'Probe World',
+      data: { entries: {} },
+    }),
+    /already exists with different data.*world_info_update/i,
+  );
+});
+
+test('client treats identical lorebook create/update as deduplicated and updates changed data', async () => {
+  const edits = [];
+  let stored = { entries: { 0: { uid: 0, content: 'same' } } };
+  const fetchImpl = async (url, options = {}) => {
+    const path = new URL(String(url)).pathname;
+    if (path === '/csrf-token') return makeJsonResponse({ token: 'csrf-wi-upsert' });
+    if (path === '/api/worldinfo/list') return makeJsonResponse([{ name: 'Probe', file_id: 'Probe' }]);
+    if (path === '/api/worldinfo/get') return makeJsonResponse(stored);
+    if (path === '/api/worldinfo/edit') {
+      const body = JSON.parse(options.body);
+      edits.push(body);
+      stored = body.data;
+      return makeJsonResponse({ ok: true });
+    }
+    throw new Error('unexpected URL: ' + url);
+  };
+
+  const client = new SillyTavernClient({ baseUrl: 'https://st.example.test', fetchImpl });
+  const sameCreate = await client.createWorldInfo({ name: 'Probe', data: stored });
+  assert.equal(sameCreate.deduplicated, true);
+  const sameUpdate = await client.updateWorldInfo({ name: 'Probe', data: stored });
+  assert.equal(sameUpdate.deduplicated, true);
+  assert.equal(edits.length, 0);
+
+  const changed = { entries: { 0: { uid: 0, content: 'changed' } } };
+  const updated = await client.updateWorldInfo({ name: 'Probe', data: changed });
+  assert.equal(updated.updated, true);
+  assert.equal(edits.length, 1);
+  assert.deepEqual(edits[0], { name: 'Probe', data: changed });
+});
+
+test('client upserts and deletes lorebook entries while preserving the rest of the book', async () => {
+  let stored = {
+    name: 'Probe',
+    extensions: { keep: true },
+    entries: {
+      0: { uid: 0, content: 'keep', key: ['keep'] },
+      7: { uid: 7, content: 'old', key: ['old'] },
+    },
+  };
+  const edits = [];
+  const fetchImpl = async (url, options = {}) => {
+    const path = new URL(String(url)).pathname;
+    if (path === '/csrf-token') return makeJsonResponse({ token: 'csrf-wi-entry' });
+    if (path === '/api/worldinfo/list') return makeJsonResponse([{ name: 'Probe', file_id: 'Probe' }]);
+    if (path === '/api/worldinfo/get') return makeJsonResponse(stored);
+    if (path === '/api/worldinfo/edit') {
+      const body = JSON.parse(options.body);
+      edits.push(body);
+      stored = body.data;
+      return makeJsonResponse({ ok: true });
+    }
+    throw new Error('unexpected URL: ' + url);
+  };
+
+  const client = new SillyTavernClient({ baseUrl: 'https://st.example.test', fetchImpl });
+  const upserted = await client.upsertWorldInfoEntry({
+    name: 'Probe',
+    uid: 7,
+    entry: { content: 'new', key: ['new'], constant: true },
+  });
+  assert.equal(upserted.uid, 7);
+  assert.equal(upserted.updated, true);
+  assert.equal(stored.extensions.keep, true);
+  assert.equal(stored.entries[0].content, 'keep');
+  assert.deepEqual(stored.entries[7], {
+    uid: 7,
+    content: 'new',
+    key: ['new'],
+    constant: true,
+  });
+
+  const deleted = await client.deleteWorldInfoEntry({ name: 'Probe', uid: 7 });
+  assert.equal(deleted.deleted, true);
+  assert.equal(stored.entries[7], undefined);
+  assert.equal(stored.entries[0].content, 'keep');
+  assert.equal(edits.length, 2);
+
+  const absent = await client.deleteWorldInfoEntry({ name: 'Probe', uid: 7 });
+  assert.equal(absent.deduplicated, true);
+  assert.equal(absent.alreadyAbsent, true);
+  assert.equal(edits.length, 2);
+});
+
+test('client deletes lorebooks idempotently', async () => {
+  let exists = true;
+  let deletes = 0;
+  const fetchImpl = async (url) => {
+    const path = new URL(String(url)).pathname;
+    if (path === '/csrf-token') return makeJsonResponse({ token: 'csrf-wi-delete' });
+    if (path === '/api/worldinfo/list') {
+      return makeJsonResponse(exists ? [{ name: 'Probe', file_id: 'Probe' }] : []);
+    }
+    if (path === '/api/worldinfo/delete') {
+      deletes += 1;
+      exists = false;
+      return new Response('', { status: 200 });
+    }
+    throw new Error('unexpected URL: ' + url);
+  };
+
+  const client = new SillyTavernClient({ baseUrl: 'https://st.example.test', fetchImpl });
+  const first = await client.deleteWorldInfo({ name: 'Probe' });
+  assert.equal(first.deleted, true);
+  const second = await client.deleteWorldInfo({ name: 'Probe' });
+  assert.equal(second.deduplicated, true);
+  assert.equal(second.alreadyAbsent, true);
+  assert.equal(deletes, 1);
+});
+
