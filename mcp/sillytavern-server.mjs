@@ -1107,6 +1107,130 @@ export class SillyTavernClient {
     };
   }
 
+  async renameCharacter({ avatarUrl, newName }) {
+    const oldAvatarUrl = String(avatarUrl || '').trim();
+    const targetName = String(newName || '').trim();
+    if (!oldAvatarUrl) throw new Error('avatarUrl is required.');
+    if (!targetName) throw new Error('newName is required.');
+
+    const findUniqueTarget = async () => {
+      const characters = await this.listCharacters();
+      const matches = Array.isArray(characters)
+        ? characters.filter((character) => {
+            const name = String(
+              character?.data?.name ?? character?.name ?? '',
+            ).trim();
+            const avatar = String(character?.avatar ?? '').trim();
+            return name === targetName && avatar !== oldAvatarUrl;
+          })
+        : [];
+
+      if (matches.length > 1) {
+        throw new Error(
+          `Character rename is ambiguous: multiple characters already have the name ${targetName}.`,
+        );
+      }
+      if (matches.length === 1) {
+        const avatarUrl = String(matches[0]?.avatar ?? '').trim();
+        if (!avatarUrl) {
+          throw new Error('Renamed character match has no avatar filename.');
+        }
+        return avatarUrl;
+      }
+      return '';
+    };
+
+    let source;
+    try {
+      source = await this.getCharacter(oldAvatarUrl);
+    } catch (error) {
+      if (!isCharacterGetNotFound(error)) throw error;
+      const alreadyRenamedAvatarUrl = await findUniqueTarget();
+      if (!alreadyRenamedAvatarUrl) throw error;
+      return {
+        ok: true,
+        renamed: false,
+        deduplicated: true,
+        alreadyRenamed: true,
+        oldAvatarUrl,
+        avatarUrl: alreadyRenamedAvatarUrl,
+        characterName: targetName,
+      };
+    }
+
+    const currentName = String(
+      source?.data?.name ?? source?.name ?? '',
+    ).trim();
+    if (currentName === targetName) {
+      return {
+        ok: true,
+        renamed: false,
+        deduplicated: true,
+        alreadyRenamed: true,
+        oldAvatarUrl,
+        avatarUrl: oldAvatarUrl,
+        characterName: targetName,
+      };
+    }
+
+    let renamedResult;
+    try {
+      renamedResult = await this.post('/api/characters/rename', {
+        avatar_url: oldAvatarUrl,
+        new_name: targetName,
+      });
+    } catch (error) {
+      let sourceStillExists = true;
+      try {
+        await this.getCharacter(oldAvatarUrl);
+      } catch (verifyError) {
+        if (isCharacterGetNotFound(verifyError)) {
+          sourceStillExists = false;
+        } else {
+          throw verifyError;
+        }
+      }
+      if (!sourceStillExists) {
+        const alreadyRenamedAvatarUrl = await findUniqueTarget();
+        if (alreadyRenamedAvatarUrl) {
+          return {
+            ok: true,
+            renamed: false,
+            deduplicated: true,
+            alreadyRenamed: true,
+            oldAvatarUrl,
+            avatarUrl: alreadyRenamedAvatarUrl,
+            characterName: targetName,
+          };
+        }
+      }
+      throw error;
+    }
+
+    const newAvatarUrl = String(renamedResult?.avatar ?? '').trim();
+    if (!newAvatarUrl) {
+      throw new Error('SillyTavern character rename returned no avatar filename.');
+    }
+
+    const renamed = await this.getCharacter(newAvatarUrl);
+    const storedName = String(
+      renamed?.data?.name ?? renamed?.name ?? '',
+    ).trim();
+    if (storedName !== targetName) {
+      throw new Error(
+        `SillyTavern character rename verification failed: expected ${targetName}, got ${storedName || '(empty)'}.`,
+      );
+    }
+
+    return {
+      ok: true,
+      renamed: true,
+      oldAvatarUrl,
+      avatarUrl: newAvatarUrl,
+      characterName: targetName,
+    };
+  }
+
   listWorldInfo() {
     return this.post('/api/worldinfo/list', {});
   }
@@ -2480,6 +2604,7 @@ export function startHttpServer({
         mobileRoute.kind === 'character_update' ||
         mobileRoute.kind === 'character_delete' ||
         mobileRoute.kind === 'character_duplicate' ||
+        mobileRoute.kind === 'character_rename' ||
         mobileRoute.kind === 'preset_save' ||
         mobileRoute.kind === 'preset_delete' ||
         mobileRoute.kind === 'nemo_profile_install' ||
@@ -2491,7 +2616,8 @@ export function startHttpServer({
         req.method === 'GET' &&
         (mobileRoute.kind === 'character_update' ||
           mobileRoute.kind === 'character_delete' ||
-          mobileRoute.kind === 'character_duplicate')
+          mobileRoute.kind === 'character_duplicate' ||
+          mobileRoute.kind === 'character_rename')
       ) {
         res.statusCode = 405;
         res.setHeader('allow', 'POST');
