@@ -9,6 +9,8 @@ const SUPPORTED_OPS = new Set([
   'characters',
   'character',
   'character_create',
+  'character_update',
+  'character_delete',
   'world_info',
   'world_info_entry',
   'recent_chats',
@@ -60,10 +62,10 @@ export function parseOneShotCommand(raw) {
   const command = { ...value, op };
   if (value.nonce != null) command.nonce = requiredString(value.nonce, 'nonce');
 
-  if (['character', 'chat', 'turn', 'generate'].includes(op)) {
+  if (['character', 'character_update', 'character_delete', 'chat', 'turn', 'generate'].includes(op)) {
     command.avatarUrl = requiredString(value.avatarUrl, 'avatarUrl');
   }
-  if (op === 'character_create') {
+  if (['character_create', 'character_update'].includes(op)) {
     command.cardJson = requiredString(value.cardJson, 'cardJson');
     let card;
     try {
@@ -74,9 +76,15 @@ export function parseOneShotCommand(raw) {
     if (!card || typeof card !== 'object' || Array.isArray(card)) {
       throw new Error('cardJson must be a JSON object.');
     }
-    if (value.fileName != null) {
+    if (op === 'character_create' && value.fileName != null) {
       command.fileName = requiredString(value.fileName, 'fileName');
     }
+  }
+  if (op === 'character_delete') {
+    if (value.deleteChats != null && typeof value.deleteChats !== 'boolean') {
+      throw new Error('deleteChats must be a boolean.');
+    }
+    command.deleteChats = value.deleteChats === true;
   }
   if (['chat', 'turn', 'generate'].includes(op)) {
     command.fileName = requiredString(value.fileName, 'fileName');
@@ -141,6 +149,24 @@ function routeFor(command) {
         body: {
           ...(command.fileName ? { fileName: command.fileName } : {}),
           cardJson: command.cardJson,
+        },
+      };
+    case 'character_update':
+      return {
+        method: 'POST',
+        suffix: '/character-update',
+        body: {
+          avatarUrl: command.avatarUrl,
+          cardJson: command.cardJson,
+        },
+      };
+    case 'character_delete':
+      return {
+        method: 'POST',
+        suffix: '/character-delete',
+        body: {
+          avatarUrl: command.avatarUrl,
+          deleteChats: command.deleteChats,
         },
       };
     case 'world_info':
