@@ -42,6 +42,7 @@ export function classifyMobileRestRequest(requestTarget, basePath) {
   if (pathname === `${normalizedBase}/character-export-json`) {
     return { kind: 'character_export_json', avatarUrl: one(url.searchParams, 'avatarUrl') };
   }
+  if (pathname === `${normalizedBase}/character-import-json`) return { kind: 'character_import_json' };
   if (pathname === `${normalizedBase}/character`) {
     return { kind: 'character', avatarUrl: one(url.searchParams, 'avatarUrl') };
   }
@@ -144,6 +145,25 @@ export async function executeMobileRestRoute(route, client, body = {}) {
       }
 
       return client.createCharacter({ card, fileName });
+    }
+    case 'character_import_json': {
+      const cardJson =
+        typeof body?.cardJson === 'string' ? body.cardJson.trim() : '';
+      const fileName =
+        typeof body?.fileName === 'string' ? body.fileName.trim() : '';
+      if (!cardJson) throw new Error('cardJson is required.');
+
+      let card;
+      try {
+        card = JSON.parse(cardJson);
+      } catch {
+        throw new Error('cardJson must be valid JSON.');
+      }
+      if (!card || typeof card !== 'object' || Array.isArray(card)) {
+        throw new Error('cardJson must be valid JSON.');
+      }
+
+      return client.importCharacterJson({ card, fileName });
     }
     case 'character_update': {
       const avatarUrl =
