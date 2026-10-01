@@ -1018,3 +1018,64 @@ test('lorebook mutation routes reject malformed payloads before client writes', 
   );
 });
 
+test('classifies world info save/delete as write routes', async () => {
+  const basePath = '/st-secret/mobile';
+  assert.deepEqual(
+    classifyMobileRestRequest('/st-secret/mobile/world-info-save', basePath),
+    { kind: 'world_info_save' },
+  );
+  assert.deepEqual(
+    classifyMobileRestRequest('/st-secret/mobile/world-info-delete', basePath),
+    { kind: 'world_info_delete' },
+  );
+  assert.equal(isMobileRestWriteRoute({ kind: 'world_info_save' }), true);
+  assert.equal(isMobileRestWriteRoute({ kind: 'world_info_delete' }), true);
+  assert.equal(isMobileRestPostOnlyRoute({ kind: 'world_info_save' }), true);
+  assert.equal(isMobileRestPostOnlyRoute({ kind: 'world_info_delete' }), true);
+
+  const calls = [];
+  const client = {
+    async saveWorldInfo(input) {
+      calls.push({ op: 'save', input });
+      return { ok: true, name: input.name };
+    },
+    async deleteWorldInfo(input) {
+      calls.push({ op: 'delete', input });
+      return { ok: true, deleted: true, name: input.name };
+    },
+  };
+  const data = { entries: { 0: { uid: 0, key: ['probe'], content: 'WORLD_PROBE' } } };
+
+  const saved = await executeMobileRestRoute(
+    { kind: 'world_info_save' },
+    client,
+    { name: 'Probe Lore', dataJson: JSON.stringify(data) },
+  );
+  const deleted = await executeMobileRestRoute(
+    { kind: 'world_info_delete' },
+    client,
+    { name: 'Probe Lore' },
+  );
+
+  assert.equal(saved.ok, true);
+  assert.equal(deleted.deleted, true);
+  assert.deepEqual(calls, [
+    { op: 'save', input: { name: 'Probe Lore', data } },
+    { op: 'delete', input: { name: 'Probe Lore' } },
+  ]);
+});
+
+test('world info save rejects invalid world JSON before mutation', async () => {
+  const client = {
+    saveWorldInfo() { throw new Error('should not be called'); },
+  };
+  await assert.rejects(
+    () => executeMobileRestRoute(
+      { kind: 'world_info_save' },
+      client,
+      { name: 'Probe', dataJson: JSON.stringify({ nope: true }) },
+    ),
+    /entries/,
+  );
+});
+
