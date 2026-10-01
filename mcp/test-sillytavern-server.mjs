@@ -2406,8 +2406,9 @@ test('client creates a missing lorebook through native multipart import and veri
     if (path === '/api/worldinfo/import') {
       assert.equal(options.method, 'POST');
       assert(options.body instanceof FormData);
-      const file = options.body.get('file');
+      const file = options.body.get('avatar');
       const convertedData = options.body.get('convertedData');
+      assert.equal(options.body.get('file'), null);
       assert(file);
       assert.equal(file.name, 'Probe World.json');
       assert.equal(await file.text(), JSON.stringify({
