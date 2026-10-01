@@ -1113,9 +1113,9 @@ export class SillyTavernClient {
     if (!oldAvatarUrl) throw new Error('avatarUrl is required.');
     if (!targetName) throw new Error('newName is required.');
 
-    const findUniqueTarget = async () => {
+    const findTargetMatches = async () => {
       const characters = await this.listCharacters();
-      const matches = Array.isArray(characters)
+      return Array.isArray(characters)
         ? characters.filter((character) => {
             const name = String(
               character?.data?.name ?? character?.name ?? '',
@@ -1124,7 +1124,10 @@ export class SillyTavernClient {
             return name === targetName && avatar !== oldAvatarUrl;
           })
         : [];
+    };
 
+    const resolveUniqueTarget = async () => {
+      const matches = await findTargetMatches();
       if (matches.length > 1) {
         throw new Error(
           `Character rename is ambiguous: multiple characters already have the name ${targetName}.`,
@@ -1145,16 +1148,14 @@ export class SillyTavernClient {
       source = await this.getCharacter(oldAvatarUrl);
     } catch (error) {
       if (!isCharacterGetNotFound(error)) throw error;
-      const alreadyRenamedAvatarUrl = await findUniqueTarget();
+      const alreadyRenamedAvatarUrl = await resolveUniqueTarget();
       if (!alreadyRenamedAvatarUrl) throw error;
       return {
         ok: true,
-        renamed: false,
-        deduplicated: true,
-        alreadyRenamed: true,
         oldAvatarUrl,
         avatarUrl: alreadyRenamedAvatarUrl,
         characterName: targetName,
+        deduplicated: true,
       };
     }
 
@@ -1164,13 +1165,18 @@ export class SillyTavernClient {
     if (currentName === targetName) {
       return {
         ok: true,
-        renamed: false,
-        deduplicated: true,
-        alreadyRenamed: true,
         oldAvatarUrl,
         avatarUrl: oldAvatarUrl,
         characterName: targetName,
+        deduplicated: true,
       };
+    }
+
+    const occupiedTargets = await findTargetMatches();
+    if (occupiedTargets.length > 0) {
+      throw new Error(
+        `Character name ${targetName} already exists. Choose another name.`,
+      );
     }
 
     let renamedResult;
@@ -1191,16 +1197,14 @@ export class SillyTavernClient {
         }
       }
       if (!sourceStillExists) {
-        const alreadyRenamedAvatarUrl = await findUniqueTarget();
+        const alreadyRenamedAvatarUrl = await resolveUniqueTarget();
         if (alreadyRenamedAvatarUrl) {
           return {
             ok: true,
-            renamed: false,
-            deduplicated: true,
-            alreadyRenamed: true,
             oldAvatarUrl,
             avatarUrl: alreadyRenamedAvatarUrl,
             characterName: targetName,
+            deduplicated: true,
           };
         }
       }
@@ -1212,19 +1216,8 @@ export class SillyTavernClient {
       throw new Error('SillyTavern character rename returned no avatar filename.');
     }
 
-    const renamed = await this.getCharacter(newAvatarUrl);
-    const storedName = String(
-      renamed?.data?.name ?? renamed?.name ?? '',
-    ).trim();
-    if (storedName !== targetName) {
-      throw new Error(
-        `SillyTavern character rename verification failed: expected ${targetName}, got ${storedName || '(empty)'}.`,
-      );
-    }
-
     return {
       ok: true,
-      renamed: true,
       oldAvatarUrl,
       avatarUrl: newAvatarUrl,
       characterName: targetName,
