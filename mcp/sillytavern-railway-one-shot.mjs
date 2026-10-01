@@ -11,6 +11,7 @@ const SUPPORTED_OPS = new Set([
   'character_create',
   'character_update',
   'character_delete',
+  'character_duplicate',
   'world_info',
   'world_info_entry',
   'recent_chats',
@@ -62,7 +63,7 @@ export function parseOneShotCommand(raw) {
   const command = { ...value, op };
   if (value.nonce != null) command.nonce = requiredString(value.nonce, 'nonce');
 
-  if (['character', 'character_update', 'character_delete', 'chat', 'turn', 'generate'].includes(op)) {
+  if (['character', 'character_update', 'character_delete', 'character_duplicate', 'chat', 'turn', 'generate'].includes(op)) {
     command.avatarUrl = requiredString(value.avatarUrl, 'avatarUrl');
   }
   if (['character_create', 'character_update'].includes(op)) {
@@ -91,6 +92,13 @@ export function parseOneShotCommand(raw) {
       throw new Error('deleteChats must be a boolean.');
     }
     command.deleteChats = value.deleteChats === true;
+  }
+  if (op === 'character_duplicate') {
+    command.newName = requiredString(value.newName, 'newName');
+    command.fileName =
+      value.fileName != null
+        ? requiredString(value.fileName, 'fileName').replace(/\.png$/i, '')
+        : command.newName.replace(/\.png$/i, '');
   }
   if (['chat', 'turn', 'generate'].includes(op)) {
     command.fileName = requiredString(value.fileName, 'fileName');
@@ -173,6 +181,16 @@ function routeFor(command) {
         body: {
           avatarUrl: command.avatarUrl,
           deleteChats: command.deleteChats,
+        },
+      };
+    case 'character_duplicate':
+      return {
+        method: 'POST',
+        suffix: '/character-duplicate',
+        body: {
+          avatarUrl: command.avatarUrl,
+          newName: command.newName,
+          fileName: command.fileName,
         },
       };
     case 'world_info':
