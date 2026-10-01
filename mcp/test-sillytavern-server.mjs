@@ -2439,3 +2439,143 @@ test('client creates a missing lorebook through native multipart import and veri
   assert.deepEqual(stored, data);
 });
 
+test('client binds an existing lorebook to a V3 character while preserving card data', async () => {
+  let editBody = null;
+  const character = {
+    spec: 'chara_card_v3',
+    spec_version: '3.0',
+    data: {
+      name: 'Darya',
+      description: 'keep description',
+      extensions: {
+        talkativeness: 0.7,
+        custom_marker: 'keep-me',
+        world: '',
+      },
+      character_book: {
+        name: 'Embedded Book',
+        entries: [{ id: 1, keys: ['embedded'], content: 'keep embedded' }],
+      },
+    },
+    avatar: 'Darya.png',
+    chat: 'Darya - current',
+    create_date: '2026-09-01T00:00:00.000Z',
+  };
+  const fetchImpl = async (url, options = {}) => {
+    const path = new URL(String(url)).pathname;
+    if (path === '/csrf-token') return makeJsonResponse({ token: 'csrf-bind-world' });
+    if (path === '/api/worldinfo/list') {
+      return makeJsonResponse([{ file_id: 'Darya Lore', name: 'Darya Lore', extensions: {} }]);
+    }
+    if (path === '/api/characters/get') return makeJsonResponse(character);
+    if (path === '/api/characters/edit') {
+      editBody = JSON.parse(options.body);
+      return new Response('', { status: 200 });
+    }
+    throw new Error('unexpected URL: ' + url);
+  };
+
+  const client = new SillyTavernClient({
+    baseUrl: 'https://st.example.test',
+    fetchImpl,
+  });
+  const result = await client.bindCharacterWorld({
+    avatarUrl: 'Darya.png',
+    name: 'Darya Lore',
+  });
+
+  assert.deepEqual(result, {
+    ok: true,
+    avatarUrl: 'Darya.png',
+    characterName: 'Darya',
+    world: 'Darya Lore',
+  });
+  const stored = JSON.parse(editBody.json_data);
+  assert.equal(stored.data.extensions.world, 'Darya Lore');
+  assert.equal(stored.data.extensions.custom_marker, 'keep-me');
+  assert.equal(stored.data.description, 'keep description');
+  assert.deepEqual(stored.data.character_book, character.data.character_book);
+  assert.equal(editBody.chat, 'Darya - current');
+  assert.equal(editBody.create_date, '2026-09-01T00:00:00.000Z');
+});
+
+test('character world bind refuses a missing lorebook before character write', async () => {
+  let characterReads = 0;
+  const fetchImpl = async (url) => {
+    const path = new URL(String(url)).pathname;
+    if (path === '/csrf-token') return makeJsonResponse({ token: 'csrf-bind-missing' });
+    if (path === '/api/worldinfo/list') return makeJsonResponse([]);
+    if (path === '/api/characters/get') {
+      characterReads += 1;
+      return makeJsonResponse({});
+    }
+    throw new Error('unexpected URL: ' + url);
+  };
+
+  const client = new SillyTavernClient({
+    baseUrl: 'https://st.example.test',
+    fetchImpl,
+  });
+  await assert.rejects(
+    () => client.bindCharacterWorld({
+      avatarUrl: 'Darya.png',
+      name: 'Missing Lore',
+    }),
+    /does not exist/,
+  );
+  assert.equal(characterReads, 0);
+});
+
+test('character world bind and unbind are state-idempotent', async () => {
+  let editCalls = 0;
+  let character = {
+    spec: 'chara_card_v3',
+    spec_version: '3.0',
+    data: {
+      name: 'Darya',
+      extensions: { world: 'Darya Lore', custom_marker: 'keep-me' },
+    },
+    avatar: 'Darya.png',
+    chat: 'Darya - current',
+    create_date: '2026-09-01T00:00:00.000Z',
+  };
+  const fetchImpl = async (url, options = {}) => {
+    const path = new URL(String(url)).pathname;
+    if (path === '/csrf-token') return makeJsonResponse({ token: 'csrf-bind-idempotent' });
+    if (path === '/api/worldinfo/list') {
+      return makeJsonResponse([{ file_id: 'Darya Lore', name: 'Darya Lore', extensions: {} }]);
+    }
+    if (path === '/api/characters/get') return makeJsonResponse(character);
+    if (path === '/api/characters/edit') {
+      editCalls += 1;
+      const body = JSON.parse(options.body);
+      character = JSON.parse(body.json_data);
+      character.avatar = 'Darya.png';
+      character.chat = body.chat;
+      character.create_date = body.create_date;
+      return new Response('', { status: 200 });
+    }
+    throw new Error('unexpected URL: ' + url);
+  };
+
+  const client = new SillyTavernClient({
+    baseUrl: 'https://st.example.test',
+    fetchImpl,
+  });
+
+  const alreadyBound = await client.bindCharacterWorld({
+    avatarUrl: 'Darya.png',
+    name: 'Darya Lore',
+  });
+  assert.equal(alreadyBound.deduplicated, true);
+  assert.equal(editCalls, 0);
+
+  const unbound = await client.unbindCharacterWorld({ avatarUrl: 'Darya.png' });
+  assert.equal(unbound.world, '');
+  assert.equal(editCalls, 1);
+
+  const alreadyUnbound = await client.unbindCharacterWorld({ avatarUrl: 'Darya.png' });
+  assert.equal(alreadyUnbound.deduplicated, true);
+  assert.equal(editCalls, 1);
+});
+
