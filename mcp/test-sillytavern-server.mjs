@@ -2579,3 +2579,202 @@ test('character world bind and unbind are state-idempotent', async () => {
   assert.equal(editCalls, 1);
 });
 
+test('character world bind snapshots an existing embedded character book before native world injection', async () => {
+  let editBody = null;
+  const embeddedBook = {
+    name: 'Embedded Book',
+    entries: [{ id: 3, keys: ['embedded'], content: 'ORIGINAL_EMBEDDED_BOOK' }],
+  };
+  const character = {
+    spec: 'chara_card_v3',
+    spec_version: '3.0',
+    data: {
+      name: 'Darya',
+      extensions: { world: '', custom_marker: 'keep-me' },
+      character_book: embeddedBook,
+    },
+    avatar: 'Darya.png',
+    chat: 'Darya - current',
+    create_date: '2026-09-01T00:00:00.000Z',
+  };
+  const fetchImpl = async (url, options = {}) => {
+    const path = new URL(String(url)).pathname;
+    if (path === '/csrf-token') return makeJsonResponse({ token: 'csrf-bind-snapshot' });
+    if (path === '/api/worldinfo/list') {
+      return makeJsonResponse([{ file_id: 'External Lore', name: 'External Lore', extensions: {} }]);
+    }
+    if (path === '/api/characters/get') return makeJsonResponse(character);
+    if (path === '/api/characters/edit') {
+      editBody = JSON.parse(options.body);
+      return new Response('', { status: 200 });
+    }
+    throw new Error('unexpected URL: ' + url);
+  };
+
+  const client = new SillyTavernClient({
+    baseUrl: 'https://st.example.test',
+    fetchImpl,
+  });
+  await client.bindCharacterWorld({
+    avatarUrl: 'Darya.png',
+    name: 'External Lore',
+  });
+
+  const stored = JSON.parse(editBody.json_data);
+  assert.deepEqual(
+    stored.data.extensions.sillytavern_mobile_world_binding.previousCharacterBook,
+    embeddedBook,
+  );
+  assert.equal(
+    stored.data.extensions.sillytavern_mobile_world_binding.managed,
+    true,
+  );
+});
+
+test('character world unbind removes injected external book and restores the pre-bind embedded book', async () => {
+  let editBody = null;
+  const embeddedBook = {
+    name: 'Embedded Book',
+    entries: [{ id: 3, keys: ['embedded'], content: 'ORIGINAL_EMBEDDED_BOOK' }],
+  };
+  const externalBook = {
+    name: 'External Lore',
+    entries: [{ id: 7, keys: ['external'], content: 'EXTERNAL_BOOK' }],
+  };
+  const character = {
+    spec: 'chara_card_v3',
+    spec_version: '3.0',
+    data: {
+      name: 'Darya',
+      extensions: {
+        world: 'External Lore',
+        custom_marker: 'keep-me',
+        sillytavern_mobile_world_binding: {
+          managed: true,
+          previousCharacterBook: embeddedBook,
+        },
+      },
+      character_book: externalBook,
+    },
+    avatar: 'Darya.png',
+    chat: 'Darya - current',
+    create_date: '2026-09-01T00:00:00.000Z',
+  };
+
+  const fetchImpl = async (url, options = {}) => {
+    const path = new URL(String(url)).pathname;
+    if (path === '/csrf-token') return makeJsonResponse({ token: 'csrf-unbind-restore' });
+    if (path === '/api/characters/get') return makeJsonResponse(character);
+    if (path === '/api/characters/edit') {
+      editBody = JSON.parse(options.body);
+      return new Response('', { status: 200 });
+    }
+    throw new Error('unexpected URL: ' + url);
+  };
+
+  const client = new SillyTavernClient({
+    baseUrl: 'https://st.example.test',
+    fetchImpl,
+  });
+  const result = await client.unbindCharacterWorld({ avatarUrl: 'Darya.png' });
+
+  assert.equal(result.world, '');
+  const stored = JSON.parse(editBody.json_data);
+  assert.deepEqual(stored.data.character_book, embeddedBook);
+  assert.equal(stored.data.extensions.world, '');
+  assert.equal(stored.data.extensions.custom_marker, 'keep-me');
+  assert.equal(
+    Object.prototype.hasOwnProperty.call(
+      stored.data.extensions,
+      'sillytavern_mobile_world_binding',
+    ),
+    false,
+  );
+});
+
+test('character world unbind removes injected external book when no embedded book existed before bind', async () => {
+  let editBody = null;
+  const character = {
+    spec: 'chara_card_v3',
+    spec_version: '3.0',
+    data: {
+      name: 'Probe',
+      extensions: {
+        world: 'External Lore',
+        sillytavern_mobile_world_binding: {
+          managed: true,
+          previousCharacterBook: null,
+        },
+      },
+      character_book: {
+        name: 'External Lore',
+        entries: [{ id: 7, keys: ['external'], content: 'EXTERNAL_BOOK' }],
+      },
+    },
+    avatar: 'Probe.png',
+    chat: 'Probe - current',
+    create_date: '2026-09-01T00:00:00.000Z',
+  };
+  const fetchImpl = async (url, options = {}) => {
+    const path = new URL(String(url)).pathname;
+    if (path === '/csrf-token') return makeJsonResponse({ token: 'csrf-unbind-remove' });
+    if (path === '/api/characters/get') return makeJsonResponse(character);
+    if (path === '/api/characters/edit') {
+      editBody = JSON.parse(options.body);
+      return new Response('', { status: 200 });
+    }
+    throw new Error('unexpected URL: ' + url);
+  };
+
+  const client = new SillyTavernClient({
+    baseUrl: 'https://st.example.test',
+    fetchImpl,
+  });
+  await client.unbindCharacterWorld({ avatarUrl: 'Probe.png' });
+
+  const stored = JSON.parse(editBody.json_data);
+  assert.equal(
+    Object.prototype.hasOwnProperty.call(stored.data, 'character_book'),
+    false,
+  );
+});
+
+test('character world bind refuses replacing a different existing world link without explicit unbind', async () => {
+  let editCalls = 0;
+  const character = {
+    spec: 'chara_card_v3',
+    spec_version: '3.0',
+    data: {
+      name: 'Darya',
+      extensions: { world: 'Old Lore' },
+    },
+    avatar: 'Darya.png',
+  };
+  const fetchImpl = async (url) => {
+    const path = new URL(String(url)).pathname;
+    if (path === '/csrf-token') return makeJsonResponse({ token: 'csrf-bind-rebind' });
+    if (path === '/api/worldinfo/list') {
+      return makeJsonResponse([{ file_id: 'New Lore', name: 'New Lore', extensions: {} }]);
+    }
+    if (path === '/api/characters/get') return makeJsonResponse(character);
+    if (path === '/api/characters/edit') {
+      editCalls += 1;
+      return new Response('', { status: 200 });
+    }
+    throw new Error('unexpected URL: ' + url);
+  };
+
+  const client = new SillyTavernClient({
+    baseUrl: 'https://st.example.test',
+    fetchImpl,
+  });
+  await assert.rejects(
+    () => client.bindCharacterWorld({
+      avatarUrl: 'Darya.png',
+      name: 'New Lore',
+    }),
+    /already bound to Old Lore.*unbind first/i,
+  );
+  assert.equal(editCalls, 0);
+});
+
