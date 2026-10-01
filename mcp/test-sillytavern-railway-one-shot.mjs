@@ -443,3 +443,65 @@ test('character_create derives deterministic fileName from card name when omitte
   assert.equal(parsed.fileName, 'Deterministic Character');
 });
 
+test('character_duplicate validates source and derives deterministic target filename', async () => {
+  const parsed = parseOneShotCommand(JSON.stringify({
+    op: 'character_duplicate',
+    nonce: 'duplicate-1',
+    avatarUrl: 'Darya.png',
+    newName: 'Darya Copy',
+  }));
+
+  assert.equal(parsed.op, 'character_duplicate');
+  assert.equal(parsed.avatarUrl, 'Darya.png');
+  assert.equal(parsed.newName, 'Darya Copy');
+  assert.equal(parsed.fileName, 'Darya Copy');
+
+  const calls = [];
+  const fetchImpl = async (url, init = {}) => {
+    calls.push({ url: String(url), init });
+    return new Response(JSON.stringify({
+      ok: true,
+      sourceAvatarUrl: 'Darya.png',
+      avatarUrl: 'Darya Copy.png',
+      characterName: 'Darya Copy',
+    }), {
+      status: 200,
+      headers: { 'content-type': 'application/json' },
+    });
+  };
+
+  const result = await executeOneShot({
+    command: parsed,
+    publicDomain: 'example.up.railway.app',
+    mcpPath: '/secret/mcp',
+    fetchImpl,
+  });
+
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].url, 'https://example.up.railway.app/secret/mobile/character-duplicate');
+  assert.equal(calls[0].init.method, 'POST');
+  assert.deepEqual(JSON.parse(calls[0].init.body), {
+    avatarUrl: 'Darya.png',
+    newName: 'Darya Copy',
+    fileName: 'Darya Copy',
+  });
+  assert.equal(result.avatarUrl, 'Darya Copy.png');
+});
+
+test('character_duplicate rejects missing source or target name', () => {
+  assert.throws(
+    () => parseOneShotCommand(JSON.stringify({
+      op: 'character_duplicate',
+      newName: 'Copy',
+    })),
+    /avatarUrl is required/,
+  );
+  assert.throws(
+    () => parseOneShotCommand(JSON.stringify({
+      op: 'character_duplicate',
+      avatarUrl: 'Darya.png',
+    })),
+    /newName is required/,
+  );
+});
+
