@@ -1744,6 +1744,16 @@ test('client renames a character through native rename and verifies the new card
   const fetchImpl = async (url, options = {}) => {
     const path = new URL(String(url)).pathname;
     if (path === '/csrf-token') return makeJsonResponse({ token: 'csrf-rename' });
+    if (path === '/api/characters/all') {
+      return makeJsonResponse([
+        {
+          spec: 'chara_card_v3',
+          spec_version: '3.0',
+          data: { name: 'Old Name' },
+          avatar: 'Old Name.png',
+        },
+      ]);
+    }
     if (path === '/api/characters/get') {
       const body = JSON.parse(options.body);
       if (body.avatar_url === 'Old Name.png') {
@@ -1872,6 +1882,16 @@ test('client renames a native character and returns the new avatar filename', as
   const fetchImpl = async (url, options = {}) => {
     const path = new URL(String(url)).pathname;
     if (path === '/csrf-token') return makeJsonResponse({ token: 'csrf-rename' });
+    if (path === '/api/characters/all') {
+      return makeJsonResponse([
+        {
+          spec: 'chara_card_v3',
+          spec_version: '3.0',
+          data: { name: 'Old Name' },
+          avatar: 'Old Name.png',
+        },
+      ]);
+    }
     if (path === '/api/characters/get') {
       const body = JSON.parse(options.body);
       calls.push({ path, body });
