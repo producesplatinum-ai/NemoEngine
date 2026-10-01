@@ -1080,6 +1080,33 @@ export class SillyTavernClient {
     };
   }
 
+  async duplicateCharacter({ avatarUrl, newName, fileName = '' }) {
+    const sourceAvatarUrl = String(avatarUrl || '').trim();
+    const targetName = String(newName || '').trim();
+    if (!sourceAvatarUrl) throw new Error('avatarUrl is required.');
+    if (!targetName) throw new Error('newName is required.');
+
+    const source = await this.getCharacter(sourceAvatarUrl);
+    const card = JSON.parse(JSON.stringify(characterCardSemanticCore(source)));
+    if (!card.data || typeof card.data !== 'object' || Array.isArray(card.data)) {
+      card.data = {};
+    }
+    card.data.name = targetName;
+
+    const targetFileName = String(fileName || targetName)
+      .trim()
+      .replace(/\.png$/i, '');
+    const created = await this.createCharacter({
+      card,
+      fileName: targetFileName,
+    });
+
+    return {
+      ...created,
+      sourceAvatarUrl,
+    };
+  }
+
   listWorldInfo() {
     return this.post('/api/worldinfo/list', {});
   }
@@ -2452,6 +2479,7 @@ export function startHttpServer({
         mobileRoute.kind === 'character_create' ||
         mobileRoute.kind === 'character_update' ||
         mobileRoute.kind === 'character_delete' ||
+        mobileRoute.kind === 'character_duplicate' ||
         mobileRoute.kind === 'preset_save' ||
         mobileRoute.kind === 'preset_delete' ||
         mobileRoute.kind === 'nemo_profile_install' ||
@@ -2462,7 +2490,8 @@ export function startHttpServer({
         mobileWriteRoute &&
         req.method === 'GET' &&
         (mobileRoute.kind === 'character_update' ||
-          mobileRoute.kind === 'character_delete')
+          mobileRoute.kind === 'character_delete' ||
+          mobileRoute.kind === 'character_duplicate')
       ) {
         res.statusCode = 405;
         res.setHeader('allow', 'POST');
