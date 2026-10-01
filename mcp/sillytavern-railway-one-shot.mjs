@@ -12,6 +12,7 @@ const SUPPORTED_OPS = new Set([
   'character_update',
   'character_delete',
   'character_duplicate',
+  'character_rename',
   'world_info',
   'world_info_entry',
   'recent_chats',
@@ -63,7 +64,7 @@ export function parseOneShotCommand(raw) {
   const command = { ...value, op };
   if (value.nonce != null) command.nonce = requiredString(value.nonce, 'nonce');
 
-  if (['character', 'character_update', 'character_delete', 'character_duplicate', 'chat', 'turn', 'generate'].includes(op)) {
+  if (['character', 'character_update', 'character_delete', 'character_duplicate', 'character_rename', 'chat', 'turn', 'generate'].includes(op)) {
     command.avatarUrl = requiredString(value.avatarUrl, 'avatarUrl');
   }
   if (['character_create', 'character_update'].includes(op)) {
@@ -99,6 +100,9 @@ export function parseOneShotCommand(raw) {
       value.fileName != null
         ? requiredString(value.fileName, 'fileName').replace(/\.png$/i, '')
         : command.newName.replace(/\.png$/i, '');
+  }
+  if (op === 'character_rename') {
+    command.newName = requiredString(value.newName, 'newName');
   }
   if (['chat', 'turn', 'generate'].includes(op)) {
     command.fileName = requiredString(value.fileName, 'fileName');
@@ -191,6 +195,15 @@ function routeFor(command) {
           avatarUrl: command.avatarUrl,
           newName: command.newName,
           fileName: command.fileName,
+        },
+      };
+    case 'character_rename':
+      return {
+        method: 'POST',
+        suffix: '/character-rename',
+        body: {
+          avatarUrl: command.avatarUrl,
+          newName: command.newName,
         },
       };
     case 'world_info':
