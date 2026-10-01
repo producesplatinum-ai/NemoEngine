@@ -2384,3 +2384,52 @@ test('client deletes world info idempotently', async () => {
   });
 });
 
+test('client creates a missing lorebook through native multipart import and verifies persistence', async () => {
+  let importedName = '';
+  let stored = null;
+  const fetchImpl = async (url, options = {}) => {
+    const path = new URL(String(url)).pathname;
+    if (path === '/csrf-token') return makeJsonResponse({ token: 'csrf-wi-import-create' });
+    if (path === '/api/worldinfo/list') {
+      return makeJsonResponse(
+        stored ? [{ name: importedName, file_id: importedName, extensions: stored.extensions || {} }] : [],
+      );
+    }
+    if (path === '/api/worldinfo/get') {
+      return makeJsonResponse(stored || { entries: {} });
+    }
+    if (path === '/api/worldinfo/import') {
+      assert.equal(options.method, 'POST');
+      assert(options.body instanceof FormData);
+      const file = options.body.get('file');
+      const convertedData = options.body.get('convertedData');
+      assert(file);
+      assert.equal(file.name, 'Probe World.json');
+      assert.equal(await file.text(), JSON.stringify({
+        name: 'Probe World',
+        extensions: { marker: 'persist-me' },
+        entries: { 0: { uid: 0, key: ['probe'], content: 'PERSIST_ME' } },
+      }, null, 4));
+      assert.equal(convertedData, await file.text());
+      stored = JSON.parse(String(convertedData));
+      importedName = 'Probe World';
+      return makeJsonResponse({ name: 'Probe World' });
+    }
+    if (path === '/api/worldinfo/edit') {
+      throw new Error('create must not use /api/worldinfo/edit for a missing lorebook');
+    }
+    throw new Error('unexpected URL: ' + url);
+  };
+
+  const data = {
+    name: 'Probe World',
+    extensions: { marker: 'persist-me' },
+    entries: { 0: { uid: 0, key: ['probe'], content: 'PERSIST_ME' } },
+  };
+  const client = new SillyTavernClient({ baseUrl: 'https://st.example.test', fetchImpl });
+  const result = await client.createWorldInfo({ name: 'Probe World', data });
+
+  assert.deepEqual(result, { ok: true, name: 'Probe World', created: true });
+  assert.deepEqual(stored, data);
+});
+
