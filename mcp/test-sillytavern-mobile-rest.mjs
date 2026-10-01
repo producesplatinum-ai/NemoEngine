@@ -1139,3 +1139,50 @@ test('character world bind/unbind validate payloads before client mutation', asy
   );
 });
 
+test('classifies character world bind/unbind as post-only write routes', async () => {
+  const basePath = '/st-secret/mobile';
+  assert.deepEqual(
+    classifyMobileRestRequest('/st-secret/mobile/character-world-bind', basePath),
+    { kind: 'character_world_bind' },
+  );
+  assert.deepEqual(
+    classifyMobileRestRequest('/st-secret/mobile/character-world-unbind', basePath),
+    { kind: 'character_world_unbind' },
+  );
+
+  for (const kind of ['character_world_bind', 'character_world_unbind']) {
+    assert.equal(isMobileRestWriteRoute({ kind }), true, kind);
+    assert.equal(isMobileRestPostOnlyRoute({ kind }), true, kind);
+  }
+
+  const calls = [];
+  const client = {
+    async bindCharacterWorld(input) {
+      calls.push({ op: 'bind', input });
+      return { ok: true, avatarUrl: input.avatarUrl, worldName: input.worldName, bound: true };
+    },
+    async unbindCharacterWorld(input) {
+      calls.push({ op: 'unbind', input });
+      return { ok: true, avatarUrl: input.avatarUrl, worldName: '', bound: false };
+    },
+  };
+
+  const bound = await executeMobileRestRoute(
+    { kind: 'character_world_bind' },
+    client,
+    { avatarUrl: 'Darya.png', worldName: 'Darya Lore' },
+  );
+  const unbound = await executeMobileRestRoute(
+    { kind: 'character_world_unbind' },
+    client,
+    { avatarUrl: 'Darya.png' },
+  );
+
+  assert.equal(bound.bound, true);
+  assert.equal(unbound.bound, false);
+  assert.deepEqual(calls, [
+    { op: 'bind', input: { avatarUrl: 'Darya.png', worldName: 'Darya Lore' } },
+    { op: 'unbind', input: { avatarUrl: 'Darya.png' } },
+  ]);
+});
+
