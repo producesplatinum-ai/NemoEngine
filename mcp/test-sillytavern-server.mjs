@@ -2894,3 +2894,264 @@ test('world info delete rejects a false-positive 200 when the book still exists'
     /did not persist|still exists/i,
   );
 });
+
+test('client creates an empty valid chat and verifies it through recent chats', async () => {
+  let saveBody = null;
+  let recentCalls = 0;
+  const fetchImpl = async (url, options = {}) => {
+    const path = new URL(String(url)).pathname;
+    if (path === '/csrf-token') return makeJsonResponse({ token: 'csrf-chat-create' });
+    if (path === '/api/characters/get') {
+      return makeJsonResponse({
+        spec: 'chara_card_v3',
+        spec_version: '3.0',
+        data: { name: 'Darya' },
+        name: 'Darya',
+        avatar: 'Darya.png',
+      });
+    }
+    if (path === '/api/chats/recent') {
+      recentCalls += 1;
+      if (recentCalls === 1) return makeJsonResponse([]);
+      return makeJsonResponse([{
+        avatar: 'Darya.png',
+        file_id: 'Probe Chat',
+        file_name: 'Probe Chat.jsonl',
+        message_count: 0,
+      }]);
+    }
+    if (path === '/api/chats/save') {
+      saveBody = JSON.parse(options.body);
+      return makeJsonResponse({ ok: true });
+    }
+    if (path === '/api/chats/get') {
+      return makeJsonResponse([{
+        user_name: 'You',
+        character_name: 'Darya',
+        chat_metadata: {
+          one_shot_nonce: 'chat-create-1',
+          one_shot_op: 'chat_create',
+        },
+      }]);
+    }
+    throw new Error('unexpected URL: ' + url);
+  };
+
+  const client = new SillyTavernClient({
+    baseUrl: 'https://st.example.test',
+    fetchImpl,
+  });
+  const result = await client.createChat({
+    nonce: 'chat-create-1',
+    avatarUrl: 'Darya.png',
+    fileName: 'Probe Chat',
+  });
+
+  assert.equal(saveBody.avatar_url, 'Darya.png');
+  assert.equal(saveBody.file_name, 'Probe Chat');
+  assert.equal(saveBody.chat.length, 1);
+  assert.equal(saveBody.chat[0].character_name, 'Darya');
+  assert.equal(saveBody.chat[0].chat_metadata.one_shot_nonce, 'chat-create-1');
+  assert.deepEqual(result, {
+    ok: true,
+    created: true,
+    avatarUrl: 'Darya.png',
+    fileName: 'Probe Chat',
+  });
+});
+
+test('client deduplicates replayed chat_create nonce and refuses a foreign existing chat', async () => {
+  let saveCalls = 0;
+  const makeClient = (header) => new SillyTavernClient({
+    baseUrl: 'https://st.example.test',
+    fetchImpl: async (url) => {
+      const path = new URL(String(url)).pathname;
+      if (path === '/csrf-token') return makeJsonResponse({ token: 'csrf-chat-create-dedupe' });
+      if (path === '/api/characters/get') {
+        return makeJsonResponse({ data: { name: 'Darya' }, name: 'Darya', avatar: 'Darya.png' });
+      }
+      if (path === '/api/chats/recent') {
+        return makeJsonResponse([{
+          avatar: 'Darya.png',
+          file_id: 'Probe Chat',
+          file_name: 'Probe Chat.jsonl',
+        }]);
+      }
+      if (path === '/api/chats/get') return makeJsonResponse([header]);
+      if (path === '/api/chats/save') {
+        saveCalls += 1;
+        return makeJsonResponse({ ok: true });
+      }
+      throw new Error('unexpected URL: ' + url);
+    },
+  });
+
+  const deduped = await makeClient({
+    chat_metadata: {
+      one_shot_nonce: 'chat-create-1',
+      one_shot_op: 'chat_create',
+    },
+  }).createChat({
+    nonce: 'chat-create-1',
+    avatarUrl: 'Darya.png',
+    fileName: 'Probe Chat',
+  });
+
+  assert.equal(deduped.deduplicated, true);
+  assert.equal(saveCalls, 0);
+
+  await assert.rejects(
+    () => makeClient({
+      chat_metadata: {
+        one_shot_nonce: 'other',
+        one_shot_op: 'chat_create',
+      },
+    }).createChat({
+      nonce: 'chat-create-1',
+      avatarUrl: 'Darya.png',
+      fileName: 'Probe Chat',
+    }),
+    /already exists/i,
+  );
+  assert.equal(saveCalls, 0);
+});
+
+test('client renames a chat with post-state verification and deduplicates an already-renamed state', async () => {
+  let renameBody = null;
+  let recentCalls = 0;
+  const fetchImpl = async (url, options = {}) => {
+    const path = new URL(String(url)).pathname;
+    if (path === '/csrf-token') return makeJsonResponse({ token: 'csrf-chat-rename' });
+    if (path === '/api/chats/recent') {
+      recentCalls += 1;
+      if (recentCalls === 1) {
+        return makeJsonResponse([{
+          avatar: 'Darya.png',
+          file_id: 'Old Chat',
+          file_name: 'Old Chat.jsonl',
+        }]);
+      }
+      return makeJsonResponse([{
+        avatar: 'Darya.png',
+        file_id: 'New Chat',
+        file_name: 'New Chat.jsonl',
+      }]);
+    }
+    if (path === '/api/chats/rename') {
+      renameBody = JSON.parse(options.body);
+      return makeJsonResponse({ ok: true, sanitizedFileName: 'New Chat' });
+    }
+    throw new Error('unexpected URL: ' + url);
+  };
+
+  const client = new SillyTavernClient({
+    baseUrl: 'https://st.example.test',
+    fetchImpl,
+  });
+  const result = await client.renameChat({
+    avatarUrl: 'Darya.png',
+    fileName: 'Old Chat',
+    newFileName: 'New Chat',
+  });
+
+  assert.deepEqual(renameBody, {
+    avatar_url: 'Darya.png',
+    original_file: 'Old Chat.jsonl',
+    renamed_file: 'New Chat.jsonl',
+    is_group: false,
+  });
+  assert.deepEqual(result, {
+    ok: true,
+    renamed: true,
+    avatarUrl: 'Darya.png',
+    fileName: 'New Chat',
+    oldFileName: 'Old Chat',
+  });
+
+  const dedupeClient = new SillyTavernClient({
+    baseUrl: 'https://st.example.test',
+    fetchImpl: async (url) => {
+      const path = new URL(String(url)).pathname;
+      if (path === '/csrf-token') return makeJsonResponse({ token: 'csrf-chat-rename-dedupe' });
+      if (path === '/api/chats/recent') {
+        return makeJsonResponse([{
+          avatar: 'Darya.png',
+          file_id: 'New Chat',
+          file_name: 'New Chat.jsonl',
+        }]);
+      }
+      throw new Error('unexpected URL: ' + url);
+    },
+  });
+  const deduped = await dedupeClient.renameChat({
+    avatarUrl: 'Darya.png',
+    fileName: 'Old Chat',
+    newFileName: 'New Chat',
+  });
+  assert.equal(deduped.deduplicated, true);
+  assert.equal(deduped.alreadyRenamed, true);
+});
+
+test('client deletes a chat idempotently and verifies absence', async () => {
+  let deleteCalls = 0;
+  let recentCalls = 0;
+  const fetchImpl = async (url, options = {}) => {
+    const path = new URL(String(url)).pathname;
+    if (path === '/csrf-token') return makeJsonResponse({ token: 'csrf-chat-delete' });
+    if (path === '/api/chats/recent') {
+      recentCalls += 1;
+      if (recentCalls === 1) {
+        return makeJsonResponse([{
+          avatar: 'Darya.png',
+          file_id: 'Probe Chat',
+          file_name: 'Probe Chat.jsonl',
+        }]);
+      }
+      return makeJsonResponse([]);
+    }
+    if (path === '/api/chats/delete') {
+      deleteCalls += 1;
+      assert.deepEqual(JSON.parse(options.body), {
+        avatar_url: 'Darya.png',
+        chatfile: 'Probe Chat.jsonl',
+      });
+      return makeJsonResponse({ ok: true });
+    }
+    throw new Error('unexpected URL: ' + url);
+  };
+
+  const client = new SillyTavernClient({
+    baseUrl: 'https://st.example.test',
+    fetchImpl,
+  });
+  const result = await client.deleteChat({
+    avatarUrl: 'Darya.png',
+    fileName: 'Probe Chat',
+  });
+
+  assert.equal(deleteCalls, 1);
+  assert.deepEqual(result, {
+    ok: true,
+    deleted: true,
+    avatarUrl: 'Darya.png',
+    fileName: 'Probe Chat',
+  });
+
+  const absentClient = new SillyTavernClient({
+    baseUrl: 'https://st.example.test',
+    fetchImpl: async (url) => {
+      const path = new URL(String(url)).pathname;
+      if (path === '/csrf-token') return makeJsonResponse({ token: 'csrf-chat-delete-absent' });
+      if (path === '/api/chats/recent') return makeJsonResponse([]);
+      throw new Error('unexpected URL: ' + url);
+    },
+  });
+  const absent = await absentClient.deleteChat({
+    avatarUrl: 'Darya.png',
+    fileName: 'Probe Chat',
+  });
+  assert.equal(absent.deleted, false);
+  assert.equal(absent.deduplicated, true);
+  assert.equal(absent.alreadyAbsent, true);
+});
+
