@@ -348,6 +348,30 @@ export function isDaryaImportAuthorized(suppliedToken, expectedToken) {
   return timingSafeEqual(a, b);
 }
 
+function characterCardSemanticCore(card) {
+  const data =
+    card?.data && typeof card.data === 'object' && !Array.isArray(card.data)
+      ? card.data
+      : {};
+  return {
+    spec: card?.spec ?? '',
+    spec_version: card?.spec_version ?? '',
+    data,
+  };
+}
+
+function sameCharacterCardData(left, right) {
+  return (
+    semanticSha256(characterCardSemanticCore(left)) ===
+    semanticSha256(characterCardSemanticCore(right))
+  );
+}
+
+function isCharacterGetNotFound(error) {
+  const message = error instanceof Error ? error.message : String(error);
+  return message.includes('/api/characters/get') && message.includes('HTTP 404');
+}
+
 export class SillyTavernClient {
   constructor({
     baseUrl,
@@ -837,6 +861,33 @@ export class SillyTavernClient {
     const name = String(data.name || card.name || '').trim();
     if (!name) throw new Error('Character card name is required.');
 
+    const normalizedFileName = String(fileName || '')
+      .trim()
+      .replace(/\.png$/i, '');
+    if (normalizedFileName) {
+      const candidateAvatarUrl = `${normalizedFileName}.png`;
+      let existing = null;
+      try {
+        existing = await this.getCharacter(candidateAvatarUrl);
+      } catch (error) {
+        if (!isCharacterGetNotFound(error)) throw error;
+      }
+
+      if (existing) {
+        if (sameCharacterCardData(existing, card)) {
+          return {
+            ok: true,
+            avatarUrl: candidateAvatarUrl,
+            characterName: name,
+            deduplicated: true,
+          };
+        }
+        throw new Error(
+          `Character file ${candidateAvatarUrl} already exists with different data. Use character_update.`,
+        );
+      }
+    }
+
     const depthPrompt =
       extensions?.depth_prompt &&
       typeof extensions.depth_prompt === 'object' &&
@@ -874,7 +925,6 @@ export class SillyTavernClient {
       json_data: JSON.stringify(card),
     };
 
-    const normalizedFileName = String(fileName || '').trim();
     if (normalizedFileName) payload.file_name = normalizedFileName;
 
     const avatarUrl = String(
@@ -911,6 +961,15 @@ export class SillyTavernClient {
         : {};
     const name = String(data.name || card.name || '').trim();
     if (!name) throw new Error('Character card name is required.');
+
+    if (sameCharacterCardData(existing, card)) {
+      return {
+        ok: true,
+        avatarUrl: normalizedAvatarUrl,
+        characterName: name,
+        deduplicated: true,
+      };
+    }
 
     const depthPrompt =
       extensions?.depth_prompt &&
@@ -967,10 +1026,51 @@ export class SillyTavernClient {
       throw new Error('deleteChats must be a boolean.');
     }
 
-    await this.post('/api/characters/delete', {
-      avatar_url: normalizedAvatarUrl,
-      delete_chats: deleteChats,
-    });
+    try {
+      await this.getCharacter(normalizedAvatarUrl);
+    } catch (error) {
+      if (isCharacterGetNotFound(error)) {
+        return {
+          ok: true,
+          deleted: false,
+          deduplicated: true,
+          alreadyAbsent: true,
+          avatarUrl: normalizedAvatarUrl,
+          deleteChats,
+        };
+      }
+      throw error;
+    }
+
+    try {
+      await this.post('/api/characters/delete', {
+        avatar_url: normalizedAvatarUrl,
+        delete_chats: deleteChats,
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      if (
+        message.includes('/api/characters/delete') &&
+        message.includes('HTTP 400')
+      ) {
+        try {
+          await this.getCharacter(normalizedAvatarUrl);
+        } catch (verifyError) {
+          if (isCharacterGetNotFound(verifyError)) {
+            return {
+              ok: true,
+              deleted: false,
+              deduplicated: true,
+              alreadyAbsent: true,
+              avatarUrl: normalizedAvatarUrl,
+              deleteChats,
+            };
+          }
+          throw verifyError;
+        }
+      }
+      throw error;
+    }
 
     return {
       ok: true,
