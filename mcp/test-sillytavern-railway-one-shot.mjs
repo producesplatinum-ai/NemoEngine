@@ -936,3 +936,69 @@ test('world_info_save/delete reject invalid payloads', () => {
   );
 });
 
+test('character_world_bind/unbind validate identifiers and route exactly once', async () => {
+  const bind = parseOneShotCommand(JSON.stringify({
+    op: 'character_world_bind',
+    nonce: 'world-bind-1',
+    avatarUrl: 'Darya.png',
+    name: 'Darya Lore',
+  }));
+  assert.equal(bind.avatarUrl, 'Darya.png');
+  assert.equal(bind.name, 'Darya Lore');
+
+  const calls = [];
+  const fetchImpl = async (url, init = {}) => {
+    calls.push({ url: String(url), init });
+    return new Response(JSON.stringify({ ok: true }), {
+      status: 200,
+      headers: { 'content-type': 'application/json' },
+    });
+  };
+
+  await executeOneShot({
+    command: bind,
+    publicDomain: 'example.up.railway.app',
+    mcpPath: '/secret/mcp',
+    fetchImpl,
+  });
+
+  const unbind = parseOneShotCommand(JSON.stringify({
+    op: 'character_world_unbind',
+    nonce: 'world-unbind-1',
+    avatarUrl: 'Darya.png',
+  }));
+  await executeOneShot({
+    command: unbind,
+    publicDomain: 'example.up.railway.app',
+    mcpPath: '/secret/mcp',
+    fetchImpl,
+  });
+
+  assert.equal(calls.length, 2);
+  assert.equal(calls[0].url, 'https://example.up.railway.app/secret/mobile/character-world-bind');
+  assert.deepEqual(JSON.parse(calls[0].init.body), {
+    avatarUrl: 'Darya.png',
+    name: 'Darya Lore',
+  });
+  assert.equal(calls[1].url, 'https://example.up.railway.app/secret/mobile/character-world-unbind');
+  assert.deepEqual(JSON.parse(calls[1].init.body), {
+    avatarUrl: 'Darya.png',
+  });
+});
+
+test('character_world_bind/unbind reject missing required identifiers', () => {
+  assert.throws(
+    () => parseOneShotCommand(JSON.stringify({
+      op: 'character_world_bind',
+      avatarUrl: 'Darya.png',
+    })),
+    /name is required/,
+  );
+  assert.throws(
+    () => parseOneShotCommand(JSON.stringify({
+      op: 'character_world_unbind',
+    })),
+    /avatarUrl is required/,
+  );
+});
+
