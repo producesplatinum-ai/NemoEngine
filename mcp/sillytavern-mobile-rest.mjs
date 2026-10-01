@@ -39,6 +39,9 @@ export function classifyMobileRestRequest(requestTarget, basePath) {
   if (pathname === `${normalizedBase}/character-delete`) return { kind: 'character_delete' };
   if (pathname === `${normalizedBase}/character-duplicate`) return { kind: 'character_duplicate' };
   if (pathname === `${normalizedBase}/character-rename`) return { kind: 'character_rename' };
+  if (pathname === `${normalizedBase}/character-export-json`) {
+    return { kind: 'character_export_json', avatarUrl: one(url.searchParams, 'avatarUrl') };
+  }
   if (pathname === `${normalizedBase}/character`) {
     return { kind: 'character', avatarUrl: one(url.searchParams, 'avatarUrl') };
   }
@@ -120,6 +123,9 @@ export async function executeMobileRestRoute(route, client, body = {}) {
     case 'character':
       if (!route.avatarUrl) throw new Error('avatarUrl is required.');
       return client.getCharacter(route.avatarUrl);
+    case 'character_export_json':
+      if (!route.avatarUrl) throw new Error('avatarUrl is required.');
+      return client.exportCharacterJson(route.avatarUrl);
     case 'character_create': {
       const cardJson =
         typeof body?.cardJson === 'string' ? body.cardJson.trim() : '';
