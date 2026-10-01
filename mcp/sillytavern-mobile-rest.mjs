@@ -35,6 +35,8 @@ export function classifyMobileRestRequest(requestTarget, basePath) {
   if (pathname === `${normalizedBase}/preset-save`) return { kind: 'preset_save' };
   if (pathname === `${normalizedBase}/preset-delete`) return { kind: 'preset_delete' };
   if (pathname === `${normalizedBase}/character-create`) return { kind: 'character_create' };
+  if (pathname === `${normalizedBase}/character-update`) return { kind: 'character_update' };
+  if (pathname === `${normalizedBase}/character-delete`) return { kind: 'character_delete' };
   if (pathname === `${normalizedBase}/character`) {
     return { kind: 'character', avatarUrl: one(url.searchParams, 'avatarUrl') };
   }
@@ -134,6 +136,38 @@ export async function executeMobileRestRoute(route, client, body = {}) {
       }
 
       return client.createCharacter({ card, fileName });
+    }
+    case 'character_update': {
+      const avatarUrl =
+        typeof body?.avatarUrl === 'string' ? body.avatarUrl.trim() : '';
+      const cardJson =
+        typeof body?.cardJson === 'string' ? body.cardJson.trim() : '';
+      if (!avatarUrl) throw new Error('avatarUrl is required.');
+      if (!cardJson) throw new Error('cardJson is required.');
+
+      let card;
+      try {
+        card = JSON.parse(cardJson);
+      } catch {
+        throw new Error('cardJson must be valid JSON.');
+      }
+      if (!card || typeof card !== 'object' || Array.isArray(card)) {
+        throw new Error('cardJson must be valid JSON.');
+      }
+
+      return client.updateCharacter({ avatarUrl, card });
+    }
+    case 'character_delete': {
+      const avatarUrl =
+        typeof body?.avatarUrl === 'string' ? body.avatarUrl.trim() : '';
+      if (!avatarUrl) throw new Error('avatarUrl is required.');
+      if (body?.deleteChats != null && typeof body.deleteChats !== 'boolean') {
+        throw new Error('deleteChats must be a boolean.');
+      }
+      return client.deleteCharacter({
+        avatarUrl,
+        deleteChats: body?.deleteChats === true,
+      });
     }
     case 'world_info':
       return client.listWorldInfo();
