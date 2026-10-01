@@ -1106,43 +1106,55 @@ export class SillyTavernClient {
       delete next[key];
     }
 
-    const data =
-      next?.data && typeof next.data === 'object' && !Array.isArray(next.data)
-        ? next.data
-        : null;
-    let currentWorld = '';
-    if (data) {
-      if (
-        !data.extensions ||
-        typeof data.extensions !== 'object' ||
-        Array.isArray(data.extensions)
-      ) {
-        data.extensions = {};
-      }
-      currentWorld = String(data.extensions.world ?? '').trim();
-      if (currentWorld === worldName) {
-        return {
-          ok: true,
-          avatarUrl: normalizedAvatarUrl,
-          characterName: String(data.name || next.name || '').trim(),
-          world: worldName,
-          deduplicated: true,
-        };
-      }
-      data.extensions.world = worldName;
-    } else {
-      currentWorld = String(next.world ?? '').trim();
-      if (currentWorld === worldName) {
-        return {
-          ok: true,
-          avatarUrl: normalizedAvatarUrl,
-          characterName: String(next.name || '').trim(),
-          world: worldName,
-          deduplicated: true,
-        };
-      }
-      next.world = worldName;
+    if (
+      !next?.data ||
+      typeof next.data !== 'object' ||
+      Array.isArray(next.data)
+    ) {
+      throw new Error('Character card data is unavailable.');
     }
+    if (
+      !next.data.extensions ||
+      typeof next.data.extensions !== 'object' ||
+      Array.isArray(next.data.extensions)
+    ) {
+      next.data.extensions = {};
+    }
+
+    const data = next.data;
+    const extensions = data.extensions;
+    const currentWorld = String(extensions.world ?? '').trim();
+    if (currentWorld === worldName) {
+      return {
+        ok: true,
+        avatarUrl: normalizedAvatarUrl,
+        characterName: String(data.name || next.name || '').trim(),
+        world: worldName,
+        deduplicated: true,
+      };
+    }
+    if (currentWorld) {
+      throw new Error(
+        `Character is already bound to ${currentWorld}. Unbind first.`,
+      );
+    }
+
+    const bindingKey = 'sillytavern_mobile_world_binding';
+    if (
+      !extensions[bindingKey] ||
+      typeof extensions[bindingKey] !== 'object' ||
+      Array.isArray(extensions[bindingKey])
+    ) {
+      extensions[bindingKey] = {
+        managed: true,
+        previousCharacterBook:
+          Object.prototype.hasOwnProperty.call(data, 'character_book')
+            ? JSON.parse(JSON.stringify(data.character_book))
+            : null,
+      };
+    }
+
+    extensions.world = worldName;
 
     const updated = await this.updateCharacter({
       avatarUrl: normalizedAvatarUrl,
@@ -1172,42 +1184,60 @@ export class SillyTavernClient {
       delete next[key];
     }
 
-    const data =
-      next?.data && typeof next.data === 'object' && !Array.isArray(next.data)
-        ? next.data
+    if (
+      !next?.data ||
+      typeof next.data !== 'object' ||
+      Array.isArray(next.data)
+    ) {
+      throw new Error('Character card data is unavailable.');
+    }
+    if (
+      !next.data.extensions ||
+      typeof next.data.extensions !== 'object' ||
+      Array.isArray(next.data.extensions)
+    ) {
+      next.data.extensions = {};
+    }
+
+    const data = next.data;
+    const extensions = data.extensions;
+    const currentWorld = String(extensions.world ?? '').trim();
+    const bindingKey = 'sillytavern_mobile_world_binding';
+    const binding =
+      extensions[bindingKey] &&
+      typeof extensions[bindingKey] === 'object' &&
+      !Array.isArray(extensions[bindingKey])
+        ? extensions[bindingKey]
         : null;
-    let currentWorld = '';
-    if (data) {
-      if (
-        !data.extensions ||
-        typeof data.extensions !== 'object' ||
-        Array.isArray(data.extensions)
-      ) {
-        data.extensions = {};
+
+    if (!currentWorld && !binding) {
+      return {
+        ok: true,
+        avatarUrl: normalizedAvatarUrl,
+        characterName: String(data.name || next.name || '').trim(),
+        world: '',
+        deduplicated: true,
+      };
+    }
+
+    extensions.world = '';
+
+    if (binding?.managed === true) {
+      if (binding.previousCharacterBook == null) {
+        delete data.character_book;
+      } else {
+        data.character_book = JSON.parse(
+          JSON.stringify(binding.previousCharacterBook),
+        );
       }
-      currentWorld = String(data.extensions.world ?? '').trim();
-      if (!currentWorld) {
-        return {
-          ok: true,
-          avatarUrl: normalizedAvatarUrl,
-          characterName: String(data.name || next.name || '').trim(),
-          world: '',
-          deduplicated: true,
-        };
-      }
-      data.extensions.world = '';
-    } else {
-      currentWorld = String(next.world ?? '').trim();
-      if (!currentWorld) {
-        return {
-          ok: true,
-          avatarUrl: normalizedAvatarUrl,
-          characterName: String(next.name || '').trim(),
-          world: '',
-          deduplicated: true,
-        };
-      }
-      next.world = '';
+      delete extensions[bindingKey];
+    } else if (
+      currentWorld &&
+      data.character_book &&
+      typeof data.character_book === 'object' &&
+      String(data.character_book.name || '').trim() === currentWorld
+    ) {
+      delete data.character_book;
     }
 
     const updated = await this.updateCharacter({
