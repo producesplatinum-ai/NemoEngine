@@ -950,6 +950,18 @@ export class SillyTavernClient {
     };
   }
 
+  async importCharacterJson({ card, fileName = '' }) {
+    if (!card || typeof card !== 'object' || Array.isArray(card)) {
+      throw new Error('Character card must be an object.');
+    }
+
+    const created = await this.createCharacter({ card, fileName });
+    return {
+      ...created,
+      imported: true,
+    };
+  }
+
   async updateCharacter({ avatarUrl, card }) {
     const normalizedAvatarUrl = String(avatarUrl || '').trim();
     if (!normalizedAvatarUrl) throw new Error('avatarUrl is required.');
