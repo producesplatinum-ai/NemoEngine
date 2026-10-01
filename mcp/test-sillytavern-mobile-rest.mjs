@@ -532,3 +532,95 @@ test('preset delete rejects missing name', async () => {
     /name is required/,
   );
 });
+
+test('classifies character update/delete routes and dispatches validated payloads', async () => {
+  const basePath = '/st-secret/mobile';
+  assert.deepEqual(
+    classifyMobileRestRequest('/st-secret/mobile/character-update', basePath),
+    { kind: 'character_update' },
+  );
+  assert.deepEqual(
+    classifyMobileRestRequest('/st-secret/mobile/character-delete', basePath),
+    { kind: 'character_delete' },
+  );
+
+  const calls = [];
+  const client = {
+    async updateCharacter(input) {
+      calls.push({ op: 'update', input });
+      return { ok: true, avatarUrl: input.avatarUrl, characterName: input.card.data.name };
+    },
+    async deleteCharacter(input) {
+      calls.push({ op: 'delete', input });
+      return { ok: true, deleted: true, ...input };
+    },
+  };
+  const card = {
+    spec: 'chara_card_v3',
+    spec_version: '3.0',
+    data: { name: 'Mobile CRUD Probe', description: 'updated' },
+  };
+
+  const update = await executeMobileRestRoute(
+    { kind: 'character_update' },
+    client,
+    {
+      avatarUrl: 'Mobile CRUD Probe.png',
+      cardJson: JSON.stringify(card),
+    },
+  );
+  assert.equal(update.ok, true);
+
+  const deleted = await executeMobileRestRoute(
+    { kind: 'character_delete' },
+    client,
+    {
+      avatarUrl: 'Mobile CRUD Probe.png',
+      deleteChats: false,
+    },
+  );
+  assert.equal(deleted.deleted, true);
+  assert.deepEqual(calls, [
+    {
+      op: 'update',
+      input: { avatarUrl: 'Mobile CRUD Probe.png', card },
+    },
+    {
+      op: 'delete',
+      input: { avatarUrl: 'Mobile CRUD Probe.png', deleteChats: false },
+    },
+  ]);
+});
+
+test('character update/delete reject invalid payloads', async () => {
+  const client = {
+    updateCharacter() { throw new Error('should not be called'); },
+    deleteCharacter() { throw new Error('should not be called'); },
+  };
+
+  await assert.rejects(
+    () => executeMobileRestRoute(
+      { kind: 'character_update' },
+      client,
+      { avatarUrl: 'Darya.png', cardJson: '{bad}' },
+    ),
+    /cardJson must be valid JSON/,
+  );
+  await assert.rejects(
+    () => executeMobileRestRoute(
+      { kind: 'character_delete' },
+      client,
+      { avatarUrl: '' },
+    ),
+    /avatarUrl is required/,
+  );
+  await assert.rejects(
+    () => executeMobileRestRoute(
+      { kind: 'character_delete' },
+      client,
+      { avatarUrl: 'Darya.png', deleteChats: 'yes' },
+    ),
+    /deleteChats must be a boolean/,
+  );
+});
+
