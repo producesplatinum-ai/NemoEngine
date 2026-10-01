@@ -1982,5 +1982,56 @@ test('character rename is idempotent when source is absent and exactly one targe
   });
 });
 
+test('client exports a character as native JSON and returns parsed card data', async () => {
+  let exportBody = null;
+  const exported = {
+    spec: 'chara_card_v3',
+    spec_version: '3.0',
+    data: {
+      name: 'Darya',
+      description: 'exported description',
+      extensions: { custom_marker: 'preserved' },
+      character_book: {
+        name: 'Darya Book',
+        entries: [{ id: 1, keys: ['k'], content: 'c' }],
+      },
+    },
+  };
 
+  const fetchImpl = async (url, options = {}) => {
+    const path = new URL(String(url)).pathname;
+    if (path === '/csrf-token') return makeJsonResponse({ token: 'csrf-export-json' });
+    if (path === '/api/characters/export') {
+      exportBody = JSON.parse(options.body);
+      return makeJsonResponse(exported);
+    }
+    throw new Error('unexpected URL: ' + url);
+  };
+
+  const client = new SillyTavernClient({
+    baseUrl: 'https://st.example.test',
+    fetchImpl,
+  });
+  const result = await client.exportCharacterJson('Darya.png');
+
+  assert.deepEqual(exportBody, {
+    format: 'json',
+    avatar_url: 'Darya.png',
+  });
+  assert.deepEqual(result, exported);
+});
+
+test('client character JSON export rejects a missing avatarUrl before network use', async () => {
+  const client = new SillyTavernClient({
+    baseUrl: 'https://st.example.test',
+    fetchImpl: async () => {
+      throw new Error('should not be called');
+    },
+  });
+
+  await assert.rejects(
+    () => client.exportCharacterJson(''),
+    /avatarUrl is required/,
+  );
+});
 
