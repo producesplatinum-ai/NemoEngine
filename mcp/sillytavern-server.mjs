@@ -1331,7 +1331,7 @@ export class SillyTavernClient {
     const json = JSON.stringify(data, null, 4);
     const form = new FormData();
     form.append(
-      'file',
+      'avatar',
       new Blob([json], { type: 'application/json' }),
       `${target}.json`,
     );
