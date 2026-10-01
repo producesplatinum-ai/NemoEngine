@@ -1739,3 +1739,134 @@ test('character duplicate is idempotent through deterministic create semantics',
   assert.equal(result.sourceAvatarUrl, 'Darya.png');
 });
 
+test('client renames a character through native rename and verifies the new card', async () => {
+  const calls = [];
+  const fetchImpl = async (url, options = {}) => {
+    const path = new URL(String(url)).pathname;
+    if (path === '/csrf-token') return makeJsonResponse({ token: 'csrf-rename' });
+    if (path === '/api/characters/get') {
+      const body = JSON.parse(options.body);
+      if (body.avatar_url === 'Old Name.png') {
+        return makeJsonResponse({
+          spec: 'chara_card_v3',
+          spec_version: '3.0',
+          data: { name: 'Old Name', description: 'keep me' },
+          avatar: 'Old Name.png',
+          chat: 'Old Name - chat',
+        });
+      }
+      if (body.avatar_url === 'New Name.png') {
+        return makeJsonResponse({
+          spec: 'chara_card_v3',
+          spec_version: '3.0',
+          data: { name: 'New Name', description: 'keep me' },
+          avatar: 'New Name.png',
+          chat: 'Old Name - chat',
+        });
+      }
+    }
+    if (path === '/api/characters/rename') {
+      calls.push(JSON.parse(options.body));
+      return makeJsonResponse({ avatar: 'New Name.png' });
+    }
+    throw new Error('unexpected URL: ' + url);
+  };
+
+  const client = new SillyTavernClient({
+    baseUrl: 'https://st.example.test',
+    fetchImpl,
+  });
+  const result = await client.renameCharacter({
+    avatarUrl: 'Old Name.png',
+    newName: 'New Name',
+  });
+
+  assert.deepEqual(calls, [{ avatar_url: 'Old Name.png', new_name: 'New Name' }]);
+  assert.deepEqual(result, {
+    ok: true,
+    renamed: true,
+    oldAvatarUrl: 'Old Name.png',
+    avatarUrl: 'New Name.png',
+    characterName: 'New Name',
+  });
+});
+
+test('character rename deduplicates after a concurrent rename already reached the target state', async () => {
+  let renameCalls = 0;
+  const fetchImpl = async (url, options = {}) => {
+    const path = new URL(String(url)).pathname;
+    if (path === '/csrf-token') return makeJsonResponse({ token: 'csrf-rename-dedupe' });
+    if (path === '/api/characters/get') {
+      const body = JSON.parse(options.body);
+      if (body.avatar_url === 'Old Name.png') {
+        return makeJsonResponse({ error: 'not found' }, { status: 404 });
+      }
+    }
+    if (path === '/api/characters/all') {
+      return makeJsonResponse([
+        {
+          spec: 'chara_card_v3',
+          spec_version: '3.0',
+          data: { name: 'New Name', description: 'same' },
+          avatar: 'New Name.png',
+          name: 'New Name',
+        },
+      ]);
+    }
+    if (path === '/api/characters/rename') {
+      renameCalls += 1;
+      return makeJsonResponse({ avatar: 'New Name.png' });
+    }
+    throw new Error('unexpected URL: ' + url);
+  };
+
+  const client = new SillyTavernClient({
+    baseUrl: 'https://st.example.test',
+    fetchImpl,
+  });
+  const result = await client.renameCharacter({
+    avatarUrl: 'Old Name.png',
+    newName: 'New Name',
+  });
+
+  assert.equal(renameCalls, 0);
+  assert.deepEqual(result, {
+    ok: true,
+    renamed: false,
+    deduplicated: true,
+    alreadyRenamed: true,
+    oldAvatarUrl: 'Old Name.png',
+    avatarUrl: 'New Name.png',
+    characterName: 'New Name',
+  });
+});
+
+test('character rename refuses ambiguous already-renamed matches', async () => {
+  const fetchImpl = async (url, options = {}) => {
+    const path = new URL(String(url)).pathname;
+    if (path === '/csrf-token') return makeJsonResponse({ token: 'csrf-rename-ambiguous' });
+    if (path === '/api/characters/get') {
+      return makeJsonResponse({ error: 'not found' }, { status: 404 });
+    }
+    if (path === '/api/characters/all') {
+      return makeJsonResponse([
+        { data: { name: 'New Name' }, avatar: 'New Name.png', name: 'New Name' },
+        { data: { name: 'New Name' }, avatar: 'New Name_1.png', name: 'New Name' },
+      ]);
+    }
+    throw new Error('unexpected URL: ' + url);
+  };
+
+  const client = new SillyTavernClient({
+    baseUrl: 'https://st.example.test',
+    fetchImpl,
+  });
+  await assert.rejects(
+    () => client.renameCharacter({
+      avatarUrl: 'Old Name.png',
+      newName: 'New Name',
+    }),
+    /ambiguous/i,
+  );
+});
+
