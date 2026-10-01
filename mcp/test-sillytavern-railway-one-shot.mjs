@@ -624,3 +624,48 @@ test('character_rename rejects missing identifiers', () => {
   );
 });
 
+test('character_export_json validates avatarUrl and performs exactly one GET', async () => {
+  const parsed = parseOneShotCommand(JSON.stringify({
+    op: 'character_export_json',
+    nonce: 'export-json-1',
+    avatarUrl: 'Darya.png',
+  }));
+  assert.equal(parsed.op, 'character_export_json');
+  assert.equal(parsed.avatarUrl, 'Darya.png');
+
+  const calls = [];
+  const fetchImpl = async (url, init = {}) => {
+    calls.push({ url: String(url), init });
+    return new Response(JSON.stringify({
+      spec: 'chara_card_v3',
+      spec_version: '3.0',
+      data: { name: 'Darya' },
+    }), {
+      status: 200,
+      headers: { 'content-type': 'application/json' },
+    });
+  };
+
+  const result = await executeOneShot({
+    command: parsed,
+    publicDomain: 'example.up.railway.app',
+    mcpPath: '/secret/mcp',
+    fetchImpl,
+  });
+
+  assert.equal(calls.length, 1);
+  assert.equal(
+    calls[0].url,
+    'https://example.up.railway.app/secret/mobile/character-export-json?avatarUrl=Darya.png',
+  );
+  assert.equal(calls[0].init.method, 'GET');
+  assert.equal(result.data.name, 'Darya');
+});
+
+test('character_export_json rejects missing avatarUrl', () => {
+  assert.throws(
+    () => parseOneShotCommand(JSON.stringify({ op: 'character_export_json' })),
+    /avatarUrl is required/,
+  );
+});
+
