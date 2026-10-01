@@ -1434,3 +1434,154 @@ test('client deletes a character through native delete without chats by default'
   });
 });
 
+test('character create deduplicates an identical deterministic file instead of writing twice', async () => {
+  let createCalls = 0;
+  const card = {
+    spec: 'chara_card_v3',
+    spec_version: '3.0',
+    data: {
+      name: 'Deterministic Probe',
+      description: 'same card',
+      extensions: { talkativeness: 0.5 },
+    },
+  };
+  const fetchImpl = async (url, options = {}) => {
+    const path = new URL(String(url)).pathname;
+    if (path === '/csrf-token') return makeJsonResponse({ token: 'csrf-create-dedupe' });
+    if (path === '/api/characters/get') {
+      return makeJsonResponse({
+        ...card,
+        avatar: 'Deterministic Probe.png',
+        chat: 'existing-chat',
+        create_date: '2026-10-01T12:00:00.000Z',
+      });
+    }
+    if (path === '/api/characters/create') {
+      createCalls += 1;
+      return makeJsonResponse('Deterministic Probe.png');
+    }
+    throw new Error('unexpected URL: ' + url);
+  };
+
+  const client = new SillyTavernClient({
+    baseUrl: 'https://st.example.test',
+    fetchImpl,
+  });
+  const result = await client.createCharacter({
+    card,
+    fileName: 'Deterministic Probe',
+  });
+
+  assert.equal(createCalls, 0);
+  assert.deepEqual(result, {
+    ok: true,
+    avatarUrl: 'Deterministic Probe.png',
+    characterName: 'Deterministic Probe',
+    deduplicated: true,
+  });
+});
+
+test('character create refuses to overwrite a deterministic file with different card data', async () => {
+  const requested = {
+    spec: 'chara_card_v3',
+    spec_version: '3.0',
+    data: { name: 'Deterministic Probe', description: 'new data' },
+  };
+  const existing = {
+    spec: 'chara_card_v3',
+    spec_version: '3.0',
+    data: { name: 'Deterministic Probe', description: 'existing data' },
+  };
+  const fetchImpl = async (url) => {
+    const path = new URL(String(url)).pathname;
+    if (path === '/csrf-token') return makeJsonResponse({ token: 'csrf-create-conflict' });
+    if (path === '/api/characters/get') return makeJsonResponse(existing);
+    throw new Error('unexpected URL: ' + url);
+  };
+
+  const client = new SillyTavernClient({
+    baseUrl: 'https://st.example.test',
+    fetchImpl,
+  });
+
+  await assert.rejects(
+    () => client.createCharacter({ card: requested, fileName: 'Deterministic Probe' }),
+    /already exists with different data.*character_update/i,
+  );
+});
+
+test('character update deduplicates when requested card data is already stored', async () => {
+  let editCalls = 0;
+  const card = {
+    spec: 'chara_card_v3',
+    spec_version: '3.0',
+    data: {
+      name: 'Update Probe',
+      description: 'already current',
+      extensions: { crud_probe: 'same' },
+    },
+  };
+  const fetchImpl = async (url) => {
+    const path = new URL(String(url)).pathname;
+    if (path === '/csrf-token') return makeJsonResponse({ token: 'csrf-update-dedupe' });
+    if (path === '/api/characters/get') return makeJsonResponse({
+      ...card,
+      avatar: 'Update Probe.png',
+      chat: 'existing-chat',
+      create_date: '2026-10-01T12:00:00.000Z',
+    });
+    if (path === '/api/characters/edit') {
+      editCalls += 1;
+      return new Response('', { status: 200 });
+    }
+    throw new Error('unexpected URL: ' + url);
+  };
+
+  const client = new SillyTavernClient({
+    baseUrl: 'https://st.example.test',
+    fetchImpl,
+  });
+  const result = await client.updateCharacter({
+    avatarUrl: 'Update Probe.png',
+    card,
+  });
+
+  assert.equal(editCalls, 0);
+  assert.equal(result.deduplicated, true);
+});
+
+test('character delete treats an already absent target as a successful final state', async () => {
+  let deleteCalls = 0;
+  const fetchImpl = async (url) => {
+    const path = new URL(String(url)).pathname;
+    if (path === '/csrf-token') return makeJsonResponse({ token: 'csrf-delete-absent' });
+    if (path === '/api/characters/get') {
+      return makeJsonResponse({ error: 'missing' }, { status: 404 });
+    }
+    if (path === '/api/characters/delete') {
+      deleteCalls += 1;
+      return new Response('', { status: 200 });
+    }
+    throw new Error('unexpected URL: ' + url);
+  };
+
+  const client = new SillyTavernClient({
+    baseUrl: 'https://st.example.test',
+    fetchImpl,
+  });
+  const result = await client.deleteCharacter({
+    avatarUrl: 'Already Gone.png',
+    deleteChats: false,
+  });
+
+  assert.equal(deleteCalls, 0);
+  assert.deepEqual(result, {
+    ok: true,
+    deleted: false,
+    deduplicated: true,
+    alreadyAbsent: true,
+    avatarUrl: 'Already Gone.png',
+    deleteChats: false,
+  });
+});
+
