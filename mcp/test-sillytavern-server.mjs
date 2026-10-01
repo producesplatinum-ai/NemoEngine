@@ -2146,8 +2146,9 @@ test('character JSON import inherits create idempotency', async () => {
 });
 
 test('client creates a lorebook without overwriting an existing different book', async () => {
-  const edits = [];
+  const imports = [];
   let listMode = 'absent';
+  let stored = null;
   const fetchImpl = async (url, options = {}) => {
     const path = new URL(String(url)).pathname;
     if (path === '/csrf-token') return makeJsonResponse({ token: 'csrf-wi-create' });
@@ -2155,12 +2156,15 @@ test('client creates a lorebook without overwriting an existing different book',
       return makeJsonResponse(listMode === 'absent' ? [] : [{ name: 'Probe World', file_id: 'Probe World' }]);
     }
     if (path === '/api/worldinfo/get') {
-      return makeJsonResponse({ entries: { 0: { uid: 0, content: 'existing' } } });
+      return makeJsonResponse(stored || { entries: { 0: { uid: 0, content: 'existing' } } });
     }
-    if (path === '/api/worldinfo/edit') {
-      edits.push(JSON.parse(options.body));
+    if (path === '/api/worldinfo/import') {
+      assert(options.body instanceof FormData);
+      const convertedData = String(options.body.get('convertedData') || '');
+      imports.push(JSON.parse(convertedData));
+      stored = JSON.parse(convertedData);
       listMode = 'present';
-      return makeJsonResponse({ ok: true });
+      return makeJsonResponse({ name: 'Probe World' });
     }
     throw new Error('unexpected URL: ' + url);
   };
@@ -2171,8 +2175,9 @@ test('client creates a lorebook without overwriting an existing different book',
     data: { entries: {} },
   });
   assert.equal(created.created, true);
-  assert.deepEqual(edits, [{ name: 'Probe World', data: { entries: {} } }]);
+  assert.deepEqual(imports, [{ entries: {} }]);
 
+  stored = { entries: { 0: { uid: 0, content: 'existing' } } };
   await assert.rejects(
     () => client.createWorldInfo({
       name: 'Probe World',
