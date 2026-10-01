@@ -958,6 +958,9 @@ test('client creates a character card through the current SillyTavern create end
   const fetchImpl = async (url, options = {}) => {
     const path = new URL(String(url)).pathname;
     if (path === '/csrf-token') return makeJsonResponse({ token: 'csrf-create-character' });
+    if (path === '/api/characters/get') {
+      return makeJsonResponse({ error: 'not found' }, { status: 404 });
+    }
     if (path === '/api/characters/create') {
       createBody = JSON.parse(options.body);
       return makeJsonResponse('Darya.png');
@@ -1406,6 +1409,14 @@ test('client deletes a character through native delete without chats by default'
   const fetchImpl = async (url, options = {}) => {
     const path = new URL(String(url)).pathname;
     if (path === '/csrf-token') return makeJsonResponse({ token: 'csrf-delete-character' });
+    if (path === '/api/characters/get') {
+      return makeJsonResponse({
+        spec: 'chara_card_v3',
+        spec_version: '3.0',
+        data: { name: 'Mobile CRUD Probe' },
+        avatar: 'Mobile CRUD Probe.png',
+      });
+    }
     if (path === '/api/characters/delete') {
       deleteBody = JSON.parse(options.body);
       return new Response('', { status: 200 });
