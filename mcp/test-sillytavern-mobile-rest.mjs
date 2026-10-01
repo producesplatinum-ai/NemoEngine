@@ -1079,3 +1079,63 @@ test('world info save rejects invalid world JSON before mutation', async () => {
   );
 });
 
+test('classifies character world bind/unbind as POST-only write routes', async () => {
+  const basePath = '/st-secret/mobile';
+  const bindRoute = classifyMobileRestRequest('/st-secret/mobile/character-world-bind', basePath);
+  const unbindRoute = classifyMobileRestRequest('/st-secret/mobile/character-world-unbind', basePath);
+  assert.deepEqual(bindRoute, { kind: 'character_world_bind' });
+  assert.deepEqual(unbindRoute, { kind: 'character_world_unbind' });
+  assert.equal(isMobileRestWriteRoute(bindRoute), true);
+  assert.equal(isMobileRestWriteRoute(unbindRoute), true);
+  assert.equal(isMobileRestPostOnlyRoute(bindRoute), true);
+  assert.equal(isMobileRestPostOnlyRoute(unbindRoute), true);
+
+  const calls = [];
+  const client = {
+    async bindCharacterWorld(input) {
+      calls.push({ op: 'bind', input });
+      return { ok: true, ...input };
+    },
+    async unbindCharacterWorld(input) {
+      calls.push({ op: 'unbind', input });
+      return { ok: true, ...input };
+    },
+  };
+
+  await executeMobileRestRoute(bindRoute, client, {
+    avatarUrl: 'Darya.png',
+    name: 'Darya Lore',
+  });
+  await executeMobileRestRoute(unbindRoute, client, {
+    avatarUrl: 'Darya.png',
+  });
+
+  assert.deepEqual(calls, [
+    { op: 'bind', input: { avatarUrl: 'Darya.png', name: 'Darya Lore' } },
+    { op: 'unbind', input: { avatarUrl: 'Darya.png' } },
+  ]);
+});
+
+test('character world bind/unbind validate payloads before client mutation', async () => {
+  const client = {
+    bindCharacterWorld() { throw new Error('should not be called'); },
+    unbindCharacterWorld() { throw new Error('should not be called'); },
+  };
+  await assert.rejects(
+    () => executeMobileRestRoute(
+      { kind: 'character_world_bind' },
+      client,
+      { avatarUrl: 'Darya.png' },
+    ),
+    /name is required/,
+  );
+  await assert.rejects(
+    () => executeMobileRestRoute(
+      { kind: 'character_world_unbind' },
+      client,
+      {},
+    ),
+    /avatarUrl is required/,
+  );
+});
+
