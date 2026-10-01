@@ -1870,3 +1870,133 @@ test('character rename refuses ambiguous already-renamed matches', async () => {
   );
 });
 
+test('client renames a native character and returns the new avatar filename', async () => {
+  const calls = [];
+  const fetchImpl = async (url, options = {}) => {
+    const path = new URL(String(url)).pathname;
+    if (path === '/csrf-token') return makeJsonResponse({ token: 'csrf-rename' });
+    if (path === '/api/characters/get') {
+      calls.push({ path, body: JSON.parse(options.body) });
+      return makeJsonResponse({
+        spec: 'chara_card_v3',
+        spec_version: '3.0',
+        data: { name: 'Old Name' },
+        avatar: 'Old Name.png',
+      });
+    }
+    if (path === '/api/characters/all') {
+      calls.push({ path, body: JSON.parse(options.body) });
+      return makeJsonResponse([
+        {
+          spec: 'chara_card_v3',
+          spec_version: '3.0',
+          data: { name: 'Old Name' },
+          avatar: 'Old Name.png',
+        },
+      ]);
+    }
+    if (path === '/api/characters/rename') {
+      calls.push({ path, body: JSON.parse(options.body) });
+      return makeJsonResponse({ avatar: 'New Name.png' });
+    }
+    throw new Error('unexpected URL: ' + url);
+  };
+
+  const client = new SillyTavernClient({
+    baseUrl: 'https://st.example.test',
+    fetchImpl,
+  });
+  const result = await client.renameCharacter({
+    avatarUrl: 'Old Name.png',
+    newName: 'New Name',
+  });
+
+  assert.deepEqual(result, {
+    ok: true,
+    oldAvatarUrl: 'Old Name.png',
+    avatarUrl: 'New Name.png',
+    characterName: 'New Name',
+  });
+  const rename = calls.find(x => x.path === '/api/characters/rename');
+  assert.deepEqual(rename.body, {
+    avatar_url: 'Old Name.png',
+    new_name: 'New Name',
+  });
+});
+
+test('character rename is idempotent when source is absent and exactly one target already exists', async () => {
+  const fetchImpl = async (url, options = {}) => {
+    const path = new URL(String(url)).pathname;
+    if (path === '/csrf-token') return makeJsonResponse({ token: 'csrf-rename-dedupe' });
+    if (path === '/api/characters/get') {
+      return makeJsonResponse({ error: 'not found' }, { status: 404 });
+    }
+    if (path === '/api/characters/all') {
+      return makeJsonResponse([
+        {
+          spec: 'chara_card_v3',
+          spec_version: '3.0',
+          data: { name: 'New Name' },
+          avatar: 'New Name.png',
+        },
+      ]);
+    }
+    if (path === '/api/characters/rename') {
+      throw new Error('rename should not be called');
+    }
+    throw new Error('unexpected URL: ' + url);
+  };
+
+  const client = new SillyTavernClient({
+    baseUrl: 'https://st.example.test',
+    fetchImpl,
+  });
+  const result = await client.renameCharacter({
+    avatarUrl: 'Old Name.png',
+    newName: 'New Name',
+  });
+
+  assert.deepEqual(result, {
+    ok: true,
+    oldAvatarUrl: 'Old Name.png',
+    avatarUrl: 'New Name.png',
+    characterName: 'New Name',
+    deduplicated: true,
+  });
+});
+
+test('character rename refuses an occupied target name while source still exists', async () => {
+  const fetchImpl = async (url, options = {}) => {
+    const path = new URL(String(url)).pathname;
+    if (path === '/csrf-token') return makeJsonResponse({ token: 'csrf-rename-conflict' });
+    if (path === '/api/characters/get') {
+      return makeJsonResponse({
+        spec: 'chara_card_v3',
+        spec_version: '3.0',
+        data: { name: 'Old Name' },
+        avatar: 'Old Name.png',
+      });
+    }
+    if (path === '/api/characters/all') {
+      return makeJsonResponse([
+        { data: { name: 'Old Name' }, avatar: 'Old Name.png' },
+        { data: { name: 'New Name' }, avatar: 'Existing Target.png' },
+      ]);
+    }
+    throw new Error('unexpected URL: ' + url);
+  };
+
+  const client = new SillyTavernClient({
+    baseUrl: 'https://st.example.test',
+    fetchImpl,
+  });
+
+  await assert.rejects(
+    () => client.renameCharacter({
+      avatarUrl: 'Old Name.png',
+      newName: 'New Name',
+    }),
+    /already exists/i,
+  );
+});
+
