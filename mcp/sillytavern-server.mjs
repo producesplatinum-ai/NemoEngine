@@ -831,6 +831,13 @@ export class SillyTavernClient {
     const name = String(data.name || card.name || '').trim();
     if (!name) throw new Error('Character card name is required.');
 
+    const depthPrompt =
+      extensions?.depth_prompt &&
+      typeof extensions.depth_prompt === 'object' &&
+      !Array.isArray(extensions.depth_prompt)
+        ? extensions.depth_prompt
+        : {};
+
     const payload = {
       ch_name: name,
       description: data.description ?? card.description ?? '',
@@ -850,6 +857,14 @@ export class SillyTavernClient {
         data.alternate_greetings ?? card.alternate_greetings ?? [],
       talkativeness:
         extensions.talkativeness ?? card.talkativeness ?? 0.5,
+      fav: String(Boolean(extensions.fav ?? card.fav ?? false)),
+      world: String(extensions.world ?? card.world ?? ''),
+      depth_prompt_prompt: String(depthPrompt.prompt ?? ''),
+      depth_prompt_depth: Number.isFinite(Number(depthPrompt.depth))
+        ? Number(depthPrompt.depth)
+        : 4,
+      depth_prompt_role: String(depthPrompt.role ?? 'system'),
+      extensions: JSON.stringify(extensions),
       json_data: JSON.stringify(card),
     };
 
