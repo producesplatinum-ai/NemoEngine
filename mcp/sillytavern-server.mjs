@@ -549,6 +549,46 @@ export class SillyTavernClient {
     }
   }
 
+  async postForm(pathname, form) {
+    await this.bootstrapSession();
+
+    if (!(form instanceof FormData)) {
+      throw new Error('FormData body is required.');
+    }
+
+    const headers = {
+      ...this.authHeaders(),
+      accept: 'application/json',
+      'x-csrf-token': this.csrfToken,
+    };
+    if (this.cookie) headers.cookie = this.cookie;
+
+    const response = await this.fetchImpl(`${this.baseUrl}${pathname}`, {
+      method: 'POST',
+      headers,
+      body: form,
+    });
+
+    if (!response.ok) {
+      const bodyText = await response.text();
+      throw new Error(
+        `SillyTavern ${pathname} failed with HTTP ${response.status}: ${safeErrorBody(bodyText)}`,
+      );
+    }
+
+    const contentType = response.headers?.get?.('content-type') || '';
+    if (contentType.includes('application/json')) {
+      return response.json();
+    }
+
+    const text = await response.text();
+    try {
+      return JSON.parse(text);
+    } catch {
+      return text;
+    }
+  }
+
   async importDaryaSourceFile({ relativePath, sha256, body, token }) {
     const normalizedPath = String(relativePath || '').trim();
     const normalizedSha = String(sha256 || '').trim().toLowerCase();
@@ -1288,7 +1328,36 @@ export class SillyTavernClient {
       );
     }
 
-    await this.post('/api/worldinfo/edit', { name: target, data });
+    const json = JSON.stringify(data, null, 4);
+    const form = new FormData();
+    form.append(
+      'file',
+      new Blob([json], { type: 'application/json' }),
+      `${target}.json`,
+    );
+    form.append('convertedData', json);
+
+    const imported = await this.postForm('/api/worldinfo/import', form);
+    const importedName = String(imported?.name || '').trim();
+    if (importedName && importedName !== target) {
+      throw new Error(
+        `World info import returned unexpected name ${importedName}; expected ${target}.`,
+      );
+    }
+
+    if (!(await this.worldInfoExists(target))) {
+      throw new Error(
+        `World info ${target} import returned success but the book did not persist.`,
+      );
+    }
+
+    const stored = await this.getWorldInfo(target);
+    if (semanticSha256(stored) !== semanticSha256(data)) {
+      throw new Error(
+        `World info ${target} persisted with different data after import.`,
+      );
+    }
+
     return { ok: true, name: target, created: true };
   }
 
