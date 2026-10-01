@@ -931,3 +931,90 @@ test('POST-only mobile route classification covers character mutations without H
   assert.equal(isMobileRestPostOnlyRoute({ kind: 'generate' }), false);
 });
 
+test('classifies all lorebook mutation routes as explicit POST routes', () => {
+  const basePath = '/st-secret/mobile';
+  for (const [suffix, kind] of [
+    ['world-info-create', 'world_info_create'],
+    ['world-info-update', 'world_info_update'],
+    ['world-info-delete', 'world_info_delete'],
+    ['world-info-entry-upsert', 'world_info_entry_upsert'],
+    ['world-info-entry-delete', 'world_info_entry_delete'],
+  ]) {
+    const route = classifyMobileRestRequest('/st-secret/mobile/' + suffix, basePath);
+    assert.deepEqual(route, { kind });
+    assert.equal(isMobileRestWriteRoute(route), true);
+    assert.equal(isMobileRestPostOnlyRoute(route), true);
+  }
+});
+
+test('dispatches lorebook create/update/delete and deterministic entry mutations', async () => {
+  const calls = [];
+  const client = {
+    createWorldInfo(input) { calls.push(['create', input]); return { ok: true, created: true }; },
+    updateWorldInfo(input) { calls.push(['update', input]); return { ok: true, updated: true }; },
+    deleteWorldInfo(input) { calls.push(['delete', input]); return { ok: true, deleted: true }; },
+    upsertWorldInfoEntry(input) { calls.push(['upsert', input]); return { ok: true, uid: input.uid }; },
+    deleteWorldInfoEntry(input) { calls.push(['entry-delete', input]); return { ok: true, uid: input.uid }; },
+  };
+  const data = { entries: { 0: { uid: 0, content: 'x' } } };
+
+  await executeMobileRestRoute(
+    { kind: 'world_info_create' },
+    client,
+    { name: 'Probe', worldJson: JSON.stringify({ entries: {} }) },
+  );
+  await executeMobileRestRoute(
+    { kind: 'world_info_update' },
+    client,
+    { name: 'Probe', worldJson: JSON.stringify(data) },
+  );
+  await executeMobileRestRoute(
+    { kind: 'world_info_delete' },
+    client,
+    { name: 'Probe' },
+  );
+  await executeMobileRestRoute(
+    { kind: 'world_info_entry_upsert' },
+    client,
+    { name: 'Probe', uid: 7, entryJson: JSON.stringify({ content: 'entry' }) },
+  );
+  await executeMobileRestRoute(
+    { kind: 'world_info_entry_delete' },
+    client,
+    { name: 'Probe', uid: 7 },
+  );
+
+  assert.deepEqual(calls, [
+    ['create', { name: 'Probe', data: { entries: {} } }],
+    ['update', { name: 'Probe', data }],
+    ['delete', { name: 'Probe' }],
+    ['upsert', { name: 'Probe', uid: 7, entry: { content: 'entry' } }],
+    ['entry-delete', { name: 'Probe', uid: 7 }],
+  ]);
+});
+
+test('lorebook mutation routes reject malformed payloads before client writes', async () => {
+  const client = new Proxy({}, {
+    get() {
+      return () => { throw new Error('should not be called'); };
+    },
+  });
+
+  await assert.rejects(
+    () => executeMobileRestRoute(
+      { kind: 'world_info_update' },
+      client,
+      { name: 'Probe', worldJson: '{bad}' },
+    ),
+    /worldJson must be valid JSON/,
+  );
+  await assert.rejects(
+    () => executeMobileRestRoute(
+      { kind: 'world_info_entry_upsert' },
+      client,
+      { name: 'Probe', uid: -1, entryJson: '{}' },
+    ),
+    /uid must be a non-negative integer/,
+  );
+});
+
