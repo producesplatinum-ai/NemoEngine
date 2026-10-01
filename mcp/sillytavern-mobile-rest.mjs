@@ -49,6 +49,11 @@ const MOBILE_REST_POST_ONLY_ROUTE_KINDS = new Set([
   'character_rename',
   'character_import_json',
   'world_info_create',
+  'world_info_update',
+  'world_info_save',
+  'world_info_delete',
+  'world_info_entry_upsert',
+  'world_info_entry_delete',
 ]);
 
 export function isMobileRestWriteRoute(route) {
