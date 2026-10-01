@@ -1001,3 +1001,135 @@ test('character_world_bind/unbind reject missing required identifiers', () => {
     /avatarUrl is required/,
   );
 });
+
+test('chat_create normalizes filename and performs exactly one POST', async () => {
+  const parsed = parseOneShotCommand(JSON.stringify({
+    op: 'chat_create',
+    nonce: 'chat-create-1',
+    avatarUrl: 'Darya.png',
+    fileName: 'Probe Chat.jsonl',
+  }));
+  assert.equal(parsed.op, 'chat_create');
+  assert.equal(parsed.avatarUrl, 'Darya.png');
+  assert.equal(parsed.fileName, 'Probe Chat');
+
+  const calls = [];
+  const fetchImpl = async (url, init = {}) => {
+    calls.push({ url: String(url), init });
+    return new Response(JSON.stringify({
+      ok: true,
+      created: true,
+      avatarUrl: 'Darya.png',
+      fileName: 'Probe Chat',
+    }), {
+      status: 200,
+      headers: { 'content-type': 'application/json' },
+    });
+  };
+
+  const result = await executeOneShot({
+    command: parsed,
+    publicDomain: 'example.up.railway.app',
+    mcpPath: '/secret/mcp',
+    fetchImpl,
+  });
+
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].url, 'https://example.up.railway.app/secret/mobile/chat-create');
+  assert.equal(calls[0].init.method, 'POST');
+  assert.deepEqual(JSON.parse(calls[0].init.body), {
+    nonce: 'chat-create-1',
+    avatarUrl: 'Darya.png',
+    fileName: 'Probe Chat',
+  });
+  assert.equal(result.created, true);
+});
+
+test('chat_rename and chat_delete map exact filenames without jsonl suffixes', async () => {
+  const rename = parseOneShotCommand(JSON.stringify({
+    op: 'chat_rename',
+    nonce: 'chat-rename-1',
+    avatarUrl: 'Darya.png',
+    fileName: 'Old Chat.jsonl',
+    newFileName: 'New Chat.jsonl',
+  }));
+  assert.equal(rename.fileName, 'Old Chat');
+  assert.equal(rename.newFileName, 'New Chat');
+
+  const deleted = parseOneShotCommand(JSON.stringify({
+    op: 'chat_delete',
+    nonce: 'chat-delete-1',
+    avatarUrl: 'Darya.png',
+    fileName: 'New Chat.jsonl',
+  }));
+  assert.equal(deleted.fileName, 'New Chat');
+
+  const calls = [];
+  const fetchImpl = async (url, init = {}) => {
+    calls.push({ url: String(url), init });
+    return new Response(JSON.stringify({ ok: true }), {
+      status: 200,
+      headers: { 'content-type': 'application/json' },
+    });
+  };
+
+  await executeOneShot({
+    command: rename,
+    publicDomain: 'example.up.railway.app',
+    mcpPath: '/secret/mcp',
+    fetchImpl,
+  });
+  await executeOneShot({
+    command: deleted,
+    publicDomain: 'example.up.railway.app',
+    mcpPath: '/secret/mcp',
+    fetchImpl,
+  });
+
+  assert.deepEqual(
+    calls.map(x => [x.url, JSON.parse(x.init.body)]),
+    [
+      [
+        'https://example.up.railway.app/secret/mobile/chat-rename',
+        {
+          avatarUrl: 'Darya.png',
+          fileName: 'Old Chat',
+          newFileName: 'New Chat',
+        },
+      ],
+      [
+        'https://example.up.railway.app/secret/mobile/chat-delete',
+        {
+          avatarUrl: 'Darya.png',
+          fileName: 'New Chat',
+        },
+      ],
+    ],
+  );
+});
+
+test('chat lifecycle operations reject missing exact identifiers', () => {
+  assert.throws(
+    () => parseOneShotCommand(JSON.stringify({
+      op: 'chat_create',
+      fileName: 'Probe Chat',
+    })),
+    /avatarUrl is required/,
+  );
+  assert.throws(
+    () => parseOneShotCommand(JSON.stringify({
+      op: 'chat_rename',
+      avatarUrl: 'Darya.png',
+      fileName: 'Old Chat',
+    })),
+    /newFileName is required/,
+  );
+  assert.throws(
+    () => parseOneShotCommand(JSON.stringify({
+      op: 'chat_delete',
+      avatarUrl: 'Darya.png',
+    })),
+    /fileName is required/,
+  );
+});
+
