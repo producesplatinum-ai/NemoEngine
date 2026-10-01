@@ -1255,6 +1255,169 @@ export class SillyTavernClient {
     return this.post('/api/worldinfo/get', { name });
   }
 
+  async worldInfoExists(name) {
+    const target = String(name || '').trim();
+    if (!target) throw new Error('name is required.');
+    const items = await this.listWorldInfo();
+    return Array.isArray(items) && items.some((item) =>
+      String(item?.file_id || '') === target || String(item?.name || '') === target
+    );
+  }
+
+  validateWorldInfoData(data) {
+    if (!data || typeof data !== 'object' || Array.isArray(data)) {
+      throw new Error('World info data must be an object.');
+    }
+    if (!data.entries || typeof data.entries !== 'object' || Array.isArray(data.entries)) {
+      throw new Error('World info data must contain an entries object.');
+    }
+  }
+
+  async createWorldInfo({ name, data }) {
+    const target = String(name || '').trim();
+    if (!target) throw new Error('name is required.');
+    this.validateWorldInfoData(data);
+
+    if (await this.worldInfoExists(target)) {
+      const existing = await this.getWorldInfo(target);
+      if (semanticSha256(existing) === semanticSha256(data)) {
+        return { ok: true, name: target, created: false, deduplicated: true };
+      }
+      throw new Error(
+        `World info ${target} already exists with different data. Use world_info_update.`,
+      );
+    }
+
+    await this.post('/api/worldinfo/edit', { name: target, data });
+    return { ok: true, name: target, created: true };
+  }
+
+  async updateWorldInfo({ name, data }) {
+    const target = String(name || '').trim();
+    if (!target) throw new Error('name is required.');
+    this.validateWorldInfoData(data);
+
+    if (await this.worldInfoExists(target)) {
+      const existing = await this.getWorldInfo(target);
+      if (semanticSha256(existing) === semanticSha256(data)) {
+        return { ok: true, name: target, updated: false, deduplicated: true };
+      }
+    }
+
+    await this.post('/api/worldinfo/edit', { name: target, data });
+    return { ok: true, name: target, updated: true };
+  }
+
+  async saveWorldInfo({ name, data }) {
+    const target = String(name || '').trim();
+    if (!target) throw new Error('name is required.');
+    this.validateWorldInfoData(data);
+
+    if (await this.worldInfoExists(target)) {
+      const existing = await this.getWorldInfo(target);
+      if (semanticSha256(existing) === semanticSha256(data)) {
+        return { ok: true, name: target, deduplicated: true };
+      }
+    }
+
+    await this.post('/api/worldinfo/edit', { name: target, data });
+    return { ok: true, name: target, saved: true };
+  }
+
+  async deleteWorldInfo({ name }) {
+    const target = String(name || '').trim();
+    if (!target) throw new Error('name is required.');
+
+    if (!(await this.worldInfoExists(target))) {
+      return {
+        ok: true,
+        deleted: false,
+        deduplicated: true,
+        alreadyAbsent: true,
+        name: target,
+      };
+    }
+
+    try {
+      await this.post('/api/worldinfo/delete', { name: target });
+    } catch (error) {
+      if (!(await this.worldInfoExists(target))) {
+        return {
+          ok: true,
+          deleted: false,
+          deduplicated: true,
+          alreadyAbsent: true,
+          name: target,
+        };
+      }
+      throw error;
+    }
+
+    return { ok: true, deleted: true, name: target };
+  }
+
+  async upsertWorldInfoEntry({ name, uid, entry }) {
+    const target = String(name || '').trim();
+    if (!target) throw new Error('name is required.');
+    if (!Number.isInteger(uid) || uid < 0) {
+      throw new Error('uid must be a non-negative integer.');
+    }
+    if (!entry || typeof entry !== 'object' || Array.isArray(entry)) {
+      throw new Error('entry must be an object.');
+    }
+    if (!(await this.worldInfoExists(target))) {
+      throw new Error(`World info ${target} does not exist.`);
+    }
+
+    const current = await this.getWorldInfo(target);
+    this.validateWorldInfoData(current);
+    const next = JSON.parse(JSON.stringify(current));
+    next.entries[String(uid)] = { ...entry, uid };
+
+    if (semanticSha256(current) === semanticSha256(next)) {
+      return { ok: true, name: target, uid, updated: false, deduplicated: true };
+    }
+
+    await this.post('/api/worldinfo/edit', { name: target, data: next });
+    return { ok: true, name: target, uid, updated: true };
+  }
+
+  async deleteWorldInfoEntry({ name, uid }) {
+    const target = String(name || '').trim();
+    if (!target) throw new Error('name is required.');
+    if (!Number.isInteger(uid) || uid < 0) {
+      throw new Error('uid must be a non-negative integer.');
+    }
+    if (!(await this.worldInfoExists(target))) {
+      return {
+        ok: true,
+        name: target,
+        uid,
+        deleted: false,
+        deduplicated: true,
+        alreadyAbsent: true,
+      };
+    }
+
+    const current = await this.getWorldInfo(target);
+    this.validateWorldInfoData(current);
+    if (!Object.prototype.hasOwnProperty.call(current.entries, String(uid))) {
+      return {
+        ok: true,
+        name: target,
+        uid,
+        deleted: false,
+        deduplicated: true,
+        alreadyAbsent: true,
+      };
+    }
+
+    const next = JSON.parse(JSON.stringify(current));
+    delete next.entries[String(uid)];
+    await this.post('/api/worldinfo/edit', { name: target, data: next });
+    return { ok: true, name: target, uid, deleted: true };
+  }
+
   recentChats() {
     return this.post('/api/chats/recent', {});
   }
