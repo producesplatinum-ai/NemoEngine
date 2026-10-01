@@ -400,3 +400,96 @@ function publishStatus(report) {
 }
 
 async function bootstrap() {
+  try {
+    await waitFor(() =>
+      globalThis.NemoPresetExt &&
+      globalThis.NemoRecipeRuntime &&
+      globalThis.NemoColdPrompts &&
+      globalThis.NemoVexRuntime &&
+      globalThis.NemoPromptRendering &&
+      getPresetIndex() !== null
+    );
+
+    enableFullRuntimeFlags();
+
+    const index = getPresetIndex();
+    if (index === null) throw new Error(`Preset "${activePresetName()}" is not installed.`);
+
+    const transformed = clone(openai_settings[index]);
+    if (!Array.isArray(transformed?.prompts) || !Array.isArray(transformed?.prompt_order)) {
+      throw new Error('Active Nemo preset is structurally invalid.');
+    }
+
+    await eventSource.emit(event_types.OAI_PRESET_IMPORT_READY, {
+      data: transformed,
+      presetName: activePresetName(),
+    });
+
+    await savePreset(transformed);
+    updateInMemoryPreset(index, transformed);
+
+    await sleep(2500);
+    const preflight = await runPreflight();
+    await sleep(1000);
+
+    const transform = {
+      recipeRuntime: Boolean(transformed.extensions?.nemoRecipeRuntime),
+      vexRuntime: Boolean(transformed.extensions?.nemoVexRuntime),
+      coldPromptCount: transformed.prompts.filter(prompt => prompt?.nemoPromptBody).length,
+      promptCount: transformed.prompts.length,
+      regexCount: Array.isArray(transformed.extensions?.regex_scripts)
+        ? transformed.extensions.regex_scripts.length
+        : 0,
+    };
+
+    const report = {
+      ok: preflight.available ? preflight.ok : true,
+      bootstrapVersion: BOOTSTRAP_VERSION,
+      preset: activePresetName(),
+      importedAt: new Date().toISOString(),
+      transform,
+      preflight,
+      recipe: stat('NemoRecipeRuntime'),
+      cold: stat('NemoColdPrompts'),
+      vex: stat('NemoVexRuntime'),
+      rendering: stat('NemoPromptRendering'),
+    };
+
+    try {
+      report.persistence = await persistClientReport(report);
+    } catch (error) {
+      report.persistence = { ok: false, error: String(error?.message || error) };
+    }
+
+    publishStatus(report);
+    await runClientGenerationDiagnostic(clientGenerationRequest, report);
+    console.info('[Nemo Full Bootstrap]', report);
+  } catch (error) {
+    const report = {
+      ok: false,
+      bootstrapVersion: BOOTSTRAP_VERSION,
+      preset: activePresetName(),
+      importedAt: new Date().toISOString(),
+      error: String(error?.message || error),
+    };
+    try {
+      report.persistence = await persistClientReport(report);
+    } catch (persistError) {
+      report.persistence = { ok: false, error: String(persistError?.message || persistError) };
+    }
+
+    publishStatus(report);
+    await runClientGenerationDiagnostic(clientGenerationRequest, report);
+    console.error('[Nemo Full Bootstrap]', error);
+  }
+}
+
+let started = false;
+function startOnce() {
+  if (started) return;
+  started = true;
+  void bootstrap();
+}
+
+if (event_types.APP_READY) eventSource.on(event_types.APP_READY, startOnce);
+setTimeout(startOnce, 1500);
