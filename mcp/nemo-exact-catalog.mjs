@@ -55,6 +55,11 @@ const canonicalSources = [
     name: 'Nemo Engine 11.5.2 - Ready RU Psychology Humiliation JOI RP',
     sourcePath: '../Nemo Engine/Ready/Nemo Engine 11.5.2 - Ready RU Psychology Humiliation JOI RP.json',
   },
+  {
+    id: 'canonical-ready-ru-gooner-humiliation-joi-rp',
+    name: 'Nemo Engine 11.5.2 - Ready RU Gooner Humiliation JOI RP',
+    sourcePath: '../Nemo Engine/Ready/Nemo Engine 11.5.2 - Ready RU Gooner Humiliation JOI RP.json',
+  },
 ];
 
 function isSectionHeader(prompt) {
