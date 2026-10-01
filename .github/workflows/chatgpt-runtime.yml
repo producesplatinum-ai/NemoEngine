@@ -24,6 +24,12 @@ jobs:
         with:
           node-version: 22.23.2
 
+      - name: Test SillyTavern bootstrap installer
+        env:
+          NEMO_BOOTSTRAP_INSTALLER: ${{ github.workspace }}/sillytavern-cloud/install-nemo-full-bootstrap.mjs
+          NEMO_BOOTSTRAP_PRODUCTION_SOURCE: ${{ github.workspace }}/sillytavern-cloud/nemo-full-bootstrap
+        run: node --test sillytavern-cloud/test-install-nemo-full-bootstrap.mjs
+
       - name: Initialize evidence artifact
         run: |
           if find audit/nemo-static-evidence -mindepth 1 ! -type f ! -type d -print -quit | grep -q .; then
