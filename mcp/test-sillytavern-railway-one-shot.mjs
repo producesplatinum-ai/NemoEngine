@@ -564,3 +564,63 @@ test('character_rename rejects missing source or target name', () => {
   );
 });
 
+test('character_rename validates source and target and performs exactly one POST', async () => {
+  const parsed = parseOneShotCommand(JSON.stringify({
+    op: 'character_rename',
+    nonce: 'rename-1',
+    avatarUrl: 'Old Name.png',
+    newName: 'New Name',
+  }));
+
+  assert.equal(parsed.op, 'character_rename');
+  assert.equal(parsed.avatarUrl, 'Old Name.png');
+  assert.equal(parsed.newName, 'New Name');
+
+  const calls = [];
+  const fetchImpl = async (url, init = {}) => {
+    calls.push({ url: String(url), init });
+    return new Response(JSON.stringify({
+      ok: true,
+      oldAvatarUrl: 'Old Name.png',
+      avatarUrl: 'New Name.png',
+      characterName: 'New Name',
+    }), {
+      status: 200,
+      headers: { 'content-type': 'application/json' },
+    });
+  };
+
+  const result = await executeOneShot({
+    command: parsed,
+    publicDomain: 'example.up.railway.app',
+    mcpPath: '/secret/mcp',
+    fetchImpl,
+  });
+
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].url, 'https://example.up.railway.app/secret/mobile/character-rename');
+  assert.equal(calls[0].init.method, 'POST');
+  assert.deepEqual(JSON.parse(calls[0].init.body), {
+    avatarUrl: 'Old Name.png',
+    newName: 'New Name',
+  });
+  assert.equal(result.avatarUrl, 'New Name.png');
+});
+
+test('character_rename rejects missing identifiers', () => {
+  assert.throws(
+    () => parseOneShotCommand(JSON.stringify({
+      op: 'character_rename',
+      newName: 'New Name',
+    })),
+    /avatarUrl is required/,
+  );
+  assert.throws(
+    () => parseOneShotCommand(JSON.stringify({
+      op: 'character_rename',
+      avatarUrl: 'Old Name.png',
+    })),
+    /newName is required/,
+  );
+});
+
