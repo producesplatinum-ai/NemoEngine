@@ -848,3 +848,91 @@ test('world-info mutations validate JSON and deterministic integer UIDs', () => 
   );
 });
 
+test('world_info_save validates JSON and performs one POST', async () => {
+  const data = { entries: { 0: { uid: 0, key: ['probe'], content: 'WORLD_PROBE' } } };
+  const dataJson = JSON.stringify(data);
+  const parsed = parseOneShotCommand(JSON.stringify({
+    op: 'world_info_save',
+    nonce: 'world-save-1',
+    name: 'Probe Lore',
+    dataJson,
+  }));
+
+  assert.equal(parsed.op, 'world_info_save');
+  assert.equal(parsed.name, 'Probe Lore');
+  assert.equal(parsed.dataJson, dataJson);
+
+  const calls = [];
+  const fetchImpl = async (url, init = {}) => {
+    calls.push({ url: String(url), init });
+    return new Response(JSON.stringify({ ok: true, name: 'Probe Lore' }), {
+      status: 200,
+      headers: { 'content-type': 'application/json' },
+    });
+  };
+
+  const result = await executeOneShot({
+    command: parsed,
+    publicDomain: 'example.up.railway.app',
+    mcpPath: '/secret/mcp',
+    fetchImpl,
+  });
+
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].url, 'https://example.up.railway.app/secret/mobile/world-info-save');
+  assert.equal(calls[0].init.method, 'POST');
+  assert.deepEqual(JSON.parse(calls[0].init.body), {
+    name: 'Probe Lore',
+    dataJson,
+  });
+  assert.equal(result.ok, true);
+});
+
+test('world_info_delete validates name and performs one POST', async () => {
+  const parsed = parseOneShotCommand(JSON.stringify({
+    op: 'world_info_delete',
+    nonce: 'world-delete-1',
+    name: 'Probe Lore',
+  }));
+
+  const calls = [];
+  const fetchImpl = async (url, init = {}) => {
+    calls.push({ url: String(url), init });
+    return new Response(JSON.stringify({ ok: true, deleted: true, name: 'Probe Lore' }), {
+      status: 200,
+      headers: { 'content-type': 'application/json' },
+    });
+  };
+
+  const result = await executeOneShot({
+    command: parsed,
+    publicDomain: 'example.up.railway.app',
+    mcpPath: '/secret/mcp',
+    fetchImpl,
+  });
+
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].url, 'https://example.up.railway.app/secret/mobile/world-info-delete');
+  assert.deepEqual(JSON.parse(calls[0].init.body), { name: 'Probe Lore' });
+  assert.equal(result.deleted, true);
+});
+
+test('world_info_save/delete reject invalid payloads', () => {
+  assert.throws(
+    () => parseOneShotCommand(JSON.stringify({ op: 'world_info_save', name: 'Probe' })),
+    /dataJson is required/,
+  );
+  assert.throws(
+    () => parseOneShotCommand(JSON.stringify({
+      op: 'world_info_save',
+      name: 'Probe',
+      dataJson: JSON.stringify({ nope: true }),
+    })),
+    /entries/,
+  );
+  assert.throws(
+    () => parseOneShotCommand(JSON.stringify({ op: 'world_info_delete' })),
+    /name is required/,
+  );
+});
+
