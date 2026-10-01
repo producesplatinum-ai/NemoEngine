@@ -1596,3 +1596,146 @@ test('character delete treats an already absent target as a successful final sta
   });
 });
 
+test('client duplicates a stored V3 character while changing only identity and target file', async () => {
+  let createBody = null;
+  const stored = {
+    spec: 'chara_card_v3',
+    spec_version: '3.0',
+    data: {
+      name: 'Darya',
+      description: 'canonical description',
+      personality: 'sharp',
+      scenario: 'canonical scenario',
+      first_mes: 'Hello',
+      mes_example: '<START>\\nDarya: example',
+      creator_notes: 'notes',
+      system_prompt: 'system',
+      post_history_instructions: 'post-history',
+      tags: ['darya'],
+      creator: 'producesplatinum-ai',
+      character_version: '9.9',
+      alternate_greetings: ['Alt'],
+      extensions: {
+        talkativeness: 0.73,
+        fav: true,
+        world: 'DaryaWorld',
+        depth_prompt: { prompt: 'DEPTH', depth: 3, role: 'system' },
+        custom_marker: 'preserve-me',
+      },
+      character_book: {
+        name: 'Darya Book',
+        entries: [{ id: 1, keys: ['key'], content: 'book content' }],
+      },
+    },
+    avatar: 'Darya.png',
+    chat: 'Darya - old chat',
+    create_date: '2026-09-01T00:00:00.000Z',
+    date_added: 123,
+    chat_size: 456,
+    data_size: 789,
+  };
+
+  const fetchImpl = async (url, options = {}) => {
+    const path = new URL(String(url)).pathname;
+    if (path === '/csrf-token') return makeJsonResponse({ token: 'csrf-duplicate' });
+    if (path === '/api/characters/get') {
+      const body = JSON.parse(options.body);
+      if (body.avatar_url === 'Darya.png') return makeJsonResponse(stored);
+      if (body.avatar_url === 'Darya Copy.png') {
+        return makeJsonResponse({ error: 'not found' }, { status: 404 });
+      }
+    }
+    if (path === '/api/characters/create') {
+      createBody = JSON.parse(options.body);
+      return makeJsonResponse('Darya Copy.png');
+    }
+    throw new Error('unexpected URL: ' + url);
+  };
+
+  const client = new SillyTavernClient({
+    baseUrl: 'https://st.example.test',
+    fetchImpl,
+  });
+  const result = await client.duplicateCharacter({
+    avatarUrl: 'Darya.png',
+    newName: 'Darya Copy',
+    fileName: 'Darya Copy',
+  });
+
+  assert.deepEqual(result, {
+    ok: true,
+    sourceAvatarUrl: 'Darya.png',
+    avatarUrl: 'Darya Copy.png',
+    characterName: 'Darya Copy',
+  });
+  assert.equal(createBody.file_name, 'Darya Copy');
+  assert.equal(createBody.ch_name, 'Darya Copy');
+
+  const duplicated = JSON.parse(createBody.json_data);
+  assert.equal(duplicated.spec, 'chara_card_v3');
+  assert.equal(duplicated.spec_version, '3.0');
+  assert.equal(duplicated.data.name, 'Darya Copy');
+  assert.equal(duplicated.data.description, 'canonical description');
+  assert.equal(duplicated.data.system_prompt, 'system');
+  assert.equal(duplicated.data.extensions.custom_marker, 'preserve-me');
+  assert.deepEqual(duplicated.data.character_book, stored.data.character_book);
+  assert.equal(duplicated.avatar, undefined);
+  assert.equal(duplicated.chat, undefined);
+  assert.equal(duplicated.create_date, undefined);
+  assert.equal(duplicated.date_added, undefined);
+  assert.equal(duplicated.chat_size, undefined);
+  assert.equal(duplicated.data_size, undefined);
+});
+
+test('character duplicate is idempotent through deterministic create semantics', async () => {
+  let createCalls = 0;
+  const source = {
+    spec: 'chara_card_v3',
+    spec_version: '3.0',
+    data: {
+      name: 'Darya',
+      description: 'same',
+      extensions: { custom_marker: 'same' },
+    },
+  };
+  const existingTarget = {
+    spec: 'chara_card_v3',
+    spec_version: '3.0',
+    data: {
+      name: 'Darya Copy',
+      description: 'same',
+      extensions: { custom_marker: 'same' },
+    },
+  };
+
+  const fetchImpl = async (url, options = {}) => {
+    const path = new URL(String(url)).pathname;
+    if (path === '/csrf-token') return makeJsonResponse({ token: 'csrf-duplicate-dedupe' });
+    if (path === '/api/characters/get') {
+      const body = JSON.parse(options.body);
+      if (body.avatar_url === 'Darya.png') return makeJsonResponse(source);
+      if (body.avatar_url === 'Darya Copy.png') return makeJsonResponse(existingTarget);
+    }
+    if (path === '/api/characters/create') {
+      createCalls += 1;
+      return makeJsonResponse('Darya Copy.png');
+    }
+    throw new Error('unexpected URL: ' + url);
+  };
+
+  const client = new SillyTavernClient({
+    baseUrl: 'https://st.example.test',
+    fetchImpl,
+  });
+  const result = await client.duplicateCharacter({
+    avatarUrl: 'Darya.png',
+    newName: 'Darya Copy',
+    fileName: 'Darya Copy',
+  });
+
+  assert.equal(createCalls, 0);
+  assert.equal(result.deduplicated, true);
+  assert.equal(result.avatarUrl, 'Darya Copy.png');
+  assert.equal(result.sourceAvatarUrl, 'Darya.png');
+});
+
