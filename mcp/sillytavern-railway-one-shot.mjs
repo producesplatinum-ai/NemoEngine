@@ -15,6 +15,8 @@ const SUPPORTED_OPS = new Set([
   'character_rename',
   'character_export_json',
   'character_import_json',
+  'character_world_bind',
+  'character_world_unbind',
   'world_info',
   'world_info_entry',
   'world_info_entry_delete',
@@ -72,7 +74,7 @@ export function parseOneShotCommand(raw) {
   const command = { ...value, op };
   if (value.nonce != null) command.nonce = requiredString(value.nonce, 'nonce');
 
-  if (['character', 'character_update', 'character_delete', 'character_duplicate', 'character_rename', 'character_export_json', 'chat', 'turn', 'generate'].includes(op)) {
+  if (['character', 'character_update', 'character_delete', 'character_duplicate', 'character_rename', 'character_export_json', 'character_world_bind', 'character_world_unbind', 'chat', 'turn', 'generate'].includes(op)) {
     command.avatarUrl = requiredString(value.avatarUrl, 'avatarUrl');
   }
   if (['character_create', 'character_update', 'character_import_json'].includes(op)) {
@@ -111,6 +113,9 @@ export function parseOneShotCommand(raw) {
   }
   if (op === 'character_rename') {
     command.newName = requiredString(value.newName, 'newName');
+  }
+  if (op === 'character_world_bind') {
+    command.name = requiredString(value.name, 'name');
   }
   if (['chat', 'turn', 'generate'].includes(op)) {
     command.fileName = requiredString(value.fileName, 'fileName');
@@ -229,6 +234,18 @@ function routeFor(command) {
       const q = new URLSearchParams({ avatarUrl: command.avatarUrl });
       return { method: 'GET', suffix: `/character-export-json?${q}` };
     }
+    case 'character_world_bind':
+      return {
+        method: 'POST',
+        suffix: '/character-world-bind',
+        body: { avatarUrl: command.avatarUrl, name: command.name },
+      };
+    case 'character_world_unbind':
+      return {
+        method: 'POST',
+        suffix: '/character-world-unbind',
+        body: { avatarUrl: command.avatarUrl },
+      };
     case 'character_import_json':
       return {
         method: 'POST',
