@@ -1481,6 +1481,31 @@ export class SillyTavernClient {
     }
   }
 
+  async verifyWorldInfoStored(name, expectedData, operation = 'write') {
+    const target = String(name || '').trim();
+    if (!(await this.worldInfoExists(target))) {
+      throw new Error(
+        `World info ${target} ${operation} returned success but the book did not persist.`,
+      );
+    }
+    const stored = await this.getWorldInfo(target);
+    if (semanticSha256(stored) !== semanticSha256(expectedData)) {
+      throw new Error(
+        `World info ${target} persisted with different data after ${operation}.`,
+      );
+    }
+    return stored;
+  }
+
+  async verifyWorldInfoAbsent(name, operation = 'delete') {
+    const target = String(name || '').trim();
+    if (await this.worldInfoExists(target)) {
+      throw new Error(
+        `World info ${target} ${operation} returned success but the book still exists.`,
+      );
+    }
+  }
+
   async createWorldInfo({ name, data }) {
     const target = String(name || '').trim();
     if (!target) throw new Error('name is required.');
@@ -1513,19 +1538,7 @@ export class SillyTavernClient {
       );
     }
 
-    if (!(await this.worldInfoExists(target))) {
-      throw new Error(
-        `World info ${target} import returned success but the book did not persist.`,
-      );
-    }
-
-    const stored = await this.getWorldInfo(target);
-    if (semanticSha256(stored) !== semanticSha256(data)) {
-      throw new Error(
-        `World info ${target} persisted with different data after import.`,
-      );
-    }
-
+    await this.verifyWorldInfoStored(target, data, 'import');
     return { ok: true, name: target, created: true };
   }
 
@@ -1542,6 +1555,7 @@ export class SillyTavernClient {
     }
 
     await this.post('/api/worldinfo/edit', { name: target, data });
+    await this.verifyWorldInfoStored(target, data, 'update');
     return { ok: true, name: target, updated: true };
   }
 
@@ -1558,6 +1572,7 @@ export class SillyTavernClient {
     }
 
     await this.post('/api/worldinfo/edit', { name: target, data });
+    await this.verifyWorldInfoStored(target, data, 'save');
     return { ok: true, name: target, saved: true };
   }
 
@@ -1590,6 +1605,7 @@ export class SillyTavernClient {
       throw error;
     }
 
+    await this.verifyWorldInfoAbsent(target, 'delete');
     return { ok: true, deleted: true, name: target };
   }
 
@@ -1616,6 +1632,7 @@ export class SillyTavernClient {
     }
 
     await this.post('/api/worldinfo/edit', { name: target, data: next });
+    await this.verifyWorldInfoStored(target, next, 'entry upsert');
     return { ok: true, name: target, uid, updated: true };
   }
 
@@ -1652,6 +1669,7 @@ export class SillyTavernClient {
     const next = JSON.parse(JSON.stringify(current));
     delete next.entries[String(uid)];
     await this.post('/api/worldinfo/edit', { name: target, data: next });
+    await this.verifyWorldInfoStored(target, next, 'entry delete');
     return { ok: true, name: target, uid, deleted: true };
   }
 
