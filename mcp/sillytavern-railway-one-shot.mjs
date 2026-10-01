@@ -14,6 +14,7 @@ const SUPPORTED_OPS = new Set([
   'character_duplicate',
   'character_rename',
   'character_export_json',
+  'character_import_json',
   'world_info',
   'world_info_entry',
   'recent_chats',
@@ -68,7 +69,7 @@ export function parseOneShotCommand(raw) {
   if (['character', 'character_update', 'character_delete', 'character_duplicate', 'character_rename', 'character_export_json', 'chat', 'turn', 'generate'].includes(op)) {
     command.avatarUrl = requiredString(value.avatarUrl, 'avatarUrl');
   }
-  if (['character_create', 'character_update'].includes(op)) {
+  if (['character_create', 'character_update', 'character_import_json'].includes(op)) {
     command.cardJson = requiredString(value.cardJson, 'cardJson');
     let card;
     try {
@@ -79,7 +80,7 @@ export function parseOneShotCommand(raw) {
     if (!card || typeof card !== 'object' || Array.isArray(card)) {
       throw new Error('cardJson must be a JSON object.');
     }
-    if (op === 'character_create') {
+    if (op === 'character_create' || op === 'character_import_json') {
       if (value.fileName != null) {
         command.fileName = requiredString(value.fileName, 'fileName').replace(/\.png$/i, '');
       } else {
@@ -165,6 +166,15 @@ function routeFor(command) {
       const q = new URLSearchParams({ avatarUrl: command.avatarUrl });
       return { method: 'GET', suffix: `/character-export-json?${q}` };
     }
+    case 'character_import_json':
+      return {
+        method: 'POST',
+        suffix: '/character-import-json',
+        body: {
+          fileName: command.fileName,
+          cardJson: command.cardJson,
+        },
+      };
     case 'character_create':
       return {
         method: 'POST',
