@@ -1082,6 +1082,124 @@ export class SillyTavernClient {
     };
   }
 
+  async patchCharacter({ avatarUrl, patch }) {
+    const normalizedAvatarUrl = String(avatarUrl || '').trim();
+    if (!normalizedAvatarUrl) throw new Error('avatarUrl is required.');
+    if (!patch || typeof patch !== 'object' || Array.isArray(patch)) {
+      throw new Error('Character patch must be an object.');
+    }
+
+    const existing = await this.getCharacter(normalizedAvatarUrl);
+    const next = JSON.parse(JSON.stringify(existing || {}));
+    for (const key of [
+      'avatar',
+      'chat',
+      'create_date',
+      'date_added',
+      'chat_size',
+      'date_last_chat',
+      'data_size',
+    ]) {
+      delete next[key];
+    }
+
+    if (!next?.data || typeof next.data !== 'object' || Array.isArray(next.data)) {
+      throw new Error('Character card data is unavailable.');
+    }
+
+    const dataPatch =
+      patch?.data && typeof patch.data === 'object' && !Array.isArray(patch.data)
+        ? patch.data
+        : {};
+    const allowedDataKeys = new Set([
+      'description',
+      'creator_notes',
+      'character_version',
+      'extensions',
+    ]);
+    for (const key of Object.keys(dataPatch)) {
+      if (!allowedDataKeys.has(key)) {
+        throw new Error(`Unsupported character patch data field: ${key}`);
+      }
+    }
+
+    for (const key of ['description', 'creator_notes', 'character_version']) {
+      if (Object.prototype.hasOwnProperty.call(dataPatch, key)) {
+        if (typeof dataPatch[key] !== 'string') {
+          throw new Error(`Character patch data.${key} must be a string.`);
+        }
+        next.data[key] = dataPatch[key];
+      }
+    }
+
+    if (Object.prototype.hasOwnProperty.call(dataPatch, 'extensions')) {
+      const extensionPatch = dataPatch.extensions;
+      if (
+        !extensionPatch ||
+        typeof extensionPatch !== 'object' ||
+        Array.isArray(extensionPatch)
+      ) {
+        throw new Error('Character patch data.extensions must be an object.');
+      }
+      if (
+        !next.data.extensions ||
+        typeof next.data.extensions !== 'object' ||
+        Array.isArray(next.data.extensions)
+      ) {
+        next.data.extensions = {};
+      }
+      Object.assign(next.data.extensions, extensionPatch);
+    }
+
+    if (Object.prototype.hasOwnProperty.call(patch, 'characterBookEntries')) {
+      if (!Array.isArray(patch.characterBookEntries)) {
+        throw new Error('characterBookEntries must be an array.');
+      }
+      const entries = next.data?.character_book?.entries;
+      if (!entries || (typeof entries !== 'object' && !Array.isArray(entries))) {
+        throw new Error('Character card has no patchable character book entries.');
+      }
+
+      const availableEntries = Array.isArray(entries)
+        ? entries
+        : Object.values(entries);
+      for (const entryPatch of patch.characterBookEntries) {
+        if (
+          !entryPatch ||
+          typeof entryPatch !== 'object' ||
+          Array.isArray(entryPatch) ||
+          !Number.isInteger(entryPatch.id) ||
+          entryPatch.id < 0
+        ) {
+          throw new Error('Each characterBookEntries patch requires a non-negative integer id.');
+        }
+        const unsupportedKeys = Object.keys(entryPatch).filter(
+          (key) => key !== 'id' && key !== 'content',
+        );
+        if (unsupportedKeys.length) {
+          throw new Error(
+            `Unsupported character book patch field: ${unsupportedKeys[0]}`,
+          );
+        }
+        if (typeof entryPatch.content !== 'string') {
+          throw new Error('Character book patch content must be a string.');
+        }
+        const target = availableEntries.find(
+          (entry) => Number(entry?.id ?? entry?.uid) === entryPatch.id,
+        );
+        if (!target) {
+          throw new Error(`Character book entry ${entryPatch.id} does not exist.`);
+        }
+        target.content = entryPatch.content;
+      }
+    }
+
+    return this.updateCharacter({
+      avatarUrl: normalizedAvatarUrl,
+      card: next,
+    });
+  }
+
   async bindCharacterWorld({ avatarUrl, name }) {
     const normalizedAvatarUrl = String(avatarUrl || '').trim();
     const worldName = String(name || '').trim();
