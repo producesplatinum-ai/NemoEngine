@@ -1,6 +1,6 @@
 {
   "name": "nemoengine-mcp",
-  "version": "0.1.0",
+  "version": "0.1.2",
   "private": true,
   "type": "module",
   "engines": {
@@ -8,7 +8,9 @@
   },
   "scripts": {
     "start": "node mcp/server.mjs",
-    "test:mcp": "node --test mcp/test-server.mjs",
+    "start:sillytavern": "node mcp/sillytavern-server.mjs",
+    "start:ai-providers": "node mcp/ai-provider-server.mjs",
+    "test:mcp": "node --test mcp/test-server.mjs mcp/test-nemo-exact-catalog.mjs mcp/test-openai-preset-activation.mjs mcp/test-sillytavern-server.mjs mcp/test-sillytavern-direct-tools.mjs mcp/test-sillytavern-idempotency.mjs mcp/test-sillytavern-railway-one-shot.mjs mcp/test-sillytavern-one-shot.mjs mcp/test-sillytavern-mobile-rest.mjs mcp/test-sillytavern-mobile-generate.mjs mcp/test-ai-provider-server.mjs mcp/test-image-provider-server.mjs mcp/test-nemo-runtime-status.mjs mcp/test-provider-smoke.mjs",
     "test:nemo": "node --test scripts/test-nemo-chatgpt-runtime.mjs scripts/test-nemo-chatgpt-executor.mjs",
     "test": "npm run test:mcp && npm run test:nemo"
   },
