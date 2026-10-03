@@ -10,6 +10,7 @@ const SUPPORTED_OPS = new Set([
   'character',
   'character_create',
   'character_update',
+  'character_patch',
   'character_delete',
   'character_duplicate',
   'character_rename',
@@ -77,7 +78,7 @@ export function parseOneShotCommand(raw) {
   const command = { ...value, op };
   if (value.nonce != null) command.nonce = requiredString(value.nonce, 'nonce');
 
-  if (['character', 'character_update', 'character_delete', 'character_duplicate', 'character_rename', 'character_export_json', 'character_world_bind', 'character_world_unbind', 'chat', 'chat_create', 'chat_rename', 'chat_delete', 'turn', 'generate'].includes(op)) {
+  if (['character', 'character_update', 'character_patch', 'character_delete', 'character_duplicate', 'character_rename', 'character_export_json', 'character_world_bind', 'character_world_unbind', 'chat', 'chat_create', 'chat_rename', 'chat_delete', 'turn', 'generate'].includes(op)) {
     command.avatarUrl = requiredString(value.avatarUrl, 'avatarUrl');
   }
   if (['character_create', 'character_update', 'character_import_json'].includes(op)) {
@@ -99,6 +100,18 @@ export function parseOneShotCommand(raw) {
         if (!cardName) throw new Error('Character card name is required.');
         command.fileName = cardName.replace(/\.png$/i, '');
       }
+    }
+  }
+  if (op === 'character_patch') {
+    command.patchJson = requiredString(value.patchJson, 'patchJson');
+    let patch;
+    try {
+      patch = JSON.parse(command.patchJson);
+    } catch {
+      throw new Error('patchJson must be valid JSON.');
+    }
+    if (!patch || typeof patch !== 'object' || Array.isArray(patch)) {
+      throw new Error('patchJson must be a JSON object.');
     }
   }
   if (op === 'character_delete') {
@@ -280,6 +293,15 @@ function routeFor(command) {
         body: {
           avatarUrl: command.avatarUrl,
           cardJson: command.cardJson,
+        },
+      };
+    case 'character_patch':
+      return {
+        method: 'POST',
+        suffix: '/character-patch',
+        body: {
+          avatarUrl: command.avatarUrl,
+          patchJson: command.patchJson,
         },
       };
     case 'character_delete':
