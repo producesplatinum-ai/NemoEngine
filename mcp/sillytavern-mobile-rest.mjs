@@ -28,6 +28,7 @@ const MOBILE_REST_WRITE_ROUTE_KINDS = new Set([
   'chat_create',
   'character_create',
   'character_update',
+  'character_patch',
   'character_delete',
   'character_duplicate',
   'character_rename',
@@ -49,6 +50,7 @@ const MOBILE_REST_WRITE_ROUTE_KINDS = new Set([
 
 const MOBILE_REST_POST_ONLY_ROUTE_KINDS = new Set([
   'character_update',
+  'character_patch',
   'character_delete',
   'character_duplicate',
   'character_rename',
@@ -90,6 +92,7 @@ export function classifyMobileRestRequest(requestTarget, basePath) {
   if (pathname === `${normalizedBase}/preset-delete`) return { kind: 'preset_delete' };
   if (pathname === `${normalizedBase}/character-create`) return { kind: 'character_create' };
   if (pathname === `${normalizedBase}/character-update`) return { kind: 'character_update' };
+  if (pathname === `${normalizedBase}/character-patch`) return { kind: 'character_patch' };
   if (pathname === `${normalizedBase}/character-delete`) return { kind: 'character_delete' };
   if (pathname === `${normalizedBase}/character-duplicate`) return { kind: 'character_duplicate' };
   if (pathname === `${normalizedBase}/character-rename`) return { kind: 'character_rename' };
@@ -249,6 +252,26 @@ export async function executeMobileRestRoute(route, client, body = {}) {
       }
 
       return client.updateCharacter({ avatarUrl, card });
+    }
+    case 'character_patch': {
+      const avatarUrl =
+        typeof body?.avatarUrl === 'string' ? body.avatarUrl.trim() : '';
+      const patchJson =
+        typeof body?.patchJson === 'string' ? body.patchJson.trim() : '';
+      if (!avatarUrl) throw new Error('avatarUrl is required.');
+      if (!patchJson) throw new Error('patchJson is required.');
+
+      let patch;
+      try {
+        patch = JSON.parse(patchJson);
+      } catch {
+        throw new Error('patchJson must be valid JSON.');
+      }
+      if (!patch || typeof patch !== 'object' || Array.isArray(patch)) {
+        throw new Error('patchJson must be valid JSON.');
+      }
+
+      return client.patchCharacter({ avatarUrl, patch });
     }
     case 'character_delete': {
       const avatarUrl =
