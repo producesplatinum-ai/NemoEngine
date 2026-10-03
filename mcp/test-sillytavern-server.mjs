@@ -3155,3 +3155,87 @@ test('client deletes a chat idempotently and verifies absence', async () => {
   assert.equal(absent.alreadyAbsent, true);
 });
 
+
+
+test('client patches a character while preserving unrelated card data and selected book entries', async () => {
+  let editBody = null;
+  const character = {
+    spec: 'chara_card_v3',
+    spec_version: '3.0',
+    data: {
+      name: 'Darya',
+      description: 'old description',
+      personality: 'keep personality',
+      creator_notes: 'old notes',
+      character_version: 'old-version',
+      extensions: {
+        world: 'Darya',
+        custom_marker: 'keep-me',
+        darya_source_revision: 'old-revision',
+      },
+      character_book: {
+        name: 'Darya',
+        entries: [
+          { id: 0, keys: [], content: 'old core' },
+          { id: 1, keys: [], content: 'keep mechanics' },
+          { id: 3, keys: ['внешность'], content: 'old visual' },
+        ],
+      },
+    },
+    avatar: 'Darya.png',
+    chat: 'Darya - current',
+    create_date: '2026-09-01T00:00:00.000Z',
+  };
+
+  const fetchImpl = async (url, options = {}) => {
+    const path = new URL(String(url)).pathname;
+    if (path === '/csrf-token') return makeJsonResponse({ token: 'csrf-character-patch' });
+    if (path === '/api/characters/get') return makeJsonResponse(character);
+    if (path === '/api/characters/edit') {
+      editBody = JSON.parse(options.body);
+      return new Response('', { status: 200 });
+    }
+    throw new Error('unexpected URL: ' + url);
+  };
+
+  const client = new SillyTavernClient({
+    baseUrl: 'https://st.example.test',
+    fetchImpl,
+  });
+  const patch = {
+    data: {
+      description: 'new description',
+      creator_notes: 'new notes',
+      character_version: 'new-version',
+      extensions: {
+        darya_source_revision: 'new-revision',
+        darya_card_revision: 'new-card-revision',
+      },
+    },
+    characterBookEntries: [
+      { id: 0, content: 'new core' },
+      { id: 3, content: 'new visual' },
+    ],
+  };
+
+  const result = await client.patchCharacter({
+    avatarUrl: 'Darya.png',
+    patch,
+  });
+
+  assert.equal(result.ok, true);
+  const stored = JSON.parse(editBody.json_data);
+  assert.equal(stored.data.description, 'new description');
+  assert.equal(stored.data.personality, 'keep personality');
+  assert.equal(stored.data.creator_notes, 'new notes');
+  assert.equal(stored.data.character_version, 'new-version');
+  assert.equal(stored.data.extensions.world, 'Darya');
+  assert.equal(stored.data.extensions.custom_marker, 'keep-me');
+  assert.equal(stored.data.extensions.darya_source_revision, 'new-revision');
+  assert.equal(stored.data.extensions.darya_card_revision, 'new-card-revision');
+  assert.equal(stored.data.character_book.entries[0].content, 'new core');
+  assert.equal(stored.data.character_book.entries[1].content, 'keep mechanics');
+  assert.equal(stored.data.character_book.entries[2].content, 'new visual');
+  assert.equal(editBody.chat, 'Darya - current');
+  assert.equal(editBody.create_date, '2026-09-01T00:00:00.000Z');
+});
