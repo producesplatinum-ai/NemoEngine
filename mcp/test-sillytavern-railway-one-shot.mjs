@@ -1133,3 +1133,75 @@ test('chat lifecycle operations reject missing exact identifiers', () => {
   );
 });
 
+
+
+test('character_patch validates patch JSON and performs exactly one POST', async () => {
+  const patch = {
+    data: {
+      description: 'new description',
+      extensions: { darya_source_revision: 'new-revision' },
+    },
+    characterBookEntries: [{ id: 3, content: 'new visual' }],
+  };
+  const patchJson = JSON.stringify(patch);
+  const parsed = parseOneShotCommand(JSON.stringify({
+    op: 'character_patch',
+    nonce: 'patch-1',
+    avatarUrl: 'Darya.png',
+    patchJson,
+  }));
+
+  assert.equal(parsed.op, 'character_patch');
+  assert.equal(parsed.avatarUrl, 'Darya.png');
+  assert.equal(parsed.patchJson, patchJson);
+
+  const calls = [];
+  const fetchImpl = async (url, init = {}) => {
+    calls.push({ url: String(url), init });
+    return new Response(JSON.stringify({
+      ok: true,
+      avatarUrl: 'Darya.png',
+      characterName: 'Darya',
+    }), {
+      status: 200,
+      headers: { 'content-type': 'application/json' },
+    });
+  };
+
+  const result = await executeOneShot({
+    command: parsed,
+    publicDomain: 'example.up.railway.app',
+    mcpPath: '/secret/mcp',
+    fetchImpl,
+  });
+
+  assert.equal(calls.length, 1);
+  assert.equal(
+    calls[0].url,
+    'https://example.up.railway.app/secret/mobile/character-patch',
+  );
+  assert.equal(calls[0].init.method, 'POST');
+  assert.deepEqual(JSON.parse(calls[0].init.body), {
+    avatarUrl: 'Darya.png',
+    patchJson,
+  });
+  assert.equal(result.ok, true);
+});
+
+test('character_patch rejects missing avatar or malformed patch JSON', () => {
+  assert.throws(
+    () => parseOneShotCommand(JSON.stringify({
+      op: 'character_patch',
+      patchJson: '{}',
+    })),
+    /avatarUrl is required/,
+  );
+  assert.throws(
+    () => parseOneShotCommand(JSON.stringify({
+      op: 'character_patch',
+      avatarUrl: 'Darya.png',
+      patchJson: '{bad}',
+    })),
+    /patchJson must be valid JSON/,
+  );
+});
