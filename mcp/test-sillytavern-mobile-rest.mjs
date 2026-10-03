@@ -1237,3 +1237,64 @@ test('chat lifecycle routes reject incomplete payloads before client mutation', 
   );
 });
 
+
+
+test('classifies character patch route and dispatches a partial patch', async () => {
+  const basePath = '/st-secret/mobile';
+  assert.deepEqual(
+    classifyMobileRestRequest('/st-secret/mobile/character-patch', basePath),
+    { kind: 'character_patch' },
+  );
+
+  const calls = [];
+  const client = {
+    async patchCharacter(input) {
+      calls.push(input);
+      return { ok: true, avatarUrl: input.avatarUrl, characterName: 'Darya' };
+    },
+  };
+  const patch = {
+    data: {
+      description: 'new description',
+      extensions: { darya_source_revision: 'new-revision' },
+    },
+    characterBookEntries: [{ id: 3, content: 'new visual' }],
+  };
+
+  const result = await executeMobileRestRoute(
+    { kind: 'character_patch' },
+    client,
+    {
+      avatarUrl: 'Darya.png',
+      patchJson: JSON.stringify(patch),
+    },
+  );
+
+  assert.equal(result.ok, true);
+  assert.deepEqual(calls, [{ avatarUrl: 'Darya.png', patch }]);
+});
+
+test('character patch rejects missing identifiers and malformed patch JSON', async () => {
+  const client = {
+    patchCharacter() {
+      throw new Error('should not be called');
+    },
+  };
+
+  await assert.rejects(
+    () => executeMobileRestRoute(
+      { kind: 'character_patch' },
+      client,
+      { patchJson: '{}' },
+    ),
+    /avatarUrl is required/,
+  );
+  await assert.rejects(
+    () => executeMobileRestRoute(
+      { kind: 'character_patch' },
+      client,
+      { avatarUrl: 'Darya.png', patchJson: '{bad}' },
+    ),
+    /patchJson must be valid JSON/,
+  );
+});
