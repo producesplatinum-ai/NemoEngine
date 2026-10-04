@@ -32,6 +32,7 @@ test('exact catalog covers canonical presets, every mutual-exclusive option, eve
     'canonical-11.5.2-general-rp',
     'canonical-ready-ru-rp',
     'canonical-ready-ru-gooner-rp',
+    'canonical-ready-ru-explicit-porn-rp',
     'canonical-ready-ru-psychology-humiliation-joi-rp',
     'canonical-ready-ru-gooner-humiliation-joi-rp',
   ]) assert(ids.has(required), `missing canonical preset ${required}`);
@@ -110,6 +111,30 @@ test('overlay variants change only prompt_order and preserve every prompt defini
   }
 });
 
+
+
+test('Ready RU Explicit Porn combines the requested explicit modules in one exact preset', async () => {
+  const built = await buildExactNemoPreset('canonical-ready-ru-explicit-porn-rp');
+  const enabled = new Set(
+    built.preset.prompt_order[0].order
+      .filter((entry) => entry.enabled)
+      .map((entry) => entry.identifier),
+  );
+
+  for (const required of [
+    'v11-329-vex-gooner-vex',
+    'v11-178-nsfw-gooner-protocol',
+    'v11-180-nsfw-nsfw-core',
+    'v11-182-nsfw-proactive-partners',
+    'v11-181-nsfw-porn-tropes',
+    'v11-183-nsfw-realistic-smut',
+    'v11-184-nsfw-sexual-physiology',
+  ]) {
+    assert.equal(enabled.has(required), true, `expected enabled prompt ${required}`);
+  }
+
+  assert.equal(enabled.has('v11-305-vex-narrative-vex'), false);
+});
 
 test('Ready RU Gooner Humiliation JOI combines the requested modules in one exact preset', async () => {
   const built = await buildExactNemoPreset('canonical-ready-ru-gooner-humiliation-joi-rp');
