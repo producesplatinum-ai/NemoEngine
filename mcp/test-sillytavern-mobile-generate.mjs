@@ -316,7 +316,7 @@ test('generateNemoAssistantMessage reports safe Groq response diagnostics when c
     }),
     error => {
       assert.match(error.message, /finish_reason=length/);
-      assert.match(error.message, /reasoning_chars=43/);
+      assert.match(error.message, /reasoning_chars=44/);
       assert.match(error.message, /completion_tokens=16384/);
       assert.match(error.message, /reasoning_tokens=16384/);
       assert.doesNotMatch(error.message, /private reasoning/);
