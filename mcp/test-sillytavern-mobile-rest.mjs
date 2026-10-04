@@ -1342,3 +1342,32 @@ test('persona create rejects missing identifiers before client mutation', async 
     /avatarId is required/,
   );
 });
+
+
+test('classifies mobile nemo-generate route and dispatches compiled generation inputs', async () => {
+  const basePath = '/st-secret/mobile';
+  assert.deepEqual(
+    classifyMobileRestRequest('/st-secret/mobile/nemo-generate', basePath),
+    { kind: 'nemo_generate' },
+  );
+
+  const calls = [];
+  const client = {
+    async generateNemoAssistantMessage(input) {
+      calls.push(input);
+      return { ok: true, compiled: true, ...input };
+    },
+  };
+  const body = {
+    avatarUrl: 'Darya.png',
+    fileName: 'Nemo clean scene',
+    entryId: 'canonical-ready-ru-gooner-humiliation-joi-rp',
+    source: 'openrouter',
+    model: 'openai/gpt-oss-120b',
+  };
+  const result = await executeMobileRestRoute({ kind: 'nemo_generate' }, client, body);
+
+  assert.equal(result.ok, true);
+  assert.equal(result.compiled, true);
+  assert.deepEqual(calls, [body]);
+});
