@@ -1267,3 +1267,75 @@ test('persona_create rejects missing identifiers before network use', () => {
     /avatarId is required/,
   );
 });
+
+
+test('nemo_generate parses exact runtime inputs and performs one POST', async () => {
+  const parsed = parseOneShotCommand(JSON.stringify({
+    op: 'nemo_generate',
+    nonce: 'nemo-generate-1',
+    avatarUrl: 'Darya.png',
+    fileName: 'Nemo clean scene',
+    entryId: 'canonical-ready-ru-gooner-humiliation-joi-rp',
+    source: 'openrouter',
+    model: 'openai/gpt-oss-120b',
+  }));
+
+  assert.equal(parsed.op, 'nemo_generate');
+  assert.equal(parsed.entryId, 'canonical-ready-ru-gooner-humiliation-joi-rp');
+
+  const calls = [];
+  const fetchImpl = async (url, init = {}) => {
+    calls.push({ url: String(url), init });
+    return new Response(JSON.stringify({ ok: true, compiled: true }), {
+      status: 200,
+      headers: { 'content-type': 'application/json' },
+    });
+  };
+
+  const result = await executeOneShot({
+    command: parsed,
+    publicDomain: 'example.up.railway.app',
+    mcpPath: '/secret/mcp',
+    fetchImpl,
+  });
+
+  assert.equal(calls.length, 1);
+  assert.equal(
+    calls[0].url,
+    'https://example.up.railway.app/secret/mobile/nemo-generate',
+  );
+  assert.equal(calls[0].init.method, 'POST');
+  assert.deepEqual(JSON.parse(calls[0].init.body), {
+    nonce: 'nemo-generate-1',
+    avatarUrl: 'Darya.png',
+    fileName: 'Nemo clean scene',
+    entryId: 'canonical-ready-ru-gooner-humiliation-joi-rp',
+    source: 'openrouter',
+    model: 'openai/gpt-oss-120b',
+  });
+  assert.equal(result.compiled, true);
+});
+
+test('nemo_generate rejects missing exact preset or unsupported provider', () => {
+  assert.throws(
+    () => parseOneShotCommand(JSON.stringify({
+      op: 'nemo_generate',
+      avatarUrl: 'Darya.png',
+      fileName: 'Nemo clean scene',
+      source: 'openrouter',
+      model: 'openai/gpt-oss-120b',
+    })),
+    /entryId is required/,
+  );
+  assert.throws(
+    () => parseOneShotCommand(JSON.stringify({
+      op: 'nemo_generate',
+      avatarUrl: 'Darya.png',
+      fileName: 'Nemo clean scene',
+      entryId: 'canonical-ready-ru-gooner-humiliation-joi-rp',
+      source: 'unsupported',
+      model: 'model',
+    })),
+    /source must be deepseek, groq, or openrouter/,
+  );
+});
