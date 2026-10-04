@@ -2561,12 +2561,16 @@ export class SillyTavernClient {
         compiled.instructions,
     });
 
+    const tokenBudget = source === 'groq'
+      ? { max_completion_tokens: 16_384 }
+      : { max_tokens: 4096 };
+
     const payload = await this.post('/api/backends/chat-completions/generate', {
       chat_completion_source: source,
       messages,
       model,
       temperature: 0.7,
-      max_tokens: 4096,
+      ...tokenBudget,
       stream: false,
       presence_penalty: 0,
       frequency_penalty: 0,
