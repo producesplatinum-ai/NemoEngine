@@ -3239,3 +3239,79 @@ test('client patches a character while preserving unrelated card data and select
   assert.equal(editBody.chat, 'Darya - current');
   assert.equal(editBody.create_date, '2026-09-01T00:00:00.000Z');
 });
+
+
+test('client creates a deterministic active default persona using native avatar and settings APIs', async () => {
+  const calls = [];
+  let savedSettings = null;
+
+  const fetchImpl = async (url, options = {}) => {
+    const parsed = new URL(String(url));
+    const path = parsed.pathname;
+    calls.push({ path, method: options.method || 'GET', body: options.body || null });
+
+    if (path === '/csrf-token') {
+      return makeJsonResponse({ token: 'csrf-persona-create' });
+    }
+    if (path === '/api/settings/get') {
+      return makeJsonResponse({
+        settings: JSON.stringify({
+          user_avatar: 'user-default.png',
+          power_user: {
+            personas: {},
+            default_persona: null,
+            persona_descriptions: {},
+          },
+        }),
+      });
+    }
+    if (path === '/User%20Avatars/user-default.png' || path === '/User Avatars/user-default.png') {
+      return new Response(new Uint8Array([137, 80, 78, 71]), {
+        status: 200,
+        headers: { 'content-type': 'image/png' },
+      });
+    }
+    if (path === '/api/avatars/upload') {
+      assert(options.body instanceof FormData);
+      return makeJsonResponse({ path: 'rp-user.png' });
+    }
+    if (path === '/api/settings/save') {
+      savedSettings = JSON.parse(options.body);
+      return makeJsonResponse({ ok: true });
+    }
+    throw new Error('unexpected URL: ' + url);
+  };
+
+  const client = new SillyTavernClient({
+    baseUrl: 'https://st.example.test',
+    fetchImpl,
+  });
+
+  const result = await client.createPersona({
+    avatarId: 'rp-user.png',
+    personaName: 'Игровой Я',
+    description: 'Игровая персона пользователя.',
+  });
+
+  assert.deepEqual(result, {
+    ok: true,
+    avatarId: 'rp-user.png',
+    personaName: 'Игровой Я',
+    active: true,
+    defaultPersona: true,
+    deduplicated: false,
+  });
+  assert.equal(savedSettings.user_avatar, 'rp-user.png');
+  assert.equal(savedSettings.power_user.default_persona, 'rp-user.png');
+  assert.equal(savedSettings.power_user.personas['rp-user.png'], 'Игровой Я');
+  assert.deepEqual(savedSettings.power_user.persona_descriptions['rp-user.png'], {
+    description: 'Игровая персона пользователя.',
+    position: 0,
+    depth: 2,
+    role: 0,
+    lorebook: '',
+    title: '',
+  });
+  assert.equal(calls.filter((item) => item.path === '/api/avatars/upload').length, 1);
+  assert.equal(calls.filter((item) => item.path === '/api/settings/save').length, 1);
+});
