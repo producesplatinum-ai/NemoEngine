@@ -2589,7 +2589,26 @@ export class SillyTavernClient {
       '',
     ).trim();
     if (!rawMessage) {
-      throw new Error(`SillyTavern ${source} Nemo generation returned no message content.`);
+      const responseMessage =
+        choice?.message && typeof choice.message === 'object' && !Array.isArray(choice.message)
+          ? choice.message
+          : {};
+      const reasoning = String(
+        responseMessage?.reasoning ??
+        responseMessage?.reasoning_content ??
+        '',
+      );
+      const messageKeys = Object.keys(responseMessage).sort().join(',') || 'none';
+      const completionTokens = Number(payload?.usage?.completion_tokens || 0);
+      const reasoningTokens = Number(
+        payload?.usage?.completion_tokens_details?.reasoning_tokens || 0,
+      );
+      throw new Error(
+        `SillyTavern ${source} Nemo generation returned no message content ` +
+        `(finish_reason=${finishReason || 'unknown'}; message_keys=${messageKeys}; ` +
+        `reasoning_chars=${Array.from(reasoning).length}; ` +
+        `completion_tokens=${completionTokens}; reasoning_tokens=${reasoningTokens}).`,
+      );
     }
     const message = this.nemoOutputSanitizer(rawMessage);
 
