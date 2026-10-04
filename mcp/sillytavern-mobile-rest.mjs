@@ -26,7 +26,9 @@ const MOBILE_REST_WRITE_ROUTE_KINDS = new Set([
   'chat_delete',
   'chat_rename',
   'chat_create',
+  'persona_create',
   'character_create',
+  'persona_create',
   'character_update',
   'character_patch',
   'character_delete',
@@ -90,6 +92,7 @@ export function classifyMobileRestRequest(requestTarget, basePath) {
   if (pathname === `${normalizedBase}/nemo-exact-activate`) return { kind: 'nemo_exact_activate' };
   if (pathname === `${normalizedBase}/preset-save`) return { kind: 'preset_save' };
   if (pathname === `${normalizedBase}/preset-delete`) return { kind: 'preset_delete' };
+  if (pathname === `${normalizedBase}/persona-create`) return { kind: 'persona_create' };
   if (pathname === `${normalizedBase}/character-create`) return { kind: 'character_create' };
   if (pathname === `${normalizedBase}/character-update`) return { kind: 'character_update' };
   if (pathname === `${normalizedBase}/character-patch`) return { kind: 'character_patch' };
@@ -188,6 +191,14 @@ export async function executeMobileRestRoute(route, client, body = {}) {
         typeof body?.fallbackName === 'string' ? body.fallbackName.trim() : '';
       if (!name) throw new Error('name is required.');
       return client.deleteOpenAiPreset({ name, fallbackName });
+    }
+    case 'persona_create': {
+      const avatarId = typeof body?.avatarId === 'string' ? body.avatarId.trim() : '';
+      const personaName = typeof body?.personaName === 'string' ? body.personaName.trim() : '';
+      const description = body?.description == null ? '' : String(body.description);
+      if (!avatarId) throw new Error('avatarId is required.');
+      if (!personaName) throw new Error('personaName is required.');
+      return client.createPersona({ avatarId, personaName, description });
     }
     case 'character':
       if (!route.avatarUrl) throw new Error('avatarUrl is required.');
