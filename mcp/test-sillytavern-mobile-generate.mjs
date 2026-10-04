@@ -251,3 +251,76 @@ test('generateNemoAssistantMessage uses max_completion_tokens for Groq reasoning
   assert.ok(generated.max_completion_tokens >= 16_384);
   assert.equal(generated.include_reasoning, false);
 });
+
+
+test('generateNemoAssistantMessage reports safe Groq response diagnostics when content is empty', async () => {
+  const fetchImpl = async (url, options = {}) => {
+    const pathname = new URL(String(url)).pathname;
+    if (pathname === '/csrf-token') return response({ token: 'csrf' });
+    if (pathname === '/api/characters/get') {
+      return response({
+        name: 'Дарья',
+        data: {
+          name: 'Дарья',
+          description: 'Adult fictional character.',
+          personality: 'Sharp and direct.',
+          scenario: 'A controlled fictional test.',
+          extensions: {},
+        },
+      });
+    }
+    if (pathname === '/api/chats/get') {
+      return response([
+        { user_name: 'You', character_name: 'Дарья', chat_metadata: {} },
+        { name: 'You', is_user: true, is_system: false, mes: 'Продолжай сцену.' },
+      ]);
+    }
+    if (pathname === '/api/backends/chat-completions/generate') {
+      return response({
+        choices: [{
+          finish_reason: 'length',
+          message: {
+            role: 'assistant',
+            content: null,
+            reasoning: 'private reasoning that must never be exposed',
+          },
+        }],
+        usage: {
+          prompt_tokens: 5000,
+          completion_tokens: 16384,
+          completion_tokens_details: { reasoning_tokens: 16384 },
+        },
+      });
+    }
+    throw new Error('unexpected path: ' + pathname);
+  };
+
+  const client = new SillyTavernClient({
+    baseUrl: 'https://st.example.test',
+    fetchImpl,
+    nemoCompiler: async () => ({
+      instructions: 'COMPILED_NEMO_SYSTEM',
+      chars: 20,
+      sha256: 'c'.repeat(64),
+    }),
+  });
+
+  await assert.rejects(
+    () => client.generateNemoAssistantMessage({
+      avatarUrl: 'Darya.png',
+      fileName: 'Nemo clean scene',
+      entryId: 'canonical-ready-ru-gooner-humiliation-joi-rp',
+      source: 'groq',
+      model: 'openai/gpt-oss-120b',
+      nonce: 'nemo-groq-diagnostic-1',
+    }),
+    error => {
+      assert.match(error.message, /finish_reason=length/);
+      assert.match(error.message, /reasoning_chars=43/);
+      assert.match(error.message, /completion_tokens=16384/);
+      assert.match(error.message, /reasoning_tokens=16384/);
+      assert.doesNotMatch(error.message, /private reasoning/);
+      return true;
+    },
+  );
+});
