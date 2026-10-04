@@ -187,3 +187,67 @@ test('generateNemoAssistantMessage injects compiled Nemo instructions before pro
   );
   assert.equal(saved.chat.at(-1).extra.nemo_compiled_chars, 20);
 });
+
+
+test('generateNemoAssistantMessage uses max_completion_tokens for Groq reasoning models', async () => {
+  let generated = null;
+  const fetchImpl = async (url, options = {}) => {
+    const pathname = new URL(String(url)).pathname;
+    if (pathname === '/csrf-token') return response({ token: 'csrf' });
+    if (pathname === '/api/characters/get') {
+      return response({
+        name: 'Дарья',
+        data: {
+          name: 'Дарья',
+          description: 'Adult fictional character.',
+          personality: 'Sharp and direct.',
+          scenario: 'A controlled fictional test.',
+          extensions: {},
+        },
+      });
+    }
+    if (pathname === '/api/chats/get') {
+      return response([
+        { user_name: 'You', character_name: 'Дарья', chat_metadata: {} },
+        { name: 'You', is_user: true, is_system: false, mes: 'Продолжай сцену.' },
+      ]);
+    }
+    if (pathname === '/api/backends/chat-completions/generate') {
+      generated = JSON.parse(options.body);
+      return response({
+        choices: [{
+          finish_reason: 'stop',
+          message: { content: '<nemo-final>GROQ_REPLY</nemo-final>' },
+        }],
+      });
+    }
+    if (pathname === '/api/chats/save') return response({ result: 'ok' });
+    throw new Error('unexpected path: ' + pathname);
+  };
+
+  const client = new SillyTavernClient({
+    baseUrl: 'https://st.example.test',
+    fetchImpl,
+    nemoCompiler: async () => ({
+      instructions: 'COMPILED_NEMO_SYSTEM',
+      chars: 20,
+      sha256: 'b'.repeat(64),
+    }),
+    nemoOutputSanitizer: value => String(value),
+  });
+
+  await client.generateNemoAssistantMessage({
+    avatarUrl: 'Darya.png',
+    fileName: 'Nemo clean scene',
+    entryId: 'canonical-ready-ru-gooner-humiliation-joi-rp',
+    source: 'groq',
+    model: 'openai/gpt-oss-120b',
+    nonce: 'nemo-groq-budget-1',
+  });
+
+  assert.equal(generated.chat_completion_source, 'groq');
+  assert.equal(generated.model, 'openai/gpt-oss-120b');
+  assert.equal(generated.max_tokens, undefined);
+  assert.ok(generated.max_completion_tokens >= 16_384);
+  assert.equal(generated.include_reasoning, false);
+});
