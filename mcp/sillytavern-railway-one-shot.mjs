@@ -7,6 +7,7 @@ const SUPPORTED_OPS = new Set([
   'nemo_exact_activate',
   'client_generation_status',
   'characters',
+  'persona_create',
   'character',
   'character_create',
   'character_update',
@@ -78,6 +79,11 @@ export function parseOneShotCommand(raw) {
   const command = { ...value, op };
   if (value.nonce != null) command.nonce = requiredString(value.nonce, 'nonce');
 
+  if (op === 'persona_create') {
+    command.avatarId = requiredString(value.avatarId, 'avatarId');
+    command.personaName = requiredString(value.personaName, 'personaName');
+    command.description = value.description == null ? '' : String(value.description);
+  }
   if (['character', 'character_update', 'character_patch', 'character_delete', 'character_duplicate', 'character_rename', 'character_export_json', 'character_world_bind', 'character_world_unbind', 'chat', 'chat_create', 'chat_rename', 'chat_delete', 'turn', 'generate'].includes(op)) {
     command.avatarUrl = requiredString(value.avatarUrl, 'avatarUrl');
   }
@@ -248,6 +254,16 @@ function routeFor(command) {
     }
     case 'characters':
       return { method: 'GET', suffix: '/characters' };
+    case 'persona_create':
+      return {
+        method: 'POST',
+        suffix: '/persona-create',
+        body: {
+          avatarId: command.avatarId,
+          personaName: command.personaName,
+          description: command.description,
+        },
+      };
     case 'character': {
       const q = new URLSearchParams({ avatarUrl: command.avatarUrl });
       return { method: 'GET', suffix: `/character?${q}` };
