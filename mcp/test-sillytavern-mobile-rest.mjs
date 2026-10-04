@@ -1298,3 +1298,47 @@ test('character patch rejects missing identifiers and malformed patch JSON', asy
     /patchJson must be valid JSON/,
   );
 });
+
+
+test('classifies persona create as a POST-only write route and dispatches exact persona fields', async () => {
+  const basePath = '/st-secret/mobile';
+  const route = classifyMobileRestRequest('/st-secret/mobile/persona-create', basePath);
+  assert.deepEqual(route, { kind: 'persona_create' });
+  assert.equal(isMobileRestWriteRoute(route), true);
+  assert.equal(isMobileRestPostOnlyRoute(route), true);
+
+  const calls = [];
+  const client = {
+    async createPersona(input) {
+      calls.push(input);
+      return { ok: true, ...input, active: true, defaultPersona: true };
+    },
+  };
+
+  const result = await executeMobileRestRoute(route, client, {
+    avatarId: 'rp-user.png',
+    personaName: 'Игровой Я',
+    description: 'Игровая персона пользователя.',
+  });
+
+  assert.equal(result.ok, true);
+  assert.deepEqual(calls, [{
+    avatarId: 'rp-user.png',
+    personaName: 'Игровой Я',
+    description: 'Игровая персона пользователя.',
+  }]);
+});
+
+test('persona create rejects missing identifiers before client mutation', async () => {
+  const client = {
+    createPersona() { throw new Error('should not be called'); },
+  };
+  await assert.rejects(
+    () => executeMobileRestRoute({ kind: 'persona_create' }, client, { avatarId: 'rp-user.png' }),
+    /personaName is required/,
+  );
+  await assert.rejects(
+    () => executeMobileRestRoute({ kind: 'persona_create' }, client, { personaName: 'Игровой Я' }),
+    /avatarId is required/,
+  );
+});
