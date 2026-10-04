@@ -34,6 +34,7 @@ const SUPPORTED_OPS = new Set([
   'chat_create',
   'turn',
   'generate',
+  'nemo_generate',
 ]);
 
 function requiredString(value, name) {
@@ -84,7 +85,7 @@ export function parseOneShotCommand(raw) {
     command.personaName = requiredString(value.personaName, 'personaName');
     command.description = value.description == null ? '' : String(value.description);
   }
-  if (['character', 'character_update', 'character_patch', 'character_delete', 'character_duplicate', 'character_rename', 'character_export_json', 'character_world_bind', 'character_world_unbind', 'chat', 'chat_create', 'chat_rename', 'chat_delete', 'turn', 'generate'].includes(op)) {
+  if (['character', 'character_update', 'character_patch', 'character_delete', 'character_duplicate', 'character_rename', 'character_export_json', 'character_world_bind', 'character_world_unbind', 'chat', 'chat_create', 'chat_rename', 'chat_delete', 'turn', 'generate', 'nemo_generate'].includes(op)) {
     command.avatarUrl = requiredString(value.avatarUrl, 'avatarUrl');
   }
   if (['character_create', 'character_update', 'character_import_json'].includes(op)) {
@@ -139,7 +140,7 @@ export function parseOneShotCommand(raw) {
   if (op === 'character_world_bind') {
     command.name = requiredString(value.name, 'name');
   }
-  if (['chat', 'turn', 'generate'].includes(op)) {
+  if (['chat', 'turn', 'generate', 'nemo_generate'].includes(op)) {
     command.fileName = requiredString(value.fileName, 'fileName');
   }
   if (['chat_create', 'chat_rename', 'chat_delete'].includes(op)) {
@@ -217,12 +218,15 @@ export function parseOneShotCommand(raw) {
   if (op === 'turn') {
     command.userText = requiredString(value.userText, 'userText');
   }
-  if (op === 'generate') {
+  if (['generate', 'nemo_generate'].includes(op)) {
     command.source = requiredString(value.source, 'source');
     command.model = requiredString(value.model, 'model');
     if (!['deepseek', 'groq', 'openrouter'].includes(command.source)) {
       throw new Error('source must be deepseek, groq, or openrouter.');
     }
+  }
+  if (op === 'nemo_generate') {
+    command.entryId = requiredString(value.entryId, 'entryId');
   }
 
   return command;
@@ -447,6 +451,19 @@ function routeFor(command) {
           ...(command.nonce ? { nonce: command.nonce } : {}),
           avatarUrl: command.avatarUrl,
           fileName: command.fileName,
+          source: command.source,
+          model: command.model,
+        },
+      };
+    case 'nemo_generate':
+      return {
+        method: 'POST',
+        suffix: '/nemo-generate',
+        body: {
+          ...(command.nonce ? { nonce: command.nonce } : {}),
+          avatarUrl: command.avatarUrl,
+          fileName: command.fileName,
+          entryId: command.entryId,
           source: command.source,
           model: command.model,
         },
