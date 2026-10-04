@@ -28,7 +28,6 @@ const MOBILE_REST_WRITE_ROUTE_KINDS = new Set([
   'chat_create',
   'persona_create',
   'character_create',
-  'persona_create',
   'character_update',
   'character_patch',
   'character_delete',
@@ -51,6 +50,7 @@ const MOBILE_REST_WRITE_ROUTE_KINDS = new Set([
 ]);
 
 const MOBILE_REST_POST_ONLY_ROUTE_KINDS = new Set([
+  'persona_create',
   'character_update',
   'character_patch',
   'character_delete',
