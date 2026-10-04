@@ -36,6 +36,12 @@ import {
   applyOpenAiPresetToSettings,
 } from './openai-preset-activation.mjs';
 
+import {
+  buildNemoPortableContext,
+  compileNemoInstructions,
+  sanitizeNemoOutput,
+} from './nemo-mobile-generation.mjs';
+
 const DEFAULT_PORT = 8790;
 const MAX_TOOL_TEXT = 200_000;
 
@@ -380,11 +386,15 @@ export class SillyTavernClient {
     username = '',
     password = '',
     fetchImpl = globalThis.fetch,
+    nemoCompiler = compileNemoInstructions,
+    nemoOutputSanitizer = sanitizeNemoOutput,
   }) {
     this.baseUrl = normalizeBaseUrl(baseUrl);
     this.username = username;
     this.password = password;
     this.fetchImpl = fetchImpl;
+    this.nemoCompiler = nemoCompiler;
+    this.nemoOutputSanitizer = nemoOutputSanitizer;
     this.csrfToken = '';
     this.cookie = '';
 
@@ -2436,6 +2446,192 @@ export class SillyTavernClient {
       message,
       finishReason,
       truncated: finishReason === 'length',
+      messageCount: chat.length,
+    };
+  }
+
+  async generateNemoAssistantMessage({
+    avatarUrl,
+    fileName,
+    entryId,
+    source,
+    model,
+    nonce = '',
+  }) {
+    const character = await this.getCharacter(avatarUrl);
+    const fallbackName = String(avatarUrl).replace(/\\.png$/i, '');
+    const characterName = String(
+      character?.name || character?.data?.name || fallbackName || 'Assistant',
+    ).trim();
+
+    const existing = await this.getChat({ avatarUrl, fileName });
+    const chat = Array.isArray(existing) ? existing.slice() : [];
+    const normalizedNonce = String(nonce || '').trim();
+    if (normalizedNonce) {
+      const duplicate = chat.find(
+        (entry) =>
+          entry &&
+          typeof entry === 'object' &&
+          !Array.isArray(entry) &&
+          entry?.extra?.one_shot_nonce === normalizedNonce &&
+          entry?.extra?.one_shot_op === 'nemo_generate' &&
+          typeof entry.mes === 'string' &&
+          entry.mes.trim(),
+      );
+      if (duplicate) {
+        return {
+          ok: true,
+          saved: true,
+          deduplicated: true,
+          compiled: true,
+          avatarUrl,
+          fileName,
+          characterName,
+          entryId,
+          source,
+          model,
+          message: String(duplicate.mes),
+          finishReason: String(duplicate?.extra?.provider_finish_reason || ''),
+          truncated: duplicate?.extra?.provider_finish_reason === 'length',
+          presetSemanticSha256: String(duplicate?.extra?.nemo_preset_sha256 || ''),
+          compiledSha256: String(duplicate?.extra?.nemo_compiled_sha256 || ''),
+          compiledChars: Number(duplicate?.extra?.nemo_compiled_chars || 0),
+          messageCount: chat.length,
+        };
+      }
+    }
+
+    const conversation = chat.filter(
+      (entry) =>
+        entry &&
+        typeof entry === 'object' &&
+        typeof entry.mes === 'string' &&
+        entry.mes.trim(),
+    );
+    if (!conversation.some((entry) => entry.is_user === true)) {
+      throw new Error('Chat must contain a user message before Nemo generation.');
+    }
+
+    const data =
+      character?.data && typeof character.data === 'object' ? character.data : {};
+    let linkedWorldInfo = null;
+    const embeddedEntries = data?.character_book?.entries;
+    const hasEmbeddedLore =
+      (Array.isArray(embeddedEntries) && embeddedEntries.length > 0) ||
+      (
+        embeddedEntries &&
+        typeof embeddedEntries === 'object' &&
+        !Array.isArray(embeddedEntries) &&
+        Object.keys(embeddedEntries).length > 0
+      );
+    const linkedWorldName = String(data?.extensions?.world || '').trim();
+    if (!hasEmbeddedLore && linkedWorldName) {
+      try {
+        linkedWorldInfo = await this.getWorldInfo(linkedWorldName);
+      } catch {
+        linkedWorldInfo = null;
+      }
+    }
+
+    const built = await buildExactNemoPreset(entryId);
+    const context = buildNemoPortableContext({
+      character,
+      characterName,
+      conversation,
+    });
+    const compiled = await this.nemoCompiler({
+      preset: built.preset,
+      context,
+      profile: '100001',
+    });
+    if (!compiled?.instructions || typeof compiled.instructions !== 'string') {
+      throw new Error('Nemo compiler returned no portable instructions.');
+    }
+
+    const messages = buildCharacterGenerationMessages({
+      character,
+      characterName,
+      conversation,
+      linkedWorldInfo,
+    });
+    messages.unshift({
+      role: 'system',
+      content:
+        'NemoEngine compiled portable runtime instructions follow. Apply them to the current character and conversation. Preserve user agency and return only the final user-facing response.\n\n' +
+        compiled.instructions,
+    });
+
+    const payload = await this.post('/api/backends/chat-completions/generate', {
+      chat_completion_source: source,
+      messages,
+      model,
+      temperature: 0.7,
+      max_tokens: 4096,
+      stream: false,
+      presence_penalty: 0,
+      frequency_penalty: 0,
+      top_p: 1,
+      stop: [],
+      seed: 0,
+      logprobs: 0,
+      include_reasoning: false,
+    });
+
+    const choice = payload?.choices?.[0] || {};
+    const finishReason = String(choice?.finish_reason || '').trim();
+    const rawMessage = String(
+      choice?.message?.content ||
+      choice?.text ||
+      '',
+    ).trim();
+    if (!rawMessage) {
+      throw new Error(`SillyTavern ${source} Nemo generation returned no message content.`);
+    }
+    const message = this.nemoOutputSanitizer(rawMessage);
+
+    const nemoExtra = {
+      one_shot_op: 'nemo_generate',
+      provider_finish_reason: finishReason,
+      nemo_entry_id: entryId,
+      nemo_preset_sha256: built.presetSemanticSha256,
+      nemo_compiled_sha256: String(compiled.sha256 || ''),
+      nemo_compiled_chars: Number(compiled.chars || Array.from(compiled.instructions).length),
+    };
+    if (normalizedNonce) nemoExtra.one_shot_nonce = normalizedNonce;
+
+    chat.push({
+      name: characterName,
+      is_user: false,
+      is_system: false,
+      send_date: new Date().toISOString(),
+      mes: message,
+      extra: nemoExtra,
+    });
+
+    await this.post('/api/chats/save', {
+      ch_name: characterName,
+      file_name: fileName,
+      chat,
+      avatar_url: avatarUrl,
+    });
+
+    return {
+      ok: true,
+      saved: true,
+      compiled: true,
+      avatarUrl,
+      fileName,
+      characterName,
+      entryId,
+      presetName: built.entry.name,
+      source,
+      model,
+      message,
+      finishReason,
+      truncated: finishReason === 'length',
+      presetSemanticSha256: built.presetSemanticSha256,
+      compiledSha256: String(compiled.sha256 || ''),
+      compiledChars: Number(compiled.chars || Array.from(compiled.instructions).length),
       messageCount: chat.length,
     };
   }
