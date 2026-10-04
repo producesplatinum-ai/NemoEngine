@@ -23,6 +23,7 @@ function one(searchParams, key) {
 const MOBILE_REST_WRITE_ROUTE_KINDS = new Set([
   'turn',
   'generate',
+  'nemo_generate',
   'chat_delete',
   'chat_rename',
   'chat_create',
@@ -126,6 +127,7 @@ export function classifyMobileRestRequest(requestTarget, basePath) {
   if (pathname === `${normalizedBase}/chat-delete`) return { kind: 'chat_delete' };
   if (pathname === `${normalizedBase}/turn`) return { kind: 'turn' };
   if (pathname === `${normalizedBase}/generate`) return { kind: 'generate' };
+  if (pathname === `${normalizedBase}/nemo-generate`) return { kind: 'nemo_generate' };
   if (pathname === `${normalizedBase}/client-generation-status`) {
     return {
       kind: 'client_generation_status',
@@ -467,6 +469,34 @@ export async function executeMobileRestRoute(route, client, body = {}) {
         ...(nonce ? { nonce } : {}),
         avatarUrl,
         fileName,
+        source,
+        model,
+      });
+    }
+    case 'nemo_generate': {
+      const avatarUrl = typeof body?.avatarUrl === 'string' ? body.avatarUrl.trim() : '';
+      const fileName = typeof body?.fileName === 'string' ? body.fileName.trim() : '';
+      const entryId = typeof body?.entryId === 'string' ? body.entryId.trim() : '';
+      const source = typeof body?.source === 'string' ? body.source.trim() : '';
+      const model = typeof body?.model === 'string' ? body.model.trim() : '';
+      if (!avatarUrl || !fileName) {
+        throw new Error('avatarUrl and fileName are required.');
+      }
+      if (!entryId) {
+        throw new Error('entryId is required.');
+      }
+      if (!source || !model) {
+        throw new Error('source and model are required.');
+      }
+      if (!['deepseek', 'groq', 'openrouter'].includes(source)) {
+        throw new Error('Unsupported generation source.');
+      }
+      const nonce = typeof body?.nonce === 'string' ? body.nonce.trim() : '';
+      return client.generateNemoAssistantMessage({
+        ...(nonce ? { nonce } : {}),
+        avatarUrl,
+        fileName,
+        entryId,
         source,
         model,
       });
