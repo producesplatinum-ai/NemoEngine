@@ -51,6 +51,11 @@ const canonicalSources = [
     sourcePath: '../Nemo Engine/Ready/Nemo Engine 11.5.2 - Ready RU Gooner RP.json',
   },
   {
+    id: 'canonical-ready-ru-explicit-porn-rp',
+    name: 'Nemo Engine 11.5.2 - Ready RU Explicit Porn RP',
+    sourcePath: '../Nemo Engine/Ready/Nemo Engine 11.5.2 - Ready RU Explicit Porn RP.json',
+  },
+  {
     id: 'canonical-ready-ru-psychology-humiliation-joi-rp',
     name: 'Nemo Engine 11.5.2 - Ready RU Psychology Humiliation JOI RP',
     sourcePath: '../Nemo Engine/Ready/Nemo Engine 11.5.2 - Ready RU Psychology Humiliation JOI RP.json',
