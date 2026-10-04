@@ -33,6 +33,7 @@ test('exact catalog covers canonical presets, every mutual-exclusive option, eve
     'canonical-ready-ru-rp',
     'canonical-ready-ru-gooner-rp',
     'canonical-ready-ru-explicit-porn-rp',
+    'canonical-ready-ru-explicit-porn-rp',
     'canonical-ready-ru-psychology-humiliation-joi-rp',
     'canonical-ready-ru-gooner-humiliation-joi-rp',
   ]) assert(ids.has(required), `missing canonical preset ${required}`);
@@ -159,4 +160,44 @@ test('Ready RU Gooner Humiliation JOI combines the requested modules in one exac
   }
 
   assert.equal(enabled.has('v11-305-vex-narrative-vex'), false);
+});
+
+
+test('Ready RU Explicit Porn combines the explicit rendering stack in every prompt-order profile', async () => {
+  const built = await buildExactNemoPreset('canonical-ready-ru-explicit-porn-rp');
+
+  for (const profile of built.preset.prompt_order) {
+    const enabled = new Set(
+      profile.order
+        .filter((entry) => entry.enabled)
+        .map((entry) => entry.identifier),
+    );
+
+    for (const required of [
+      'v11-329-vex-gooner-vex',
+      'think_lang_russian',
+      'narrate_lang_russian',
+      'v11-180-nsfw-nsfw-core',
+      'v11-178-nsfw-gooner-protocol',
+      'v11-181-nsfw-porn-tropes',
+      'v11-182-nsfw-proactive-partners',
+      'v11-183-nsfw-realistic-smut',
+      'v11-184-nsfw-sexual-physiology',
+    ]) {
+      assert.equal(enabled.has(required), true, `expected enabled prompt ${required}`);
+    }
+
+    for (const incompatible of [
+      'v11-305-vex-narrative-vex',
+      'v11-309-vex-sensory-vex',
+      'v11-327-vex-lustful-vex',
+      'v11-537-classic-nsfw-core',
+      'v11-620-nsfw-gooner-slop-mode',
+      'v11-621-nsfw-gooner-s-masterpiece-protocol',
+      'v11-622-nsfw-hentai-mode',
+      'v11-134-world-logic-hentai',
+    ]) {
+      assert.equal(enabled.has(incompatible), false, `expected disabled prompt ${incompatible}`);
+    }
+  }
 });
