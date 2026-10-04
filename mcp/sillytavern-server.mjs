@@ -470,6 +470,33 @@ export class SillyTavernClient {
     }
   }
 
+  async getBuffer(pathname) {
+    await this.bootstrapSession();
+
+    const headers = {
+      ...this.authHeaders(),
+      accept: '*/*',
+    };
+    if (this.cookie) headers.cookie = this.cookie;
+
+    const response = await this.fetchImpl(`${this.baseUrl}${pathname}`, {
+      method: 'GET',
+      headers,
+    });
+
+    if (!response.ok) {
+      const bodyText = await response.text();
+      throw new Error(
+        `SillyTavern ${pathname} failed with HTTP ${response.status}: ${safeErrorBody(bodyText)}`,
+      );
+    }
+
+    return {
+      buffer: Buffer.from(await response.arrayBuffer()),
+      contentType: response.headers?.get?.('content-type') || 'application/octet-stream',
+    };
+  }
+
   async post(pathname, body = {}) {
     await this.bootstrapSession();
 
@@ -624,6 +651,112 @@ export class SillyTavernClient {
 
   listCharacters() {
     return this.post('/api/characters/all', {});
+  }
+
+  async createPersona({ avatarId, personaName, description = '' }) {
+    const normalizedAvatarId = String(avatarId || '').trim();
+    const normalizedPersonaName = String(personaName || '').trim();
+    const normalizedDescription = description == null ? '' : String(description);
+
+    if (!normalizedAvatarId) throw new Error('avatarId is required.');
+    if (!normalizedPersonaName) throw new Error('personaName is required.');
+
+    const bundle = await this.post('/api/settings/get', {});
+    const rawSettings = bundle?.settings;
+    const settings =
+      typeof rawSettings === 'string'
+        ? JSON.parse(rawSettings)
+        : rawSettings && typeof rawSettings === 'object'
+          ? structuredClone(rawSettings)
+          : {};
+
+    const nextSettings = structuredClone(settings);
+    if (!nextSettings.power_user || typeof nextSettings.power_user !== 'object' || Array.isArray(nextSettings.power_user)) {
+      nextSettings.power_user = {};
+    }
+    if (!nextSettings.power_user.personas || typeof nextSettings.power_user.personas !== 'object' || Array.isArray(nextSettings.power_user.personas)) {
+      nextSettings.power_user.personas = {};
+    }
+    if (!nextSettings.power_user.persona_descriptions || typeof nextSettings.power_user.persona_descriptions !== 'object' || Array.isArray(nextSettings.power_user.persona_descriptions)) {
+      nextSettings.power_user.persona_descriptions = {};
+    }
+
+    const descriptor = {
+      description: normalizedDescription,
+      position: 0,
+      depth: 2,
+      role: 0,
+      lorebook: '',
+      title: '',
+    };
+    const existingName = nextSettings.power_user.personas[normalizedAvatarId];
+    const existingDescriptor = nextSettings.power_user.persona_descriptions[normalizedAvatarId];
+
+    if (existingName != null) {
+      if (
+        existingName !== normalizedPersonaName ||
+        JSON.stringify(existingDescriptor || {}) !== JSON.stringify(descriptor)
+      ) {
+        throw new Error(`Persona ${normalizedAvatarId} already exists with different data.`);
+      }
+
+      if (
+        nextSettings.user_avatar === normalizedAvatarId &&
+        nextSettings.power_user.default_persona === normalizedAvatarId
+      ) {
+        return {
+          ok: true,
+          avatarId: normalizedAvatarId,
+          personaName: normalizedPersonaName,
+          active: true,
+          defaultPersona: true,
+          deduplicated: true,
+        };
+      }
+
+      nextSettings.user_avatar = normalizedAvatarId;
+      nextSettings.power_user.default_persona = normalizedAvatarId;
+      await this.post('/api/settings/save', nextSettings);
+      return {
+        ok: true,
+        avatarId: normalizedAvatarId,
+        personaName: normalizedPersonaName,
+        active: true,
+        defaultPersona: true,
+        deduplicated: false,
+      };
+    }
+
+    const sourceAvatar = String(nextSettings.user_avatar || 'user-default.png').trim() || 'user-default.png';
+    const sourcePath = `/User Avatars/${encodeURIComponent(sourceAvatar)}`;
+    const avatar = await this.getBuffer(sourcePath);
+    const form = new FormData();
+    form.append(
+      'avatar',
+      new Blob([avatar.buffer], { type: avatar.contentType || 'image/png' }),
+      'avatar.png',
+    );
+    form.append('overwrite_name', normalizedAvatarId);
+    const uploadResult = await this.postForm('/api/avatars/upload', form);
+    if (uploadResult?.path && String(uploadResult.path) !== normalizedAvatarId) {
+      throw new Error('SillyTavern avatar upload returned an unexpected persona path.');
+    }
+
+    nextSettings.power_user.personas[normalizedAvatarId] = normalizedPersonaName;
+    nextSettings.power_user.persona_descriptions[normalizedAvatarId] = descriptor;
+    nextSettings.user_avatar = normalizedAvatarId;
+    nextSettings.power_user.default_persona = normalizedAvatarId;
+
+    await this.post('/api/settings/save', nextSettings);
+
+    return {
+      ok: true,
+      avatarId: normalizedAvatarId,
+      personaName: normalizedPersonaName,
+      active: true,
+      defaultPersona: true,
+      deduplicated: false,
+    };
   }
 
   async listOpenAiPresets() {
