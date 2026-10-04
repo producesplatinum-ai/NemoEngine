@@ -1205,3 +1205,65 @@ test('character_patch rejects missing avatar or malformed patch JSON', () => {
     /patchJson must be valid JSON/,
   );
 });
+
+
+test('persona_create validates inputs and performs exactly one POST', async () => {
+  const parsed = parseOneShotCommand(JSON.stringify({
+    op: 'persona_create',
+    nonce: 'persona-create-1',
+    avatarId: 'rp-user.png',
+    personaName: 'Игровой Я',
+    description: 'Игровая персона пользователя.',
+  }));
+
+  assert.deepEqual(parsed, {
+    op: 'persona_create',
+    nonce: 'persona-create-1',
+    avatarId: 'rp-user.png',
+    personaName: 'Игровой Я',
+    description: 'Игровая персона пользователя.',
+  });
+
+  const calls = [];
+  const fetchImpl = async (url, init = {}) => {
+    calls.push({ url: String(url), init });
+    return new Response(JSON.stringify({
+      ok: true,
+      avatarId: 'rp-user.png',
+      personaName: 'Игровой Я',
+      active: true,
+      defaultPersona: true,
+    }), {
+      status: 200,
+      headers: { 'content-type': 'application/json' },
+    });
+  };
+
+  const result = await executeOneShot({
+    command: parsed,
+    publicDomain: 'example.up.railway.app',
+    mcpPath: '/secret/mcp',
+    fetchImpl,
+  });
+
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].url, 'https://example.up.railway.app/secret/mobile/persona-create');
+  assert.equal(calls[0].init.method, 'POST');
+  assert.deepEqual(JSON.parse(calls[0].init.body), {
+    avatarId: 'rp-user.png',
+    personaName: 'Игровой Я',
+    description: 'Игровая персона пользователя.',
+  });
+  assert.equal(result.active, true);
+});
+
+test('persona_create rejects missing identifiers before network use', () => {
+  assert.throws(
+    () => parseOneShotCommand(JSON.stringify({ op: 'persona_create', avatarId: 'rp-user.png' })),
+    /personaName is required/,
+  );
+  assert.throws(
+    () => parseOneShotCommand(JSON.stringify({ op: 'persona_create', personaName: 'Игровой Я' })),
+    /avatarId is required/,
+  );
+});
