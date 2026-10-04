@@ -653,6 +653,7 @@ export class SillyTavernClient {
     return this.post('/api/characters/all', {});
   }
 
+  // Native SillyTavern user persona: avatar + settings-backed descriptor.
   async createPersona({ avatarId, personaName, description = '' }) {
     const normalizedAvatarId = String(avatarId || '').trim();
     const normalizedPersonaName = String(personaName || '').trim();
