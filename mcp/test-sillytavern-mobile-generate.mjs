@@ -589,3 +589,76 @@ test('Nemo continuity guard keeps user-controlled in-progress actions unresolved
   assert.match(guard.content, /keep in-progress actions in progress/i);
   assert.match(guard.content, /do not decide climax, stopping, speaking, moving, revealing, or leaving/i);
 });
+
+
+test('Nemo continuity guard preserves role ownership and explicit asymmetry', async () => {
+  let generated = null;
+  const fetchImpl = async (url, options = {}) => {
+    const pathname = new URL(String(url)).pathname;
+    if (pathname === '/csrf-token') return response({ token: 'csrf' });
+    if (pathname === '/api/characters/get') {
+      return response({
+        name: 'Дарья',
+        data: {
+          name: 'Дарья',
+          description: 'Adult fictional character.',
+          personality: 'Sharp and direct.',
+          scenario: 'A controlled fictional test.',
+          extensions: {},
+        },
+      });
+    }
+    if (pathname === '/api/chats/get') {
+      return response([
+        { user_name: 'You', character_name: 'Дарья', chat_metadata: {} },
+        {
+          name: 'You',
+          is_user: true,
+          is_system: false,
+          mes: 'Preserve the explicit younger/older contrast and do not invent motives or control claims.',
+        },
+      ]);
+    }
+    if (pathname === '/api/backends/chat-completions/generate') {
+      generated = JSON.parse(options.body);
+      return response({
+        choices: [{
+          finish_reason: 'stop',
+          message: { content: '<nemo-final>OK</nemo-final>' },
+        }],
+      });
+    }
+    if (pathname === '/api/chats/save') return response({ result: 'ok' });
+    throw new Error('unexpected path: ' + pathname);
+  };
+
+  const client = new SillyTavernClient({
+    baseUrl: 'https://st.example.test',
+    fetchImpl,
+    nemoCompiler: async () => ({
+      instructions: 'COMPILED_NEMO_SYSTEM',
+      chars: 20,
+      sha256: '2'.repeat(64),
+    }),
+    nemoOutputSanitizer: value => String(value),
+  });
+
+  await client.generateNemoAssistantMessage({
+    avatarUrl: 'Darya.png',
+    fileName: 'Nemo role scene',
+    entryId: 'canonical-ready-ru-gooner-humiliation-joi-rp',
+    source: 'openrouter',
+    model: 'openai/gpt-oss-120b',
+    nonce: 'nemo-role-1',
+  });
+
+  const guard = generated.messages.find(
+    entry => entry.role === 'system' && /NemoEngine continuity guard/i.test(String(entry.content || '')),
+  );
+  assert.ok(guard);
+  assert.match(guard.content, /do not invent internal motives/i);
+  assert.match(guard.content, /control claims/i);
+  assert.match(guard.content, /do not neutralize explicit contrasts/i);
+  assert.match(guard.content, /younger\/older/i);
+  assert.match(guard.content, /who owns each action and consequence/i);
+});
