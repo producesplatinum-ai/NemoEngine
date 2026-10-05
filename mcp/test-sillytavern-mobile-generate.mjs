@@ -428,6 +428,10 @@ test('generateNemoAssistantMessage surfaces SillyTavern provider errors without 
       assert.match(error.message, /invalid_request_error/);
       assert.match(error.message, /context_length_exceeded/);
       assert.match(error.message, /max_completion_tokens/);
+      assert.match(error.message, /compiled_chars=8/);
+      assert.match(error.message, /messages_chars=\d+/);
+      assert.match(error.message, /request_bytes=\d+/);
+      assert.doesNotMatch(error.message, /Продолжай сцену/);
       return true;
     },
   );
