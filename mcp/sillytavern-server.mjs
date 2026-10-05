@@ -2560,6 +2560,15 @@ export class SillyTavernClient {
         'NemoEngine compiled portable runtime instructions follow. Apply them to the current character and conversation. Preserve user agency and return only the final user-facing response.\n\n' +
         compiled.instructions,
     });
+    messages.splice(1, 0, {
+      role: 'system',
+      content:
+        'NemoEngine continuity guard: treat explicit facts, relationships, constraints, and requested scope in the latest user message as authoritative. ' +
+        'Do not introduce new characters, witnesses, locations, interruptions, off-screen events, motives, or user actions unless the latest user message requests or clearly establishes them. ' +
+        'Preserve explicit relative attributes such as younger/older, status, ownership, roles, and who performs each action. ' +
+        'Continue from the nearest established beat instead of inventing a new escalation. ' +
+        'If a compiled narrative module conflicts with these continuity constraints, follow the continuity constraints.',
+    });
 
     const tokenBudget = source === 'groq'
       ? { max_completion_tokens: 16_384 }
