@@ -518,3 +518,74 @@ test('generateNemoAssistantMessage injects a continuity guard after compiled Nem
   );
   assert.ok(lastUserIndex > guardIndex, 'latest user message must remain after the continuity guard');
 });
+
+
+test('Nemo continuity guard keeps user-controlled in-progress actions unresolved', async () => {
+  let generated = null;
+  const fetchImpl = async (url, options = {}) => {
+    const pathname = new URL(String(url)).pathname;
+    if (pathname === '/csrf-token') return response({ token: 'csrf' });
+    if (pathname === '/api/characters/get') {
+      return response({
+        name: 'Дарья',
+        data: {
+          name: 'Дарья',
+          description: 'Adult fictional character.',
+          personality: 'Sharp and direct.',
+          scenario: 'A controlled fictional test.',
+          extensions: {},
+        },
+      });
+    }
+    if (pathname === '/api/chats/get') {
+      return response([
+        { user_name: 'You', character_name: 'Дарья', chat_metadata: {} },
+        {
+          name: 'You',
+          is_user: true,
+          is_system: false,
+          mes: 'The user-controlled character is performing an ongoing action. Continue without deciding its completion.',
+        },
+      ]);
+    }
+    if (pathname === '/api/backends/chat-completions/generate') {
+      generated = JSON.parse(options.body);
+      return response({
+        choices: [{
+          finish_reason: 'stop',
+          message: { content: '<nemo-final>OK</nemo-final>' },
+        }],
+      });
+    }
+    if (pathname === '/api/chats/save') return response({ result: 'ok' });
+    throw new Error('unexpected path: ' + pathname);
+  };
+
+  const client = new SillyTavernClient({
+    baseUrl: 'https://st.example.test',
+    fetchImpl,
+    nemoCompiler: async () => ({
+      instructions: 'COMPILED_NEMO_SYSTEM',
+      chars: 20,
+      sha256: '1'.repeat(64),
+    }),
+    nemoOutputSanitizer: value => String(value),
+  });
+
+  await client.generateNemoAssistantMessage({
+    avatarUrl: 'Darya.png',
+    fileName: 'Nemo agency scene',
+    entryId: 'canonical-ready-ru-gooner-humiliation-joi-rp',
+    source: 'openrouter',
+    model: 'openai/gpt-oss-120b',
+    nonce: 'nemo-agency-1',
+  });
+
+  const guard = generated.messages.find(
+    entry => entry.role === 'system' && /NemoEngine continuity guard/i.test(String(entry.content || '')),
+  );
+  assert.ok(guard);
+  assert.match(guard.content, /do not complete user-controlled/i);
+  assert.match(guard.content, /keep in-progress actions in progress/i);
+  assert.match(guard.content, /do not decide climax, stopping, speaking, moving, revealing, or leaving/i);
+});
