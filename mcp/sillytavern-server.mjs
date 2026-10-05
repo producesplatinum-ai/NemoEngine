@@ -2566,7 +2566,7 @@ export class SillyTavernClient {
       : { max_tokens: 4096 };
 
     const groqReasoning =
-      source === 'groq' && /(?:^|\\/)gpt-oss-(?:20b|120b)$/i.test(model)
+      source === 'groq' && /(?:^|\/)gpt-oss-(?:20b|120b)$/i.test(model)
         ? { reasoning_effort: 'low', include_reasoning: false }
         : { include_reasoning: false };
 
