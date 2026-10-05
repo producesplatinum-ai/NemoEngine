@@ -324,3 +324,112 @@ test('generateNemoAssistantMessage reports safe Groq response diagnostics when c
     },
   );
 });
+
+
+test('generateNemoAssistantMessage sends low reasoning effort for Groq GPT-OSS', async () => {
+  let generated = null;
+  const fetchImpl = async (url, options = {}) => {
+    const pathname = new URL(String(url)).pathname;
+    if (pathname === '/csrf-token') return response({ token: 'csrf' });
+    if (pathname === '/api/characters/get') {
+      return response({
+        name: 'Дарья',
+        data: { name: 'Дарья', description: 'Adult fictional character.', personality: 'Sharp.', scenario: 'Test.', extensions: {} },
+      });
+    }
+    if (pathname === '/api/chats/get') {
+      return response([
+        { user_name: 'You', character_name: 'Дарья', chat_metadata: {} },
+        { name: 'You', is_user: true, is_system: false, mes: 'Продолжай сцену.' },
+      ]);
+    }
+    if (pathname === '/api/backends/chat-completions/generate') {
+      generated = JSON.parse(options.body);
+      return response({
+        choices: [{ finish_reason: 'stop', message: { content: '<nemo-final>OK</nemo-final>' } }],
+      });
+    }
+    if (pathname === '/api/chats/save') return response({ result: 'ok' });
+    throw new Error('unexpected path: ' + pathname);
+  };
+
+  const client = new SillyTavernClient({
+    baseUrl: 'https://st.example.test',
+    fetchImpl,
+    nemoCompiler: async () => ({ instructions: 'COMPILED', chars: 8, sha256: 'd'.repeat(64) }),
+    nemoOutputSanitizer: value => String(value),
+  });
+
+  await client.generateNemoAssistantMessage({
+    avatarUrl: 'Darya.png',
+    fileName: 'Nemo clean scene',
+    entryId: 'canonical-ready-ru-gooner-humiliation-joi-rp',
+    source: 'groq',
+    model: 'openai/gpt-oss-120b',
+    nonce: 'nemo-groq-reasoning-1',
+  });
+
+  assert.equal(generated.reasoning_effort, 'low');
+  assert.equal(generated.include_reasoning, false);
+});
+
+test('generateNemoAssistantMessage surfaces SillyTavern provider errors without saving', async () => {
+  let saved = false;
+  const fetchImpl = async (url, options = {}) => {
+    const pathname = new URL(String(url)).pathname;
+    if (pathname === '/csrf-token') return response({ token: 'csrf' });
+    if (pathname === '/api/characters/get') {
+      return response({
+        name: 'Дарья',
+        data: { name: 'Дарья', description: 'Adult fictional character.', personality: 'Sharp.', scenario: 'Test.', extensions: {} },
+      });
+    }
+    if (pathname === '/api/chats/get') {
+      return response([
+        { user_name: 'You', character_name: 'Дарья', chat_metadata: {} },
+        { name: 'You', is_user: true, is_system: false, mes: 'Продолжай сцену.' },
+      ]);
+    }
+    if (pathname === '/api/backends/chat-completions/generate') {
+      return response({
+        error: {
+          message: 'Context length exceeded',
+          type: 'invalid_request_error',
+          code: 'context_length_exceeded',
+          param: 'max_completion_tokens',
+        },
+        quota_error: false,
+      });
+    }
+    if (pathname === '/api/chats/save') {
+      saved = true;
+      return response({ result: 'ok' });
+    }
+    throw new Error('unexpected path: ' + pathname);
+  };
+
+  const client = new SillyTavernClient({
+    baseUrl: 'https://st.example.test',
+    fetchImpl,
+    nemoCompiler: async () => ({ instructions: 'COMPILED', chars: 8, sha256: 'e'.repeat(64) }),
+  });
+
+  await assert.rejects(
+    () => client.generateNemoAssistantMessage({
+      avatarUrl: 'Darya.png',
+      fileName: 'Nemo clean scene',
+      entryId: 'canonical-ready-ru-gooner-humiliation-joi-rp',
+      source: 'groq',
+      model: 'openai/gpt-oss-120b',
+      nonce: 'nemo-provider-error-1',
+    }),
+    error => {
+      assert.match(error.message, /Context length exceeded/);
+      assert.match(error.message, /invalid_request_error/);
+      assert.match(error.message, /context_length_exceeded/);
+      assert.match(error.message, /max_completion_tokens/);
+      return true;
+    },
+  );
+  assert.equal(saved, false);
+});
