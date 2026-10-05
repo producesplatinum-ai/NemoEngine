@@ -2565,12 +2565,18 @@ export class SillyTavernClient {
       ? { max_completion_tokens: 16_384 }
       : { max_tokens: 4096 };
 
+    const groqReasoning =
+      source === 'groq' && /(?:^|\\/)gpt-oss-(?:20b|120b)$/i.test(model)
+        ? { reasoning_effort: 'low', include_reasoning: false }
+        : { include_reasoning: false };
+
     const payload = await this.post('/api/backends/chat-completions/generate', {
       chat_completion_source: source,
       messages,
       model,
       temperature: 0.7,
       ...tokenBudget,
+      ...groqReasoning,
       stream: false,
       presence_penalty: 0,
       frequency_penalty: 0,
@@ -2578,8 +2584,26 @@ export class SillyTavernClient {
       stop: [],
       seed: 0,
       logprobs: 0,
-      include_reasoning: false,
     });
+
+    if (payload?.error) {
+      const providerError =
+        payload.error && typeof payload.error === 'object' && !Array.isArray(payload.error)
+          ? payload.error
+          : { message: String(payload.error) };
+      const providerMessage = String(providerError.message || 'Unknown provider error').trim();
+      const providerType = String(providerError.type || '').trim();
+      const providerCode = String(providerError.code || '').trim();
+      const providerParam = String(providerError.param || '').trim();
+      const details = [
+        providerType && `type=${providerType}`,
+        providerCode && `code=${providerCode}`,
+        providerParam && `param=${providerParam}`,
+      ].filter(Boolean).join('; ');
+      throw new Error(
+        `SillyTavern ${source} provider error: ${providerMessage}${details ? ` (${details})` : ''}.`,
+      );
+    }
 
     const choice = payload?.choices?.[0] || {};
     const finishReason = String(choice?.finish_reason || '').trim();
