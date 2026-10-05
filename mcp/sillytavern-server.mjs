@@ -2567,6 +2567,7 @@ export class SillyTavernClient {
         'NemoEngine continuity guard. Treat the latest user message as the authoritative scene-state constraint. ' +
         'Do not introduce new people, witnesses, locations, interruptions, time jumps, motives, relationships, or completed actions unless the latest user message or established chat already contains them. ' +
         'Preserve relative attributes and role relations exactly (for example younger/older, who acts, who observes, who owns each action and consequence). ' +
+        'Do not complete user-controlled in-progress actions. Keep in-progress actions in progress; do not decide climax, stopping, speaking, moving, revealing, or leaving for the user-controlled character unless the latest user message explicitly establishes it. ' +
         'Continue from the nearest established beat instead of inventing a new transition or dramatic hook. ' +
         'When compiled style instructions conflict with continuity, continuity and user agency take priority.',
     });
