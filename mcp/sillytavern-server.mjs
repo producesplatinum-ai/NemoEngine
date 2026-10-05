@@ -2570,7 +2570,7 @@ export class SillyTavernClient {
         ? { reasoning_effort: 'low', include_reasoning: false }
         : { include_reasoning: false };
 
-    const payload = await this.post('/api/backends/chat-completions/generate', {
+    const generationRequest = {
       chat_completion_source: source,
       messages,
       model,
@@ -2584,7 +2584,20 @@ export class SillyTavernClient {
       stop: [],
       seed: 0,
       logprobs: 0,
-    });
+    };
+    const messagesChars = messages.reduce((total, entry) => {
+      const content =
+        typeof entry?.content === 'string'
+          ? entry.content
+          : JSON.stringify(entry?.content ?? '');
+      return total + Array.from(content).length;
+    }, 0);
+    const requestBytes = Buffer.byteLength(JSON.stringify(generationRequest), 'utf8');
+
+    const payload = await this.post(
+      '/api/backends/chat-completions/generate',
+      generationRequest,
+    );
 
     if (payload?.error) {
       const providerError =
@@ -2600,8 +2613,12 @@ export class SillyTavernClient {
         providerCode && `code=${providerCode}`,
         providerParam && `param=${providerParam}`,
       ].filter(Boolean).join('; ');
+      const requestMetrics =
+        `compiled_chars=${Number(compiled.chars || Array.from(compiled.instructions).length)}; ` +
+        `messages_chars=${messagesChars}; request_bytes=${requestBytes}`;
       throw new Error(
-        `SillyTavern ${source} provider error: ${providerMessage}${details ? ` (${details})` : ''}.`,
+        `SillyTavern ${source} provider error: ${providerMessage}` +
+        `${details ? ` (${details})` : ''} [${requestMetrics}].`,
       );
     }
 
