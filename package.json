@@ -8,7 +8,7 @@
   },
   "scripts": {
     "start": "node mcp/server.mjs",
-    "test:mcp": "node --test mcp/test-server.mjs",
+    "test:mcp": "node --test mcp/test-server.mjs mcp/test-darya-sync.mjs",
     "test:nemo": "node --test scripts/test-nemo-chatgpt-runtime.mjs scripts/test-nemo-chatgpt-executor.mjs",
     "test": "npm run test:mcp && npm run test:nemo"
   },
