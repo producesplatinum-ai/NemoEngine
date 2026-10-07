@@ -1,1 +1,5 @@
 .omn/
+node_modules/
+.env
+.env.*
+.nemo-mcp-runs/
