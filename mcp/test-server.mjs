@@ -7,6 +7,7 @@ import test from 'node:test';
 import {
   buildMcpServer,
   buildRunSpec,
+  DARYA_MCP_ENDPOINT_PATH,
   finishManagedRun,
   MCP_ENDPOINT_PATH,
   resolveRunPaths,
@@ -125,5 +126,48 @@ test('HTTP server exposes health endpoint', async (t) => {
   assert.deepEqual(await response.json(), {
     ok: true,
     service: 'nemoengine-mcp',
+  });
+});
+
+test('Darya MCP endpoint fails closed when sync secrets are absent', async (t) => {
+  const oldSource = process.env.DARYA_SOURCE_TOKEN;
+  const oldGitHub = process.env.DARYA_GITHUB_TOKEN;
+  const oldBearer = process.env.DARYA_MCP_TOKEN;
+  delete process.env.DARYA_SOURCE_TOKEN;
+  delete process.env.DARYA_GITHUB_TOKEN;
+  delete process.env.DARYA_MCP_TOKEN;
+
+  t.after(() => {
+    if (oldSource === undefined) delete process.env.DARYA_SOURCE_TOKEN;
+    else process.env.DARYA_SOURCE_TOKEN = oldSource;
+    if (oldGitHub === undefined) delete process.env.DARYA_GITHUB_TOKEN;
+    else process.env.DARYA_GITHUB_TOKEN = oldGitHub;
+    if (oldBearer === undefined) delete process.env.DARYA_MCP_TOKEN;
+    else process.env.DARYA_MCP_TOKEN = oldBearer;
+  });
+
+  const httpServer = startHttpServer({ port: 0, host: '127.0.0.1' });
+  await once(httpServer, 'listening');
+
+  t.after(
+    () =>
+      new Promise((resolvePromise, rejectPromise) => {
+        httpServer.close((error) => {
+          if (error) rejectPromise(error);
+          else resolvePromise();
+        });
+      }),
+  );
+
+  const address = httpServer.address();
+  assert.ok(address && typeof address === 'object');
+
+  const response = await fetch(
+    `http://127.0.0.1:${address.port}${DARYA_MCP_ENDPOINT_PATH}`,
+    { method: 'POST' },
+  );
+  assert.equal(response.status, 503);
+  assert.deepEqual(await response.json(), {
+    error: 'darya_sync_not_configured',
   });
 });
