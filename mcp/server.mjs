@@ -10,6 +10,13 @@ import { toNodeHandler } from '@modelcontextprotocol/node';
 import { createMcpHandler, McpServer } from '@modelcontextprotocol/server';
 import * as z from 'zod/v4';
 
+import {
+  buildDaryaMcpServer,
+  createDaryaGitHubClient,
+  normalizeDaryaEndpointPath,
+  safeBearerMatches,
+} from './darya-sync.mjs';
+
 const THIS_FILE = fileURLToPath(import.meta.url);
 export const REPO_ROOT = resolve(dirname(THIS_FILE), '..');
 const EXECUTOR = join(REPO_ROOT, 'scripts', 'nemo-chatgpt-executor.mjs');
@@ -162,6 +169,14 @@ function normalizeEndpointPath(value = '/mcp') {
 export const MCP_ENDPOINT_PATH = normalizeEndpointPath(
   process.env.NEMO_MCP_ENDPOINT_PATH || '/mcp',
 );
+
+export const DARYA_MCP_ENDPOINT_PATH = normalizeDaryaEndpointPath(
+  process.env.DARYA_MCP_ENDPOINT_PATH || '/darya/mcp',
+);
+
+if (DARYA_MCP_ENDPOINT_PATH === MCP_ENDPOINT_PATH) {
+  throw new Error('DARYA_MCP_ENDPOINT_PATH must differ from NEMO_MCP_ENDPOINT_PATH.');
+}
 
 function parsePort(value) {
   const port = Number(value);
@@ -429,6 +444,25 @@ export function startHttpServer({
   });
   const nodeHandler = toNodeHandler(handler);
 
+  const daryaSourceToken = (
+    process.env.DARYA_SOURCE_TOKEN || process.env.DARYA_GITHUB_TOKEN || ''
+  ).trim();
+  const daryaBearerToken = (process.env.DARYA_MCP_TOKEN || '').trim();
+  let daryaNodeHandler = null;
+
+  if (daryaSourceToken && daryaBearerToken) {
+    const daryaClient = createDaryaGitHubClient({ token: daryaSourceToken });
+    const daryaHandler = createMcpHandler(
+      () => buildDaryaMcpServer(daryaClient),
+      {
+        onerror: (error) => {
+          console.error('[darya-github-live-sync]', error.message);
+        },
+      },
+    );
+    daryaNodeHandler = toNodeHandler(daryaHandler);
+  }
+
   const httpServer = createServer((req, res) => {
     const pathname = (req.url || '/').split('?', 1)[0];
 
@@ -436,6 +470,25 @@ export function startHttpServer({
       res.statusCode = 200;
       res.setHeader('content-type', 'application/json; charset=utf-8');
       res.end(JSON.stringify({ ok: true, service: 'nemoengine-mcp' }));
+      return;
+    }
+
+    if (pathname === DARYA_MCP_ENDPOINT_PATH) {
+      if (!daryaNodeHandler) {
+        res.statusCode = 503;
+        res.setHeader('content-type', 'application/json; charset=utf-8');
+        res.end(JSON.stringify({ error: 'darya_sync_not_configured' }));
+        return;
+      }
+
+      if (!safeBearerMatches(req.headers.authorization, daryaBearerToken)) {
+        res.statusCode = 401;
+        res.setHeader('content-type', 'application/json; charset=utf-8');
+        res.end(JSON.stringify({ error: 'unauthorized' }));
+        return;
+      }
+
+      void daryaNodeHandler(req, res);
       return;
     }
 
