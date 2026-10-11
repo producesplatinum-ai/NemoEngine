@@ -2359,17 +2359,10 @@ export class SillyTavernClient {
 
     const data = character?.data && typeof character.data === 'object' ? character.data : {};
     let linkedWorldInfo = null;
-    const embeddedEntries = data?.character_book?.entries;
-    const hasEmbeddedLore =
-      (Array.isArray(embeddedEntries) && embeddedEntries.length > 0) ||
-      (
-        embeddedEntries &&
-        typeof embeddedEntries === 'object' &&
-        !Array.isArray(embeddedEntries) &&
-        Object.keys(embeddedEntries).length > 0
-      );
+    // Embedded character lore and externally linked World Info are complementary.
+    // The generation message builder selects matching entries and deduplicates content.
     const linkedWorldName = String(data?.extensions?.world || '').trim();
-    if (!hasEmbeddedLore && linkedWorldName) {
+    if (linkedWorldName) {
       try {
         linkedWorldInfo = await this.getWorldInfo(linkedWorldName);
       } catch {
@@ -2515,17 +2508,10 @@ export class SillyTavernClient {
     const data =
       character?.data && typeof character.data === 'object' ? character.data : {};
     let linkedWorldInfo = null;
-    const embeddedEntries = data?.character_book?.entries;
-    const hasEmbeddedLore =
-      (Array.isArray(embeddedEntries) && embeddedEntries.length > 0) ||
-      (
-        embeddedEntries &&
-        typeof embeddedEntries === 'object' &&
-        !Array.isArray(embeddedEntries) &&
-        Object.keys(embeddedEntries).length > 0
-      );
+    // Embedded character lore and externally linked World Info are complementary.
+    // The generation message builder selects matching entries and deduplicates content.
     const linkedWorldName = String(data?.extensions?.world || '').trim();
-    if (!hasEmbeddedLore && linkedWorldName) {
+    if (linkedWorldName) {
       try {
         linkedWorldInfo = await this.getWorldInfo(linkedWorldName);
       } catch {
