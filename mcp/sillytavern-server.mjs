@@ -202,6 +202,12 @@ export function buildCharacterGenerationMessages({
     : [];
   const transcript = normalizedConversation.map(entry => String(entry.mes)).join('\n');
   const transcriptLower = transcript.toLocaleLowerCase('ru-RU');
+  // Diary page keys use the nominative «страница N», while normal questions
+  // often say «страницу N», «на странице N», or «стр. N».
+  const mentionedPages = new Set(
+    [...transcriptLower.matchAll(/(?:^|[^\\p{L}\\p{N}])стр(?:\\.|аниц[а-яё]*)\\s*№?\\s*0*(\\d{1,4})(?!\\d)/giu)]
+      .map(match => Number(match[1])),
+  );
 
   const normalizeEntries = (book) => {
     const entries = book?.entries;
@@ -237,6 +243,8 @@ export function buildCharacterGenerationMessages({
           .map(value => String(value || '').trim())
           .filter(Boolean)
           .some((key) => {
+            const pageKey = /^страница\\s+(\\d{1,4})$/iu.exec(key);
+            if (pageKey && mentionedPages.has(Number(pageKey[1]))) return true;
             if (entry.use_regex === true) {
               try {
                 return new RegExp(key, 'iu').test(transcript);
