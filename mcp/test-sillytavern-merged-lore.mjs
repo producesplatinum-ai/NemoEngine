@@ -51,6 +51,10 @@ for (const mode of ['generate', 'nemo_generate']) {
             uid: 27, key: ['страница 999'], constant: false, disable: false,
             content: 'TEST_EXTERNAL_DIARY_UNMATCHED',
           },
+          28: {
+            uid: 28, key: ['страница 184'], constant: false, disable: true,
+            content: 'TEST_EXTERNAL_DIARY_DISABLED',
+          },
         } });
       }
       if (path === '/api/backends/chat-completions/generate') {
@@ -93,6 +97,7 @@ for (const mode of ['generate', 'nemo_generate']) {
     assert.match(joined, /TEST_EMBEDDED_VOICE_RULE/);
     assert.match(joined, /TEST_EXTERNAL_DIARY_SELECTED/);
     assert.doesNotMatch(joined, /TEST_EXTERNAL_DIARY_UNMATCHED/);
+    assert.doesNotMatch(joined, /TEST_EXTERNAL_DIARY_DISABLED/);
     assert.equal(joined.match(/TEST_EMBEDDED_VOICE_RULE/g)?.length, 1);
   });
 }
