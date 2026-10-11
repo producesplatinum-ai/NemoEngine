@@ -205,7 +205,7 @@ export function buildCharacterGenerationMessages({
   // Diary page keys use the nominative «страница N», while normal questions
   // often say «страницу N», «на странице N», or «стр. N».
   const mentionedPages = new Set(
-    [...transcriptLower.matchAll(/(?:^|[^\\p{L}\\p{N}])стр(?:\\.|аниц[а-яё]*)\\s*№?\\s*0*(\\d{1,4})(?!\\d)/giu)]
+    [...transcriptLower.matchAll(/(?:^|[^\p{L}\p{N}])стр(?:\.|аниц[а-яё]*)?\s*№?\s*0*(\d{1,4})(?!\d)/giu)]
       .map(match => Number(match[1])),
   );
 
@@ -228,7 +228,7 @@ export function buildCharacterGenerationMessages({
   const seenLore = new Set();
   for (const book of books) {
     for (const entry of normalizeEntries(book)) {
-      if (!entry || typeof entry !== 'object' || entry.enabled === false) continue;
+      if (!entry || typeof entry !== 'object' || (entry.enabled === false || entry.disable === true)) continue;
       const content = String(entry.content || '').trim();
       if (!content || seenLore.has(content)) continue;
 
@@ -243,7 +243,7 @@ export function buildCharacterGenerationMessages({
           .map(value => String(value || '').trim())
           .filter(Boolean)
           .some((key) => {
-            const pageKey = /^страница\\s+(\\d{1,4})$/iu.exec(key);
+            const pageKey = /^страница\s+(\d{1,4})$/iu.exec(key);
             if (pageKey && mentionedPages.has(Number(pageKey[1]))) return true;
             if (entry.use_regex === true) {
               try {
