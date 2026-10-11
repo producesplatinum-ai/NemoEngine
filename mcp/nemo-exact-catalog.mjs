@@ -133,7 +133,41 @@ const overlayEntries = ['Fetish', 'NSFW'].flatMap((family) =>
   }),
 );
 
+const compositeSources = [
+  {
+    id: 'composite-ready-ru-explicit-all-compatible',
+    name: 'Nemo Engine 11.5.2 - Ready RU Explicit All Compatible RP',
+    sourcePath: '../Nemo Engine/Ready/Nemo Engine 11.5.2 - Ready RU Explicit Porn RP.json',
+    kind: 'composite',
+    family: 'Composite',
+  },
+];
+
+const requestedAdditionalModules = new Set([
+  'v11-176-nsfw-dirty-talk',
+  'v11-177-nsfw-dom-language',
+  'v11-179-nsfw-moans-sfx',
+  'v11-639-fetish-humiliation',
+]);
+
+function buildCompositePreset(entry, original) {
+  const preset = clone(original);
+  updateEveryPromptOrder(preset, (orderEntry) =>
+    requestedAdditionalModules.has(orderEntry.identifier)
+      ? { ...orderEntry, enabled: true }
+      : orderEntry,
+  );
+  preset.preset_name = entry.name;
+  preset.nemo_merge_note = [
+    String(preset.nemo_merge_note || ''),
+    'Compatible add-ons: Dirty Talk, Dom Language, Moans SFX, Humiliation.',
+    'Keep Gooner Slop and Gooner Masterpiece disabled as alternatives to Gooner Protocol.',
+  ].filter(Boolean).join('\n');
+  return preset;
+}
+
 const catalog = Object.freeze([
+  ...compositeSources,
   ...canonicalSources.map((entry) => ({ ...entry, kind: 'canonical', family: 'Canonical' })),
   ...selectorEntries,
   ...overlayEntries,
@@ -196,6 +230,8 @@ export async function buildExactNemoPreset(id) {
   let preset;
   if (entry.kind === 'canonical') {
     preset = source;
+  } else if (entry.kind === 'composite') {
+    preset = buildCompositePreset(entry, source);
   } else if (entry.kind === 'selector') {
     preset = buildSelectorPreset(entry);
   } else if (entry.kind === 'overlay') {

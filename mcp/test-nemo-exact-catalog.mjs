@@ -201,3 +201,39 @@ test('Ready RU Explicit Porn combines the explicit rendering stack in every prom
     }
   }
 });
+
+test('compatible explicit composite enables all requested speech and humiliation modules without replacing the base', async () => {
+  const id = 'composite-ready-ru-explicit-all-compatible';
+  const entry = listExactNemoCatalog().find((item) => item.id === id);
+  assert.equal(entry?.kind, 'composite');
+  const built = await buildExactNemoPreset(id);
+  assert.equal(built.preset.preset_name, entry.name);
+  const original = await buildExactNemoPreset('canonical-ready-ru-explicit-porn-rp');
+  const requested = [
+    'v11-176-nsfw-dirty-talk',
+    'v11-177-nsfw-dom-language',
+    'v11-179-nsfw-moans-sfx',
+    'v11-639-fetish-humiliation',
+  ];
+  for (const [index, profile] of built.preset.prompt_order.entries()) {
+    const enabled = new Set(profile.order.filter((p) => p.enabled).map((p) => p.identifier));
+    const base = new Set(original.preset.prompt_order[index].order.filter((p) => p.enabled).map((p) => p.identifier));
+    for (const required of [
+      'v11-329-vex-gooner-vex',
+      'v11-180-nsfw-nsfw-core',
+      'v11-178-nsfw-gooner-protocol',
+      'v11-182-nsfw-proactive-partners',
+      'v11-181-nsfw-porn-tropes',
+      'v11-183-nsfw-realistic-smut',
+      'v11-184-nsfw-sexual-physiology',
+      ...requested,
+    ]) assert(enabled.has(required), 'missing ' + required);
+    for (const alternative of [
+      'v11-620-nsfw-gooner-slop-mode',
+      'v11-621-nsfw-gooner-s-masterpiece-protocol',
+      'v11-537-classic-nsfw-core',
+    ]) assert.equal(enabled.has(alternative), false, 'incompatible module ' + alternative);
+    assert.deepEqual([...enabled].sort(), [...new Set([...base, ...requested])].sort());
+  }
+  assert.equal(built.preset.prompts.length, original.preset.prompts.length);
+});
