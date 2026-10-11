@@ -202,6 +202,12 @@ export function buildCharacterGenerationMessages({
     : [];
   const transcript = normalizedConversation.map(entry => String(entry.mes)).join('\n');
   const transcriptLower = transcript.toLocaleLowerCase('ru-RU');
+  // Diary page keys use the nominative «страница N», while normal questions
+  // often say «страницу N», «на странице N», or «стр. N».
+  const mentionedPages = new Set(
+    [...transcriptLower.matchAll(/(?:^|[^\p{L}\p{N}])стр(?:\.|аниц[а-яё]*)?\s*№?\s*0*(\d{1,4})(?!\d)/giu)]
+      .map(match => Number(match[1])),
+  );
 
   const normalizeEntries = (book) => {
     const entries = book?.entries;
@@ -222,7 +228,7 @@ export function buildCharacterGenerationMessages({
   const seenLore = new Set();
   for (const book of books) {
     for (const entry of normalizeEntries(book)) {
-      if (!entry || typeof entry !== 'object' || entry.enabled === false) continue;
+      if (!entry || typeof entry !== 'object' || (entry.enabled === false || entry.disable === true)) continue;
       const content = String(entry.content || '').trim();
       if (!content || seenLore.has(content)) continue;
 
@@ -237,6 +243,8 @@ export function buildCharacterGenerationMessages({
           .map(value => String(value || '').trim())
           .filter(Boolean)
           .some((key) => {
+            const pageKey = /^страница\s+(\d{1,4})$/iu.exec(key);
+            if (pageKey && mentionedPages.has(Number(pageKey[1]))) return true;
             if (entry.use_regex === true) {
               try {
                 return new RegExp(key, 'iu').test(transcript);
@@ -2359,17 +2367,10 @@ export class SillyTavernClient {
 
     const data = character?.data && typeof character.data === 'object' ? character.data : {};
     let linkedWorldInfo = null;
-    const embeddedEntries = data?.character_book?.entries;
-    const hasEmbeddedLore =
-      (Array.isArray(embeddedEntries) && embeddedEntries.length > 0) ||
-      (
-        embeddedEntries &&
-        typeof embeddedEntries === 'object' &&
-        !Array.isArray(embeddedEntries) &&
-        Object.keys(embeddedEntries).length > 0
-      );
+    // Embedded character lore and externally linked World Info are complementary.
+    // The generation message builder selects matching entries and deduplicates content.
     const linkedWorldName = String(data?.extensions?.world || '').trim();
-    if (!hasEmbeddedLore && linkedWorldName) {
+    if (linkedWorldName) {
       try {
         linkedWorldInfo = await this.getWorldInfo(linkedWorldName);
       } catch {
@@ -2515,17 +2516,10 @@ export class SillyTavernClient {
     const data =
       character?.data && typeof character.data === 'object' ? character.data : {};
     let linkedWorldInfo = null;
-    const embeddedEntries = data?.character_book?.entries;
-    const hasEmbeddedLore =
-      (Array.isArray(embeddedEntries) && embeddedEntries.length > 0) ||
-      (
-        embeddedEntries &&
-        typeof embeddedEntries === 'object' &&
-        !Array.isArray(embeddedEntries) &&
-        Object.keys(embeddedEntries).length > 0
-      );
+    // Embedded character lore and externally linked World Info are complementary.
+    // The generation message builder selects matching entries and deduplicates content.
     const linkedWorldName = String(data?.extensions?.world || '').trim();
-    if (!hasEmbeddedLore && linkedWorldName) {
+    if (linkedWorldName) {
       try {
         linkedWorldInfo = await this.getWorldInfo(linkedWorldName);
       } catch {
