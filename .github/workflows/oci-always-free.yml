@@ -1,0 +1,58 @@
+name: OCI Always Free deployment configuration
+
+on:
+  pull_request:
+    paths:
+      - 'deploy/oci-always-free/**'
+      - '.github/workflows/oci-always-free.yml'
+  push:
+    paths:
+      - 'deploy/oci-always-free/**'
+      - '.github/workflows/oci-always-free.yml'
+
+jobs:
+  verify-compose:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify Compose topology, persistence and private port bindings
+        run: node --test deploy/oci-always-free/test-compose.mjs
+      - name: Build NemoEngine gateway image (CI architecture)
+        run: docker build --file deploy/oci-always-free/Dockerfile.nemo --tag nemoengine-oci:ci .
+      - name: Check packaged Node runtime entrypoints
+        run: |
+          docker run --rm nemoengine-oci:ci node --check mcp/sillytavern-server.mjs
+          docker run --rm nemoengine-oci:ci node --check mcp/server.mjs
+          docker run --rm nemoengine-oci:ci node --check scripts/nemo-chatgpt-runtime.mjs
+      - name: Smoke-test NemoEngine MCP container health
+        run: |
+          set -eu
+          docker run -d --rm --name nemo-oci-smoke -p 127.0.0.1:8787:8787 nemoengine-oci:ci node mcp/server.mjs
+          trap 'docker rm -f nemo-oci-smoke >/dev/null 2>&1 || true' EXIT
+          for i in $(seq 1 25); do
+            if curl -fsS http://127.0.0.1:8787/healthz | grep -q 'nemoengine-mcp'; then exit 0; fi
+            sleep 1
+          done
+          docker logs nemo-oci-smoke
+          exit 1
+      - name: Smoke-test SillyTavern MCP gateway container health
+        run: |
+          set -eu
+          docker run -d --rm --name st-oci-smoke -p 127.0.0.1:8790:8790 -e SILLYTAVERN_URL=http://sillytavern:8000 nemoengine-oci:ci node mcp/sillytavern-server.mjs
+          trap 'docker rm -f st-oci-smoke >/dev/null 2>&1 || true' EXIT
+          for i in $(seq 1 25); do
+            if curl -fsS http://127.0.0.1:8790/healthz; then exit 0; fi
+            sleep 1
+          done
+          docker logs st-oci-smoke
+          exit 1
+      - name: Check Dockerfile references
+        run: |
+          test -f package.json
+          test -f mcp/sillytavern-server.mjs
+          test -f mcp/server.mjs
+          test -f scripts/nemo-chatgpt-runtime.mjs
+          test -d 'Nemo Engine'
