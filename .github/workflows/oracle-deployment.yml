@@ -1,0 +1,26 @@
+name: Oracle self-hosted deployment config
+on:
+  pull_request:
+    paths:
+      - 'deploy/oracle/**'
+      - '.dockerignore'
+      - '.github/workflows/oracle-deployment.yml'
+  workflow_dispatch:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Node 22 test runner
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Test network isolation and durable storage layout
+        run: node --test deploy/oracle/test-layout.mjs
+      - name: Validate Docker Compose schema and substitutions
+        run: docker compose --env-file deploy/oracle/.env.example -f deploy/oracle/compose.yaml config --quiet
+      - name: Build NemoEngine ARM-compatible Node container (AMD64 runner check)
+        run: docker build -f deploy/oracle/Dockerfile -t nemo-oci-ci:latest .
