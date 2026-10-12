@@ -1,5 +1,8 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import { createHash } from 'node:crypto';
+import { mkdirSync, writeFileSync } from 'node:fs';
+import path from 'node:path';
 import { SillyTavernClient } from './sillytavern-server.mjs';
 import {
   buildNemoPortableContext,
@@ -82,23 +85,39 @@ test('buildNemoPortableContext maps character and recent transcript into runtime
   assert.equal(context.macros.NemoLore, '');
 });
 
-test('compileNemoInstructions invokes the repository runtime in portable instructions-only mode', async () => {
+test('compileNemoInstructions invokes the repository runtime and verifies emitted module manifest', async () => {
   let call = null;
+  const instructions = 'COMPILED_NEMO_INSTRUCTIONS\n';
   const result = await compileNemoInstructions({
     preset: { prompts: [], prompt_order: [] },
     context: { macros: {}, globals: {}, variables: {} },
     spawnImpl(executable, args, options) {
       call = { executable, args, options };
-      return { status: 0, stdout: 'COMPILED_NEMO_INSTRUCTIONS\n', stderr: '' };
+      const dir = args[args.indexOf('--emit-dir') + 1];
+      mkdirSync(dir, { recursive: true });
+      writeFileSync(path.join(dir, 'instructions.txt'), instructions);
+      writeFileSync(path.join(dir, 'instructions.manifest.json'), JSON.stringify({
+        schemaVersion: 'nemo-chatgpt-runtime-emission/v1',
+        profile: { character_id: '100001' },
+        instructionChars: Array.from(instructions).length,
+        instructionSha256: createHash('sha256').update(instructions).digest('hex'),
+        orderedEmittedIds: ['v11-176-nsfw-dirty-talk'],
+        omittedModules: [{ id: 'v11-999-marker', reason: 'omitted-host-marker' }],
+      }));
+      return { status: 0, stdout: '', stderr: '' };
     },
   });
 
-  assert.equal(result.instructions, 'COMPILED_NEMO_INSTRUCTIONS');
+  assert.equal(result.instructions, instructions);
   assert.ok(result.chars > 0);
   assert.match(result.sha256, /^[a-f0-9]{64}$/);
+  assert.equal(result.moduleEvidence.instructionsSha256, result.sha256);
+  assert.deepEqual(result.moduleEvidence.emittedModuleIds, ['v11-176-nsfw-dirty-talk']);
+  assert.deepEqual(result.moduleEvidence.omittedModules, [{ id: 'v11-999-marker', reason: 'omitted-host-marker' }]);
   assert.equal(call.executable, process.execPath);
   assert.ok(call.args.some(value => String(value).endsWith('nemo-chatgpt-runtime.mjs')));
-  assert.ok(call.args.includes('--instructions-only'));
+  assert.ok(call.args.includes('--emit-dir'));
+  assert.ok(!call.args.includes('--instructions-only'));
   assert.ok(call.args.includes('--mode'));
   assert.ok(call.args.includes('portable'));
   assert.ok(call.args.includes('--context'));
