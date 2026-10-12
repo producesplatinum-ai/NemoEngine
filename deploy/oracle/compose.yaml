@@ -1,0 +1,54 @@
+# Self-hosted Oracle Cloud Always Free (ARM64) or any Linux Docker host.
+# Safe default: both ports are reachable ONLY from the host loopback interface.
+services:
+  sillytavern:
+    image: ghcr.io/sillytavern/sillytavern:latest
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PUID: "${HOST_UID:-1000}"
+      PGID: "${HOST_GID:-1000}"
+    ports:
+      - "127.0.0.1:8000:8000"
+    volumes:
+      - ./state/config:/home/node/app/config
+      - ./state/data:/home/node/app/data
+      - ./state/plugins:/home/node/app/plugins
+      - ./state/extensions:/home/node/app/public/scripts/extensions/third-party
+      - ./state/backups:/home/node/app/backups
+    healthcheck:
+      test: ["CMD", "node", "src/healthcheck.js"]
+      interval: 30s
+      timeout: 10s
+      start_period: 45s
+      retries: 5
+    networks: [private]
+
+  nemo-mcp:
+    build:
+      context: ../..
+      dockerfile: deploy/oracle/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      sillytavern:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      HOST: 0.0.0.0
+      PORT: "8790"
+      SILLYTAVERN_URL: http://sillytavern:8000
+      SILLYTAVERN_BASIC_AUTH_USERNAME: "${ST_BASIC_AUTH_USERNAME:-}"
+      SILLYTAVERN_BASIC_AUTH_PASSWORD: "${ST_BASIC_AUTH_PASSWORD:-}"
+    ports:
+      - "127.0.0.1:8790:8790"
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:8790/healthz').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 10s
+      start_period: 35s
+      retries: 4
+    networks: [private]
+
+networks:
+  private:
+    driver: bridge
