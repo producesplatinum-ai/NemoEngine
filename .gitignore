@@ -3,3 +3,6 @@ node_modules/
 .env
 .env.*
 .nemo-mcp-runs/
+# Oracle Docker deployment: never commit personal chat/card data or runtime secrets
+deploy/oracle/state/
+deploy/oracle/.env
