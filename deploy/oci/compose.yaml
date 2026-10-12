@@ -1,0 +1,61 @@
+name: darya-nemo-oci
+
+services:
+  sillytavern:
+    image: ghcr.io/sillytavern/sillytavern:latest
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8000:8000"
+    volumes:
+      - st_config:/home/node/app/config
+      - st_data:/home/node/app/data
+      - st_plugins:/home/node/app/plugins
+      - st_extensions:/home/node/app/public/scripts/extensions/third-party
+      - st_backups:/home/node/app/backups
+    logging:
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  sillytavern-mcp:
+    build:
+      context: ../..
+      dockerfile: deploy/oci/Dockerfile.mcp
+    restart: unless-stopped
+    depends_on:
+      - sillytavern
+    ports:
+      - "127.0.0.1:8790:8790"
+    environment:
+      PORT: "8790"
+      HOST: "0.0.0.0"
+      SILLYTAVERN_URL: "http://sillytavern:8000"
+      SILLYTAVERN_BASIC_AUTH_USERNAME: "${SILLYTAVERN_BASIC_AUTH_USERNAME:-}"
+      SILLYTAVERN_BASIC_AUTH_PASSWORD: "${SILLYTAVERN_BASIC_AUTH_PASSWORD:-}"
+    logging:
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  nemoengine-mcp:
+    build:
+      context: ../..
+      dockerfile: deploy/oci/Dockerfile.mcp
+    command: ["npm", "run", "start"]
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8787:8787"
+    environment:
+      PORT: "8787"
+      HOST: "0.0.0.0"
+    logging:
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  st_config:
+  st_data:
+  st_plugins:
+  st_extensions:
+  st_backups:
