@@ -20,6 +20,13 @@ jobs:
           node-version: '22'
       - name: Verify Compose topology, persistence and private port bindings
         run: node --test deploy/oci-always-free/test-compose.mjs
+      - name: Build NemoEngine gateway image (CI architecture)
+        run: docker build --file deploy/oci-always-free/Dockerfile.nemo --tag nemoengine-oci:ci .
+      - name: Check packaged Node runtime entrypoints
+        run: |
+          docker run --rm nemoengine-oci:ci node --check mcp/sillytavern-server.mjs
+          docker run --rm nemoengine-oci:ci node --check mcp/server.mjs
+          docker run --rm nemoengine-oci:ci node --check scripts/nemo-chatgpt-runtime.mjs
       - name: Check Dockerfile references
         run: |
           test -f package.json
