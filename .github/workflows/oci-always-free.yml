@@ -1,0 +1,29 @@
+name: OCI Always Free deployment configuration
+
+on:
+  pull_request:
+    paths:
+      - 'deploy/oci-always-free/**'
+      - '.github/workflows/oci-always-free.yml'
+  push:
+    paths:
+      - 'deploy/oci-always-free/**'
+      - '.github/workflows/oci-always-free.yml'
+
+jobs:
+  verify-compose:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify Compose topology, persistence and private port bindings
+        run: node --test deploy/oci-always-free/test-compose.mjs
+      - name: Check Dockerfile references
+        run: |
+          test -f package.json
+          test -f mcp/sillytavern-server.mjs
+          test -f mcp/server.mjs
+          test -f scripts/nemo-chatgpt-runtime.mjs
+          test -d 'Nemo Engine'
