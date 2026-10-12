@@ -22,3 +22,5 @@ jobs:
         run: node --test deploy/oracle/test-layout.mjs
       - name: Validate Docker Compose schema and substitutions
         run: docker compose --env-file deploy/oracle/.env.example -f deploy/oracle/compose.yaml config --quiet
+      - name: Build NemoEngine ARM-compatible Node container (AMD64 runner check)
+        run: docker build -f deploy/oracle/Dockerfile -t nemo-oci-ci:latest .
