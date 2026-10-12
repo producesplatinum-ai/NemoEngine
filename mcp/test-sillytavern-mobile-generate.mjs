@@ -171,6 +171,13 @@ test('generateNemoAssistantMessage injects compiled Nemo instructions before pro
       instructions: 'COMPILED_NEMO_SYSTEM',
       chars: 20,
       sha256: 'a'.repeat(64),
+      moduleEvidence: {
+        schema: 'nemo-module-evidence/v1',
+        instructionsSha256: 'a'.repeat(64),
+        emittedModuleIds: ['v11-176-nsfw-dirty-talk'],
+        omittedModules: [{ id: 'v11-999-marker', reason: 'omitted-host-marker' }],
+        externalSexSkills: 'not-attached',
+      },
     }),
     nemoOutputSanitizer(value) {
       sanitized = value;
@@ -205,6 +212,9 @@ test('generateNemoAssistantMessage injects compiled Nemo instructions before pro
     'canonical-ready-ru-gooner-humiliation-joi-rp',
   );
   assert.equal(saved.chat.at(-1).extra.nemo_compiled_chars, 20);
+  assert.deepEqual(result.moduleEvidence, saved.chat.at(-1).extra.nemo_module_evidence);
+  assert.deepEqual(result.moduleEvidence.emittedModuleIds, ['v11-176-nsfw-dirty-talk']);
+  assert.equal(result.moduleEvidence.externalSexSkills, 'not-attached');
 });
 
 
