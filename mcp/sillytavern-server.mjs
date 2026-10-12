@@ -2497,6 +2497,7 @@ export class SillyTavernClient {
           presetSemanticSha256: String(duplicate?.extra?.nemo_preset_sha256 || ''),
           compiledSha256: String(duplicate?.extra?.nemo_compiled_sha256 || ''),
           compiledChars: Number(duplicate?.extra?.nemo_compiled_chars || 0),
+          moduleEvidence: duplicate?.extra?.nemo_module_evidence ?? null,
           messageCount: chat.length,
         };
       }
@@ -2667,6 +2668,7 @@ export class SillyTavernClient {
       nemo_preset_sha256: built.presetSemanticSha256,
       nemo_compiled_sha256: String(compiled.sha256 || ''),
       nemo_compiled_chars: Number(compiled.chars || Array.from(compiled.instructions).length),
+      ...(compiled.moduleEvidence ? { nemo_module_evidence: compiled.moduleEvidence } : {}),
     };
     if (normalizedNonce) nemoExtra.one_shot_nonce = normalizedNonce;
 
@@ -2703,6 +2705,7 @@ export class SillyTavernClient {
       presetSemanticSha256: built.presetSemanticSha256,
       compiledSha256: String(compiled.sha256 || ''),
       compiledChars: Number(compiled.chars || Array.from(compiled.instructions).length),
+      moduleEvidence: compiled.moduleEvidence ?? null,
       messageCount: chat.length,
     };
   }
