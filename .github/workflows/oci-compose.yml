@@ -1,0 +1,47 @@
+name: Oracle free hosting configuration
+
+on:
+  pull_request:
+    paths:
+      - "deploy/oci/**"
+      - ".github/workflows/oci-compose.yml"
+  push:
+    branches:
+      - feat/free-oracle-deployment-20261012
+    paths:
+      - "deploy/oci/**"
+      - ".github/workflows/oci-compose.yml"
+
+jobs:
+  validate-compose:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate Docker Compose configuration
+        run: |
+          docker compose --env-file deploy/oci/env.example \
+            -f deploy/oci/compose.yaml config --quiet
+          docker compose --env-file deploy/oci/env.example \
+            -f deploy/oci/compose.yaml config --format json > /tmp/compose.json
+      - name: Assert only loopback binds and durable SillyTavern volumes
+        run: |
+          python3 - <<'PY'
+          import json
+          c=json.load(open('/tmp/compose.json'))
+          expected={'sillytavern':8000,'sillytavern-mcp':8790,'nemoengine-mcp':8787}
+          assert set(c['services'])==set(expected), set(c['services'])
+          for name,port in expected.items():
+            bindings=c['services'][name].get('ports',[])
+            assert len(bindings)==1 and bindings[0]['host_ip']=='127.0.0.1', (name,bindings)
+            assert bindings[0]['published']==str(port), (name,bindings)
+            assert int(bindings[0]['target'])==port, (name,bindings)
+          m=c['services']['sillytavern']['volumes']
+          target_set={v['target'] for v in m}
+          expected_targets={'/home/node/app/config','/home/node/app/data',
+            '/home/node/app/plugins','/home/node/app/backups',
+            '/home/node/app/public/scripts/extensions/third-party'}
+          assert expected_targets<=target_set, target_set
+          assert all(v['type']=='volume' for v in m)
+          assert c['services']['sillytavern-mcp']['environment']['SILLYTAVERN_URL']=='http://sillytavern:8000'
+          print('PASS: private ports, persistent volumes, correct internal gateway URL')
+          PY
