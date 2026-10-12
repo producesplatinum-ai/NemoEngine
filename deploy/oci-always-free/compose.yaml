@@ -1,0 +1,69 @@
+name: darya-nemo-oci
+
+services:
+  sillytavern:
+    image: ghcr.io/sillytavern/sillytavern:latest
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      SILLYTAVERN_HEARTBEATINTERVAL: '30'
+    ports:
+      - '127.0.0.1:8000:8000'
+    volumes:
+      - ./state/sillytavern/config:/home/node/app/config
+      - ./state/sillytavern/data:/home/node/app/data
+      - ./state/sillytavern/plugins:/home/node/app/plugins
+      - ./state/sillytavern/extensions:/home/node/app/public/scripts/extensions/third-party
+      - ./state/sillytavern/backups:/home/node/app/backups
+    healthcheck:
+      test: ['CMD', 'node', 'src/healthcheck.js']
+      interval: 30s
+      timeout: 10s
+      start_period: 45s
+      retries: 3
+
+  sillytavern-mcp:
+    build:
+      context: ../..
+      dockerfile: deploy/oci-always-free/Dockerfile.nemo
+    image: darya/nemoengine-mcp:oci-local
+    command: ['node', 'mcp/sillytavern-server.mjs']
+    restart: unless-stopped
+    depends_on:
+      sillytavern:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      HOST: 0.0.0.0
+      PORT: '8790'
+      SILLYTAVERN_URL: http://sillytavern:8000
+      SILLYTAVERN_BASIC_AUTH_USERNAME: ${SILLYTAVERN_BASIC_AUTH_USERNAME:-}
+      SILLYTAVERN_BASIC_AUTH_PASSWORD: ${SILLYTAVERN_BASIC_AUTH_PASSWORD:-}
+    ports:
+      - '127.0.0.1:8790:8790'
+    healthcheck:
+      test: ['CMD', 'node', '-e', "fetch('http://127.0.0.1:8790/healthz').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 10s
+      start_period: 30s
+      retries: 3
+
+  nemoengine-mcp:
+    image: darya/nemoengine-mcp:oci-local
+    command: ['node', 'mcp/server.mjs']
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      HOST: 0.0.0.0
+      PORT: '8787'
+      NEMO_MCP_RUN_ROOT: /runs
+    volumes:
+      - ./state/nemo-runs:/runs
+    ports:
+      - '127.0.0.1:8787:8787'
+    healthcheck:
+      test: ['CMD', 'node', '-e', "fetch('http://127.0.0.1:8787/healthz').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 10s
+      start_period: 30s
+      retries: 3
