@@ -1,12 +1,13 @@
 import { createHash } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
-import { mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { mkdtemp, rm, writeFile, readFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 
 import { sanitizeOutput } from '../scripts/nemo-chatgpt-runtime.mjs';
+import { verifiedModuleEvidence } from './nemo-module-evidence.mjs';
 
 const RUNTIME_PATH = fileURLToPath(
   new URL('../scripts/nemo-chatgpt-runtime.mjs', import.meta.url),
@@ -99,6 +100,7 @@ export async function compileNemoInstructions({
   const directory = await mkdtemp(path.join(tmpdir(), 'nemo-mobile-'));
   const presetPath = path.join(directory, 'preset.json');
   const contextPath = path.join(directory, 'context.json');
+  const emissionDir = path.join(directory, 'emission');
 
   try {
     await Promise.all([
@@ -118,7 +120,8 @@ export async function compileNemoInstructions({
         'portable',
         '--context',
         contextPath,
-        '--instructions-only',
+        '--emit-dir',
+        emissionDir,
       ],
       {
         encoding: 'utf8',
@@ -134,15 +137,18 @@ export async function compileNemoInstructions({
       );
     }
 
-    const instructions = String(result?.stdout || '').trim();
-    if (!instructions) {
+    const instructions = await readFile(path.join(emissionDir, 'instructions.txt'), 'utf8');
+    if (!instructions.trim()) {
       throw new Error('Nemo runtime compilation returned empty instructions.');
     }
+    const manifest = JSON.parse(await readFile(path.join(emissionDir, 'instructions.manifest.json'), 'utf8'));
+    const moduleEvidence = verifiedModuleEvidence(manifest, instructions);
 
     return {
       instructions,
       chars: Array.from(instructions).length,
       sha256: createHash('sha256').update(instructions, 'utf8').digest('hex'),
+      moduleEvidence,
     };
   } finally {
     await rm(directory, { recursive: true, force: true });
